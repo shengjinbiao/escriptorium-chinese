@@ -153,7 +153,8 @@ class Versioned(models.Model):
             raise ValueError("Revision %s not found for %s" % (revision, self))
 
     def flush_history(self):
-        self.versions = []
+        for version in self.versions[::-1]:
+            self.delete_revision(version['revision'])
 
     @property
     def history(self):

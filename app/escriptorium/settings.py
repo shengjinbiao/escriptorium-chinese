@@ -114,6 +114,7 @@ TEMPLATES = [
                 'escriptorium.context_processors.enable_text_alignment',
                 'escriptorium.context_processors.enable_markdown_export',
                 'escriptorium.context_processors.enable_tei_export',
+                'escriptorium.context_processors.models_version_retention',
             ],
         },
     },
@@ -402,6 +403,10 @@ VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
 VERSION_DATE = os.getenv('VERSION_DATE', '<development>')
 KRAKEN_VERSION = 'Kraken version ' + importlib.metadata.version('kraken')
+
+# Numbers of days to retain all epochs of models before the management command can clean them up.
+# 0 means nothing will be deleted even if the cron runs.
+MODELS_VERSION_RETENTION = int(os.getenv('MODELS_VERSION_RETENTION', 30))
 
 IIIF_IMPORT_QUALITY = 'full'
 

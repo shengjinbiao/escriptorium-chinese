@@ -2076,10 +2076,18 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
         os.rename(tmp_filename, target_filename)
         super().revert(revision)
 
+    def delete(self):
+        self.flush_history()
+        super().delete()
+
     def delete_revision(self, revision):
         for version in self.versions:
             if version["revision"] == revision:
-                os.remove(os.path.join(settings.MEDIA_ROOT, version["data"]["file"]))
+                try:
+                    os.remove(os.path.join(settings.MEDIA_ROOT, version["data"]["file"]))
+                except FileNotFoundError:
+                    logger.error("File not found while trying to delete the model version %s",
+                                 version['data']['file'])
                 break
         super().delete_revision(revision)
 

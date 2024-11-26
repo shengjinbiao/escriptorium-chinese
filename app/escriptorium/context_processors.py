@@ -33,3 +33,8 @@ def enable_tei_export(request):
     return {'EXPORT_TEI_XML_ENABLED': getattr(settings,
                                               'EXPORT_TEI_XML_ENABLED',
                                               True)}
+
+
+def models_version_retention(request):
+    return {'MODELS_VERSION_RETENTION': getattr(settings,
+                                                'MODELS_VERSION_RETENTION')}
