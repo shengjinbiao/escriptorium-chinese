@@ -218,6 +218,8 @@ CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_TRACK_STARTED = True
+CELERYD_STATE_DB = "celery_state.db"
 CELERY_ACKS_LATE = True
 
 # time in seconds a user has to wait after a task is started before being able to recover
@@ -334,6 +336,10 @@ LOGGING = {
         }
     },
     'loggers': {
+        '': {
+            'handlers': ['console_debug'],
+            'propagate': True,
+        },
         'kraken': {
             'handlers': ['console', 'mail_admins'],
             'propagate': True,
