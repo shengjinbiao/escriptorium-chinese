@@ -210,9 +210,12 @@ class ZipParser(ParserDocument):
 
         with zipfile.ZipFile(self.file) as zfh:
             total = len(zfh.infolist())
+
+            # first loop to get all images
             for index, finfo in enumerate(zfh.infolist()):
                 if index < start_at:
                     continue
+
                 with zfh.open(finfo) as zipedfh:
                     try:
                         filename = os.path.basename(zipedfh.name)
@@ -247,13 +250,27 @@ class ZipParser(ParserDocument):
                             part.save()
                             self.post_process_image(part)
 
+                    except IndexError:
+                        # no file extension!?
+                        pass
+
+            # second loop for all xmls
+            for index, finfo in enumerate(zfh.infolist()):
+                if index < start_at:
+                    continue
+
+                with zfh.open(finfo) as zipedfh:
+                    try:
+                        filename = os.path.basename(zipedfh.name)
+                        file_extension = os.path.splitext(filename)[1][1:]
                         # xml
-                        elif file_extension in XML_EXTENSIONS:
+                        if file_extension in XML_EXTENSIONS:
                             parser = make_parser(self.document, zipedfh,
                                                  name=self.name, report=self.report)
 
                             for part in parser.parse(override=override, user=user):
                                 yield part
+
                     except IndexError:
                         # no file extension!?
                         pass
