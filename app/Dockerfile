@@ -31,8 +31,8 @@ RUN export JAVA_HOME=$(dirname $(dirname $(readlink -f  /usr/bin/java)))
 RUN addgroup --system uwsgi
 RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 
-RUN pip install -q --upgrade pip
+RUN pip install --root-user-action ignore -q --upgrade pip
 
 # Install Python packages and remove cache
 COPY ./requirements.txt /usr/src/app/requirements.txt
-RUN pip --no-cache-dir install -q -r requirements.txt
+RUN pip --no-cache-dir install --root-user-action ignore -q -r requirements.txt
