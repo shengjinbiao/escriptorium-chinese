@@ -19,8 +19,8 @@ RUN apt-get update -q && \
 
 # Install OpenJDK
 RUN echo "Installing jvm" && \
-    apt update && \
-    apt install -y default-jre default-jdk && \
+    apt-get update && \
+    apt-get install -y default-jre default-jdk && \
     apt-get install -y ant && \
     apt-get clean;
 
