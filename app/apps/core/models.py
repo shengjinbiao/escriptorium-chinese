@@ -2086,8 +2086,8 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
                 try:
                     os.remove(os.path.join(settings.MEDIA_ROOT, version["data"]["file"]))
                 except FileNotFoundError:
-                    logger.error("File not found while trying to delete the model version %s",
-                                 version['data']['file'])
+                    logger.warning("File not found while trying to delete the model version %s",
+                                   version['data']['file'])
                 break
         super().delete_revision(revision)
 
