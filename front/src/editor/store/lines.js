@@ -157,10 +157,23 @@ export const actions = {
     ) {
         lines.forEach((l) => (l.document_part = rootState.parts.pk));
 
+        let dataLines = lines.map(function (l) {
+            let type =
+                l.type &&
+                rootState.document.types.lines.find((t) => t.name == l.type);
+            return {
+                pk: l.pk,
+                document_part: rootState.parts.pk,
+                baseline: l.baseline,
+                region: l.region,
+                typology: (type && type.pk) || null,
+            };
+        });
+
         const resp = await api.bulkCreateLines(
             rootState.document.id,
             rootState.parts.pk,
-            { lines: lines },
+            { lines: dataLines },
         );
 
         let data = resp.data;

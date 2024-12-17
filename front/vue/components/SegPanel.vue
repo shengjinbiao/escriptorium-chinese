@@ -849,6 +849,7 @@ export default Vue.extend({
                                 baseline: l.baseline,
                                 mask: l.mask,
                                 region: (l.region && l.region.context.pk) || null,
+                                type: l.type,
                             };
 
                             if (l.transcriptionsForUndelete) {

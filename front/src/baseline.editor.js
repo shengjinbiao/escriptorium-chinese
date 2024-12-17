@@ -1186,6 +1186,9 @@ export class Segmenter {
         this.oddMasksGroup = new paper.Group();
         this.dirHintsGroup = new paper.Group();
 
+        this.lastSelectedLineType = null;
+        this.lastSelectedRegionType = null;
+
         this.linesLayer = paper.project.activeLayer;
         this.regionsLayer = new paper.Layer();
         this.orderingLayer = new paper.Layer();
@@ -1281,6 +1284,7 @@ export class Segmenter {
         } else {
             this.bindLineEvents(line);
             line.updateDataFromCanvas();
+            line.type = this.lastSelectedLineType;
         }
         this.isDrawing = false;
         this.resetToolEvents(); // unregistering
@@ -1311,6 +1315,8 @@ export class Segmenter {
         } else {
             this.bindRegionEvents(region);
             region.updateDataFromCanvas();
+            region.type = this.lastSelectedRegionType;
+            region.refresh();
         }
         this.isDrawing = false;
         this.resetToolEvents();
@@ -1745,6 +1751,7 @@ export class Segmenter {
             true,
         );
         let point = newLine.extend(event.point).point; // the point that we move around
+        newLine.select(); // select it to make drawing more precise
 
         // adds all the events bindings
         let onCancel = function (event) {
@@ -1764,7 +1771,6 @@ export class Segmenter {
                 point = newLine.extend(event.point).point;
             } else {
                 this.finishLine(newLine);
-                newLine.unselect();
                 document.removeEventListener("keyup", onCancel);
             }
         }.bind(this);
@@ -1774,7 +1780,6 @@ export class Segmenter {
             // follow the mouse cursor with the last created point
             this.movePointInView(point, event.delta);
             newLine.showDirection();
-            newLine.select(); // select it to make drawing more precise
         }.bind(this);
         this.tool.onMouseDrag = function (event) {
             // adding points to current line
@@ -1805,6 +1810,7 @@ export class Segmenter {
             null,
             true,
         );
+        newRegion.select();
 
         let onCancel = function (event) {
             if (event.keyCode == 27) {
@@ -2383,6 +2389,8 @@ export class Segmenter {
 
     setSelectionType(value) {
         if (value == "None") value = null;
+        if (this.selection.lines.length > 0) this.lastSelectedLineType = value;
+
         for (let i = 0; i < this.selection.lines.length; i++) {
             let line = this.selection.lines[i];
             if (line.type != value) {
@@ -2391,6 +2399,9 @@ export class Segmenter {
                 line.refresh();
             }
         }
+
+        if (this.selection.regions.length > 0) this.lastSelectedRegionType = value;
+
         for (let i = 0; i < this.selection.regions.length; i++) {
             let region = this.selection.regions[i];
             if (region.type != value) {
