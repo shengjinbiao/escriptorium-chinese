@@ -744,6 +744,11 @@ class LineOrderSerializer(serializers.ModelSerializer):
         fields = ('pk', 'order')
         list_serializer_class = LineOrderListSerializer
 
+    def validate_order(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Order must be non-negative")
+        return value
+
 
 class DetailedLineSerializer(LineSerializer):
     transcriptions = LineTranscriptionSerializer(many=True, required=False)
