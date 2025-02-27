@@ -1049,7 +1049,11 @@ export default {
                 }
                 // set selected items on state
                 if (failureCount < 5) {
-                    this.setSelectedPartsByOrder(selected);
+                    // filter selected to only have filtered items
+                    const filteredSelected = selected.filter(
+                        (p) => (this.filteredParts.find((part) => (part.order + 1 === p)))
+                    );
+                    this.setSelectedPartsByOrder(filteredSelected);
                 } else {
                     this.addError({ message: "Failed to fetch additional images" });
                 }
@@ -1093,7 +1097,11 @@ export default {
                 const start = order;
                 const end = this.lastSelected;
                 const selected = [...range(Math.min(start,end), Math.max(start,end) + 1)];
-                this.modifySelectedPartsByOrder({ selected, checked });
+                // only selected images in current filter
+                const filteredSelected = selected.filter(
+                    (p) => (this.filteredParts.find((part) => (part.order + 1 === p)))
+                );
+                this.modifySelectedPartsByOrder({ selected: filteredSelected, checked });
             }
             // save the last selected item (for multiple selection with shift key)
             this.lastSelected = order;
@@ -1152,7 +1160,9 @@ export default {
          * Handler for clicking "select all"
          */
         async selectAll() {
-            await this.loadAll(() => this.setSelectedParts(this.parts.map((part) => part.pk)));
+            await this.loadAll(() => this.setSelectedParts(
+                this.filteredParts.map((part) => part.pk)
+            ));
         },
         /**
          * Handler for clicking "select none"
