@@ -25,6 +25,17 @@ eScriptorium needs either Linux, macOS or Windows (with WSL).
 ## Contributing
 See [Contributing to eScriptorium](https://gitlab.com/scripta/escriptorium/-/wikis/contributing).
 
+## Steering Committee
+
+- Daniel Stoekl Ben Ezra (EPHE-PSL, UMR AOROC 8546)
+- Peter Stokes (EPHE-PSL, UMR AOROC 8546)
+- Benjamin Kiessling (EPHE-PSL, UMR AOROC 8546)
+- Robin Tissot (EPHE-PSL, UMR AOROC 8546)
+- Mathew Barber (Aga Khan University, Institute for the Study of Muslim Civilisations)
+- David Smith (Northeastern University)
+- Thibault Clérice (Inria)
+- Hassen Aguili (Inria)
+
 ## Current financial and technical contributors include:
 - [École Pratique des Hautes Études (EPHE)](https://www.ephe.psl.eu)
 - [Biblissima+](https://projet.biblissima.fr/)
