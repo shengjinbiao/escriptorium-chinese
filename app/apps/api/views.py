@@ -1293,7 +1293,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
                 response.append(serializer.data)
 
             else:
-                errors.append(errors)
+                errors.append(serializer.errors)
 
         if errors:
             return Response(errors,
