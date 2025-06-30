@@ -44,6 +44,8 @@ DEBUG = os.getenv('DEBUG', False)
 
 CUSTOM_HOME = os.getenv('CUSTOM_HOME', False) == 'True'
 
+CUSTOM_CONTRIBUTORS = os.getenv('CUSTOM_CONTRIBUTORS', False) == 'True'
+
 ALLOWED_HOSTS = ['*']
 
 ASGI_APPLICATION = "escriptorium.asgi.application"
@@ -100,7 +102,8 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(PROJECT_ROOT, 'templates'),
-                 os.path.join(BASE_DIR, 'homepage')],  # custom homepage dir (volume in docker)
+                 os.path.join(BASE_DIR, 'homepage'),  # custom homepage dir (volume in docker)
+                 os.path.join(BASE_DIR, 'contributors')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -110,6 +113,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'escriptorium.context_processors.enable_cookie_consent',
                 'escriptorium.context_processors.custom_homepage',
+                'escriptorium.context_processors.custom_contributors',
                 'escriptorium.context_processors.disable_search',
                 'escriptorium.context_processors.enable_text_alignment',
                 'escriptorium.context_processors.enable_markdown_export',
@@ -278,6 +282,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
     os.path.join(BASE_DIR, 'homepage'),
+    os.path.join(BASE_DIR, 'contributors'),
     FRONTEND_DIR
 ]
 

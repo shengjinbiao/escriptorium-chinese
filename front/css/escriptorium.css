@@ -1185,6 +1185,12 @@ body.homepage main:has(.escr-vue-enabled) footer {
     margin: 2rem 0 1rem !important;
 }
 
+/* homepage: make all list-group items theme-aware */
+body.homepage main:has(.escr-vue-enabled) .list-group-item {
+    background-color: var(--background1) !important;
+    color:            var(--text1)       !important;
+}
+
 /* search page */
 body.search main:has(.escr-vue-enabled) .text-success {
     color: var(--primary-dark) !important;

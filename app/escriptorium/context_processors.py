@@ -17,6 +17,10 @@ def custom_homepage(request):
     return {'CUSTOM_HOME': getattr(settings, 'CUSTOM_HOME', False)}
 
 
+def custom_contributors(request):
+    return {'CUSTOM_CONTRIBUTORS': getattr(settings, 'CUSTOM_CONTRIBUTORS', False)}
+
+
 def enable_text_alignment(request):
     return {'TEXT_ALIGNMENT_ENABLED': getattr(settings,
                                               'TEXT_ALIGNMENT_ENABLED',

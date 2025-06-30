@@ -72,6 +72,7 @@ urlpatterns = [
     path('document/delete_share/', DeleteDocumentUserShare.as_view(), name='delete-document-share'),
     path('document/<int:pk>/process/', DocumentPartsProcessAjax.as_view(),
          name='document-parts-process'),
-
+    path('contributors/', TemplateView.as_view(template_name='core/contributors.html'), name='contributors'),
+    path('credits/', TemplateView.as_view(template_name='core/credits.html'), name='credits'),
     path('test/', TemplateView.as_view(template_name='core/test.html')),
 ]
