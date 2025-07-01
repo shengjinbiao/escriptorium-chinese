@@ -38,6 +38,52 @@
                         Line numbering (N)
                     </template>
                 </VDropdown>
+                <VDropdown
+                    id="toggle-auto-order"
+                    class="new-section"
+                    theme="escr-tooltip-small"
+                    placement="bottom"
+                    :distance="8"
+                    :triggers="['hover']"
+                >
+                    <ToggleButton
+                        color="primary"
+                        :checked="autoOrder"
+                        :disabled="disabled"
+                        :on-change="onToggleAutoOrder"
+                    >
+                        <template #button-icon>
+                            <i class="fas fa-robot" />
+                        </template>
+                    </ToggleButton>
+                    <template #popper>
+                        Toggle automatic reordering on line creation/deletion.
+                    </template>
+                </VDropdown>
+                <!-- manual reorder when auto-order off -->
+                <VDropdown
+                    v-if="!autoOrder"
+                    id="manual-order"
+                    class="new-section"
+                    theme="escr-tooltip-small"
+                    placement="bottom"
+                    :distance="8"
+                    :triggers="['hover']"
+                >
+                    <EscrButton
+                        aria-label="reorder lines"
+                        color="primary"
+                        :on-click="onRecalculateOrdering"
+                        :disabled="disabled"
+                    >
+                        <template #button-icon>
+                            <i class="fas fa-sort" />
+                        </template>
+                    </EscrButton>
+                    <template #popper>
+                        Reorder lines manually
+                    </template>
+                </VDropdown>
 
                 <!-- calculate masks -->
                 <VDropdown
@@ -235,6 +281,18 @@ export default {
         processLines: {
             type: Function,
             required: true,
+        },
+        autoOrder: {
+            type: Boolean,
+            required: true
+        },
+        onToggleAutoOrder: {
+            type: Function,
+            required: true
+        },
+        onRecalculateOrdering: {
+            type: Function,
+            required: true
         },
     },
     computed: {

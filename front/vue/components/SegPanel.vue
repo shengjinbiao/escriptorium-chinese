@@ -205,6 +205,9 @@
             :toggle-toolbar-detached="toggleToolbarDetached"
             :tool="activeTool"
             :toolbar-detached="toolbarDetached"
+            :auto-order="autoOrder"
+            :on-toggle-auto-order="toggleAutoOrder"
+            :on-recalculate-ordering="recalculateOrdering"
         />
         <DetachableToolbar
             v-if="toolbarDetached"

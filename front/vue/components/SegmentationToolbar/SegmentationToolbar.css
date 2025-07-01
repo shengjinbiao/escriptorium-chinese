@@ -37,6 +37,11 @@
     background-color: var(--background1);
 }
 
+/* automatic reordering special styling */
+#toggle-auto-order .escr-toggle-button:not([class*="active"]):not(:hover) {
+  background-color: var(--background1);
+}
+
 /* undo/redo buttons special styling, no background when disabled */
 .escr-segmentation-toolbar .escr-button#undo-button:disabled,
 .escr-segmentation-toolbar .escr-button#redo-button:disabled {
