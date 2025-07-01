@@ -3,6 +3,8 @@ from django.contrib.auth.models import Group, Permission
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
+from rest_framework.authtoken.models import Token
 
 from users.models import GroupOwner, Invitation, ResearchField
 from users.models import User as CustomUser
@@ -149,6 +151,38 @@ class InvitationTestCase(TestCase):
         invitation.refresh_from_db()
         self.assertEqual(invitation.workflow_state, Invitation.STATE_ACCEPTED)
 
+    @override_settings(AUTH_PASSWORD_VALIDATORS=[])
+    def test_accept_with_expiry_date(self):
+        expiry_date = timezone.now() + timezone.timedelta(days=30)
+        invitation = Invitation.objects.create(
+            sender=self.sender,
+            recipient_first_name="jim",
+            recipient_last_name="doey",
+            recipient_email="jim@test.com",
+            group=self.group,
+            expiry_date=expiry_date
+        )
+
+        url = reverse('accept-invitation', kwargs={'token': invitation.token})
+        with self.assertNumQueries(3):
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        with self.assertNumQueries(10):  # the extra query -> for the expiry date
+            response = self.client.post(url, {
+                'email': invitation.recipient_email,
+                'username': 'jimd',
+                'first_name': "jim",
+                'last_name': "doey",
+                'password1': 'test',
+                'password2': 'test',
+            })
+
+        self.assertNotContains(response, "error", status_code=302)
+
+        user = User.objects.get(username="jimd")
+        self.assertEqual(user.expiry_date, expiry_date)  # check expiry_date
+
 
 class NotificationTestCase(TestCase):
     """
@@ -223,3 +257,31 @@ class TeamTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.group.groupowner.refresh_from_db()
         self.assertEqual(self.group.groupowner.owner, self.invitee)
+
+
+class TokenAndSessionExpiryTestCase(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="expired_test", password="test123")
+        self.user.expiry_date = timezone.now() - timezone.timedelta(days=1)  # expired yesterday
+        self.user.save()
+        self.token = Token.objects.create(user=self.user)
+
+    def test_token_deleted_on_expired_account(self):
+        # test for token authentication
+        response = self.client.post(reverse('api:document-list'),
+                                    HTTP_AUTHORIZATION=f'Token {self.token.key}')
+
+        self.assertEqual(response.status_code, 403)
+        with self.assertRaises(Token.DoesNotExist):
+            Token.objects.get(user=self.user)
+
+    def test_session_logout_on_expired_account(self):
+        # test with session authentication
+        self.client.login(username="expired_test", password="test123")
+        response = self.client.get(reverse('api:document-list'))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('profile'))
+        self.assertNotEqual(response.status_code, 200)

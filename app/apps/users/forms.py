@@ -4,6 +4,8 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
@@ -12,12 +14,18 @@ from users.models import ContactUs, GroupOwner, Invitation, User
 
 
 class InvitationForm(BootstrapFormMixin, forms.ModelForm):
+    expiry_date = forms.DateTimeField(
+        required=False,
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        help_text="Optional: set an expiry date for this user's account"
+    )
+
     class Meta:
         model = Invitation
         fields = ['recipient_first_name',
                   'recipient_last_name',
                   'recipient_email',
-                  'group']
+                  'group', 'expiry_date']
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -32,6 +40,92 @@ class InvitationForm(BootstrapFormMixin, forms.ModelForm):
             invitation.save()
             invitation.send(self.request)
         return invitation
+
+
+class BulkInvitationForm(BootstrapFormMixin, forms.Form):
+    file = forms.FileField(
+        label=_("CSV file with emails"),
+        help_text=_("Upload a CSV file with one email per line."),
+        required=False,
+    )
+    emails = forms.CharField(
+        label=_("Emails"),
+        widget=forms.Textarea(attrs={'rows': 5}),
+        help_text=_("Enter one email per line."),
+        required=False,
+    )
+    group = forms.ModelChoiceField(
+        label=_("Team"),
+        queryset=Group.objects.none(),
+        required=False,
+    )
+    expiry_date = forms.DateTimeField(
+        required=False,
+        widget=forms.TextInput(attrs={'type': 'date'}),
+        help_text=_("Optional: set an expiry date for these accounts"),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        self.sender = self.request.user if self.request else None
+        super().__init__(*args, **kwargs)
+        if self.sender:
+            self.fields['group'].queryset = self.sender.groups.all()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        file = cleaned_data.get('file')
+        emails = cleaned_data.get('emails')
+
+        if not file and not emails:
+            raise forms.ValidationError(_("Please provide either a CSV file or enter emails directly."))
+
+        return cleaned_data
+
+    def process_invitations(self):
+        emails = set()
+        invalid_emails = []
+
+        # emails from the file
+        if self.cleaned_data.get('file'):
+            uploaded_file = self.cleaned_data.get('file')
+            for line in uploaded_file:
+                email = line.decode('utf-8').strip()
+                if email:
+                    emails.add(email)
+
+        # emails from the textarea input
+        if self.cleaned_data.get('emails'):
+            text_emails = self.cleaned_data.get('emails')
+            for line in text_emails.splitlines():
+                email = line.strip()
+                if email:
+                    emails.add(email)
+
+        # process unique emails
+        count = 0
+        for email in emails:
+            if self._create_invitation(email, self.cleaned_data.get('group'), self.cleaned_data.get('expiry_date')):
+                count += 1
+            else:
+                invalid_emails.append(email)
+
+        return count, invalid_emails
+
+    def _create_invitation(self, email, group, expiry_date):
+        try:
+            validate_email(email)
+            invitation = Invitation(
+                recipient_email=email,
+                sender=self.sender,
+                group=group,
+                expiry_date=expiry_date,
+            )
+            invitation.save()
+            invitation.send(self.request)
+            return True
+        except ValidationError:
+            return False
 
 
 class GroupInvitationForm(InvitationForm):
