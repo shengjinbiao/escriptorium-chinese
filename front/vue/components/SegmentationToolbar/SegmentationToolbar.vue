@@ -31,7 +31,7 @@
                         :on-change="onToggleLineNumbering"
                     >
                         <template #button-icon>
-                            <LineNumberingIcon />
+                            <LineNumberingIcon style="width: 24px; height: 24px;" />
                         </template>
                     </ToggleButton>
                     <template #popper>
@@ -77,7 +77,7 @@
                         :disabled="disabled"
                     >
                         <template #button-icon>
-                            <i class="fas fa-sort" />
+                            <i class="fas fa-magic"></i>
                         </template>
                     </EscrButton>
                     <template #popper>
