@@ -120,6 +120,15 @@
                     class="btn btn-sm btn-warning fas fa-cut"
                 />
             </div>
+                <!-- toggle labels button -->
+                <button
+                    id="toggle-region-labels"
+                    title="Toggle region labels"
+                    class="btn btn-sm fas fa-tag"
+                    :class="regionLabels ? 'btn-success' : 'btn-info'"
+                    :disabled="currentMode !== 'regions'"
+                    @click="toggleRegionLabels"
+                />
 
             <div class="btn-group">
                 <button
@@ -208,6 +217,8 @@
             :auto-order="autoOrder"
             :on-toggle-auto-order="toggleAutoOrder"
             :on-recalculate-ordering="recalculateOrdering"
+            :region-labels-enabled="segmenter.showRegionLabels"
+            :on-toggle-region-labels="toggleRegionLabels"
         />
         <DetachableToolbar
             v-if="toolbarDetached"
@@ -381,6 +392,8 @@ export default Vue.extend({
     data() {
         return {
             segmenter: { loaded: false },
+            regionLabels: false,
+            currentMode: 'lines',
             imageLoaded: false,
             colorMode: "color", //  color - binary - grayscale
             undoManager: new UndoManager(),
@@ -578,6 +591,16 @@ export default Vue.extend({
                     activeTool: this.activeTool,
                     setActiveTool: this.setActiveTool,
                 });
+                this.currentMode = this.segmenter.mode;
+                const origSetMode = this.segmenter.setMode.bind(this.segmenter)
+                this.segmenter.setMode = (mode) => {
+                    origSetMode(mode)
+                    this.currentMode = mode
+                    if (mode !== 'regions' && this.regionLabels) {
+                    this.regionLabels = false
+                    this.segmenter.toggleRegionLabels(false)
+                    }
+                }
                 // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
                 let canvas = this.segmenter.canvas;
                 canvas.parentNode.parentNode.appendChild(canvas);
@@ -807,6 +830,11 @@ export default Vue.extend({
                 this.segmenter.canvas.style.left = zoom.pos.x + "px";
                 this.segmenter.refresh();
             }
+        },
+        toggleRegionLabels() {
+            if (this.segmenter.mode !== 'regions') return;
+            this.regionLabels = !this.regionLabels;
+            this.segmenter.toggleRegionLabels(this.regionLabels);
         },
         updateView() {
             // We REALLY need to check that SegPanel is opened
