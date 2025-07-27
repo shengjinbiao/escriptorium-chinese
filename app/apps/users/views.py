@@ -22,6 +22,7 @@ from django.views.generic import (
 from rest_framework.authtoken.models import Token
 
 from users.forms import (
+    BulkInvitationForm,
     ContactUsForm,
     GroupForm,
     GroupInvitationForm,
@@ -47,6 +48,36 @@ class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     def get_form(self):
         form_class = self.get_form_class()
         return form_class(request=self.request, **self.get_form_kwargs())
+
+    def get_success_url(self):
+        return reverse('home')
+
+
+class BulkInviteView(LoginRequiredMixin, SuccessMessageMixin, FormView):
+    template_name = 'users/bulk_invitation_form.html'
+    form_class = BulkInvitationForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('users.can_invite'):
+            raise PermissionDenied(_("You do not have permission to invite users."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        count, invalid = form.process_invitations()
+        msg = _("Successfully sent %(count)d invitations.") % {'count': count}
+        if invalid:
+            msg += " " + _("Skipped invalid: %(emails)s") % {
+                'emails': ", ".join(invalid)
+            }
+            messages.warning(self.request, msg)
+        else:
+            messages.success(self.request, msg)
+        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse('home')
