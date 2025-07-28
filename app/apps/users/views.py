@@ -109,7 +109,7 @@ class AcceptGroupInvitation(LoginRequiredMixin, DetailView):
         self.object = self.get_object()
         valid = self.object.accept(self.request.user)
         if not valid:
-            return Http404
+            raise Http404("Invitation is not valid.")
         messages.success(self.request, self.get_success_message())
         return HttpResponseRedirect(reverse('profile-team-list'))
 
