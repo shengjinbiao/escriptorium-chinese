@@ -46,6 +46,7 @@ from shapely.geometry import LineString, Polygon
 from skimage.measure import approximate_polygon
 from sklearn import preprocessing
 from sklearn.cluster import DBSCAN
+from solo.models import SingletonModel
 
 from core.tasks import (
     align,
@@ -1475,20 +1476,14 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
             tasks.append(sig)
 
         if (task_name == 'segment'):
-            tasks.append(segment.si(instance_pk=self.pk,
-                                    report_label='Segment in %s' % self.document.name,
-                                    **kwargs))
+            tasks.append(segment.si(instance_pks=[self.pk], report_label=f'Segment in {self.document.name}', **kwargs))
 
         if task_name == 'transcribe':
             if not self.segmented:
                 kw = kwargs.copy()
                 kw.pop('model_pk')  # we don't want to transcribe with a segmentation model
-                tasks.append(segment.si(instance_pk=self.pk,
-                                        report_label='Segment in %s' % self.document.name,
-                                        **kw))
-            tasks.append(transcribe.si(instance_pk=self.pk,
-                                       report_label='Transcribe in %s' % self.document.name,
-                                       **kwargs))
+                tasks.append(segment.si(instance_pks=[self.pk], report_label=f'Segment in {self.document.name}', **kwargs))
+            tasks.append(transcribe.si(instance_pks=[self.pk], report_label=f'Transcribe in {self.document.name}', **kwargs))
 
         if commit:
             self.chain_tasks(*tasks)
@@ -2169,3 +2164,21 @@ class TextualWitness(models.Model):
 def delete_thumbnails(sender, instance, using, **kwargs):
     thumbnailer = get_thumbnailer(instance.image)
     thumbnailer.delete()
+
+
+class InstanceSettings(SingletonModel):
+    page_batch_segmentation = models.IntegerField(
+        default=1,
+        help_text="Pages per segmentation task"
+    )
+    page_batch_recognition = models.IntegerField(
+        default=1,
+        help_text="Pages per transcription task"
+    )
+
+    class Meta:
+        verbose_name = "Instance setting"
+        verbose_name_plural = "Instance settings"
+
+    def __str__(self):
+        return "Instance settings"

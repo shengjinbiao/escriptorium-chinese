@@ -27,6 +27,7 @@ from core.models import (
     DocumentTag,
     ImageAnnotation,
     ImageAnnotationComponentValue,
+    InstanceSettings,
     Line,
     LineTranscription,
     LineType,
@@ -41,7 +42,7 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
-from core.tasks import segment, segtrain, train, transcribe
+from core.tasks import _chunks, segment, segtrain, train, transcribe
 from imports.forms import FileImportError, clean_import_uri, clean_upload_file
 from imports.models import DocumentImport
 from imports.tasks import document_import
@@ -849,6 +850,8 @@ class ProcessSerializerMixin():
 
 
 class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
+    from core.models import InstanceSettings
+    from core.tasks import _chunks
     PROCESS_NAME = 'segmentation'
     STEPS_CHOICES = (
         ('both', _('Lines and regions')),
@@ -884,6 +887,8 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def process(self):
         super().process()
+        cfg = InstanceSettings.get_solo()
+        batch_size = cfg.page_batch_segmentation
         model = self.validated_data.get('model')
         parts = self.validated_data.get('parts') or self.document.parts.all()
 
@@ -896,17 +901,18 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
             if not created:
                 ocr_model_document.executed_on = timezone.now()
                 ocr_model_document.save()
-
-        for part in parts:
-            part.chain_tasks(
-                segment.si(instance_pk=part.pk,
-                           user_pk=self.user.pk,
-                           task_group_pk=self.task_group.pk,
-                           model_pk=model.pk if model else None,  # None means default model
-                           steps=self.validated_data.get('steps'),
-                           text_direction=self.validated_data.get('text_direction'),
-                           override=self.validated_data.get('override'))
+        for chunk in _chunks([p.pk for p in parts], batch_size):
+            sig = segment.si(
+                instance_pks=chunk,
+                user_pk=self.user.pk,
+                task_group_pk=self.task_group.pk,
+                model_pk=model.pk if model else None,
+                steps=self.validated_data['steps'],
+                text_direction=self.validated_data['text_direction'],
+                override=self.validated_data['override'],
             )
+            # enqueue it directly
+            sig.apply_async()
 
 
 class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -1187,6 +1193,8 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
 
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
+    from core.models import InstanceSettings
+    from core.tasks import _chunks
     PROCESS_NAME = 'recognition'
     parts = serializers.PrimaryKeyRelatedField(many=True,
                                                queryset=DocumentPart.objects.all(),
@@ -1207,6 +1215,8 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def process(self):
         super().process()
+        cfg = InstanceSettings.get_solo()
+        batch_size = cfg.page_batch_recognition
         model = self.validated_data.get('model')
         transcription = self.validated_data.get('transcription')
         parts = self.validated_data.get('parts') or self.document.parts.all()
@@ -1219,16 +1229,16 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
         if not created:
             ocr_model_document.executed_on = timezone.now()
             ocr_model_document.save()
-
-        for part in parts:
-            part.chain_tasks(
-                transcribe.si(
-                    task_group_pk=self.task_group.pk,
-                    transcription_pk=transcription.pk,
-                    instance_pk=part.pk,
-                    model_pk=model.pk,
-                    user_pk=self.user.pk)
+        for chunk in _chunks([p.pk for p in parts], batch_size):
+            sig = transcribe.si(
+                instance_pks=chunk,
+                task_group_pk=self.task_group.pk,
+                transcription_pk=transcription.pk,
+                model_pk=model.pk,
+                user_pk=self.user.pk
             )
+            # enqueue it directly
+            sig.apply_async()
 
 
 class EditableMultipleChoiceField(serializers.MultipleChoiceField):

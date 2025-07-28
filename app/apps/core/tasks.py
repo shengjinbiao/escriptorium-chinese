@@ -45,6 +45,15 @@ class DidNotConverge(Exception):
     pass
 
 
+def _chunks(lst, n):
+    """Yield successive n-sized chunks from lst. If n<0 yields one chunk of whole list."""
+    if n < 0:
+        yield lst
+    else:
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n]
+
+
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
 def generate_part_thumbnails(instance_pk=None, user_pk=None, **kwargs):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
@@ -352,57 +361,167 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         })
 
 
-@shared_task(autoretry_for=(MemoryError,), default_retry_delay=5 * 60)
-def segment(instance_pk=None, user_pk=None, model_pk=None,
-            steps=None, text_direction=None, override=None,
-            task_group_pk=None, **kwargs):
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60)
+def segment(self, instance_pks, user_pk=None, model_pk=None, steps=None, text_direction=None, override=None, task_group_pk=None, **kwargs):
     """
     steps can be either 'regions', 'lines' or 'both'
     """
-    try:
-        DocumentPart = apps.get_model('core', 'DocumentPart')
-        part = DocumentPart.objects.get(pk=instance_pk)
-    except DocumentPart.DoesNotExist:
-        logger.error('Trying to segment non-existent DocumentPart : %d', instance_pk)
-        return
+    DocumentPart = apps.get_model('core', 'DocumentPart')
+    OcrModel = apps.get_model('core', 'OcrModel')
 
+    # load model
     try:
-        OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
     except OcrModel.DoesNotExist:
         model = None
 
+    # load user & quota‐check
+    user = None
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
-            # If quotas are enforced, assert that the user still has free CPU minutes
             if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
-    else:
-        user = None
 
-    try:
-        if steps == 'masks':
-            part.make_masks()
+    for pk in instance_pks:
+        # fetch part
+        try:
+            part = DocumentPart.objects.get(pk=pk)
+        except DocumentPart.DoesNotExist:
+            logger.error('Trying to segment non-existent DocumentPart : %s', pk)
+            continue
+
+        # actual segmentation call
+        try:
+            if steps == 'masks':
+                part.make_masks()
+            else:
+                part.segment(
+                    steps=steps,
+                    override=override,
+                    text_direction=text_direction,
+                    model=model
+                )
+        except Exception as e:
+            # on failure, rollback state & notify
+            if user:
+                user.notify(
+                    _("Something went wrong during the segmentation!"),
+                    id="segmentation-error",
+                    level='danger'
+                )
+            part.workflow_state = part.WORKFLOW_STATE_CONVERTED
+            part.save()
+            send_event(
+                "document", part.document.pk, "part:workflow",
+                {
+                    "id": part.pk,
+                    "process": "segment",
+                    "status": "canceled",
+                    "task_id": self.request.id,
+                }
+            )
+            logger.exception(e)
+            # re-raise to allow retry of the batch if desired
+            raise
         else:
-            part.segment(steps=steps,
-                         override=override,
-                         text_direction=text_direction,
-                         model=model)
-    except Exception as e:
-        if user:
-            user.notify(_("Something went wrong during the segmentation!"),
-                        id="segmentation-error", level='danger')
-        part.workflow_state = part.WORKFLOW_STATE_CONVERTED
-        part.save()
-        logger.exception(e)
-        raise e
-    else:
-        if user:
-            user.notify(_("Segmentation done!"),
-                        id="segmentation-success", level='success')
+            # on success, notify & send done event
+            if user:
+                user.notify(
+                    _("Segmentation done!"),
+                    id="segmentation-success",
+                    level='success'
+                )
+            send_event(
+                "document", part.document.pk, "part:workflow",
+                {
+                    "id": part.pk,
+                    "process": "segment",
+                    "status": "done",
+                    "task_id": self.request.id,
+                }
+            )
+
+
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=600)
+def transcribe(self, instance_pks, model_pk=None, user_pk=None, transcription_pk=None, text_direction=None, task_group_pk=None, **kwargs):
+    """
+    Run recognition on multiple pages in one celery task.
+    """
+    DocumentPart = apps.get_model('core', 'DocumentPart')
+    OcrModel = apps.get_model('core', 'OcrModel')
+    Transcription = apps.get_model('core', 'Transcription')
+
+    # load model
+    try:
+        model = OcrModel.objects.get(pk=model_pk)
+    except OcrModel.DoesNotExist:
+        model = None
+
+    # load transcription
+    transcription = Transcription.objects.get(pk=transcription_pk)
+
+    # load user & quota‐check
+    user = None
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        except User.DoesNotExist:
+            user = None
+
+    for pk in instance_pks:
+        # fetch part
+        try:
+            part = DocumentPart.objects.get(pk=pk)
+        except DocumentPart.DoesNotExist:
+            logger.error('Trying to transcribe non-existent DocumentPart : %s', pk)
+            continue
+
+        # actual transcription call
+        try:
+            part.transcribe(model, transcription, user=user)
+        except Exception as e:
+            # on failure, rollback state & notify
+            if user:
+                user.notify(
+                    _("Something went wrong during the transcription!"),
+                    id="transcription-error",
+                    level='danger'
+                )
+            part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
+            part.save()
+            send_event(
+                "document", part.document.pk, "part:workflow",
+                {
+                    "id": part.pk,
+                    "process": "transcribe",
+                    "status": "canceled",
+                    "task_id": self.request.id,
+                }
+            )
+            logger.exception(e)
+            raise
+        else:
+            # on success, notify & send done event
+            if user:
+                user.notify(
+                    _("Transcription done!"),
+                    id="transcription-success",
+                    level='success'
+                )
+            send_event(
+                "document", part.document.pk, "part:workflow",
+                {
+                    "id": part.pk,
+                    "process": "transcribe",
+                    "status": "done",
+                    "task_id": self.request.id,
+                }
+            )
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
@@ -655,53 +774,6 @@ def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
             } for letter, poly, confidence in zip(
                 pred.prediction, pred.cuts, pred.confidences)]
             lt.save()
-
-
-@shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
-def transcribe(instance_pk=None, model_pk=None, user_pk=None,
-               transcription_pk=None, text_direction=None, task_group_pk=None,
-               **kwargs):
-
-    try:
-        DocumentPart = apps.get_model('core', 'DocumentPart')
-        part = DocumentPart.objects.get(pk=instance_pk)
-    except DocumentPart.DoesNotExist:
-
-        logger.error('Trying to transcribe non-existent DocumentPart : %d', instance_pk)
-        return
-
-    if user_pk:
-        try:
-            user = User.objects.get(pk=user_pk)
-            # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
-                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
-        except User.DoesNotExist:
-            user = None
-    else:
-        user = None
-
-    try:
-        OcrModel = apps.get_model('core', 'OcrModel')
-        model = OcrModel.objects.get(pk=model_pk)
-        Transcription = apps.get_model('core', 'Transcription')
-        transcription = Transcription.objects.get(pk=transcription_pk)
-
-        part.transcribe(model, transcription, user=user)
-
-    except Exception as e:
-        if user:
-            user.notify(_("Something went wrong during the transcription!"),
-                        id="transcription-error", level='danger')
-        part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
-        part.save()
-        logger.exception(e)
-        raise e
-    else:
-        if user and model:
-            user.notify(_("Transcription done!"),
-                        id="transcription-success",
-                        level='success')
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
