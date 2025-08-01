@@ -1,4 +1,4 @@
-version: "3.9"
+#version: "3.9"
 
 x-app:
   &app
@@ -7,7 +7,8 @@ x-app:
     context: .
   env_file: variables.env
   volumes:
-    # - ./app/:/usr/src/app/
+    
+    - ./app/:/usr/src/app/ #同步代码，主機和容器内app 目錄下的所有文件
     - static:/usr/src/app/static
     - media:/usr/src/app/media
   command: /bin/true

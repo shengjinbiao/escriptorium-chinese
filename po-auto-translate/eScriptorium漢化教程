@@ -1,0 +1,55 @@
+# eScriptorium 漢化教程
+
+本教程將指導你如何對 eScriptorium 進行漢化（中文本地化）。
+
+eScriptorium 漢化總結步驟
+
+準備環境
+確保本地或容器內已安裝 Python、Django 及項目依賴。
+cd ~/escriptorium/app
+python3 -m venv venv
+source venv/bin/activate
+pip install -r ../requirements.txt
+
+設置語言支持
+locale/
+└── zh_Hans/
+    └── LC_MESSAGES/
+        └── django.po
+編輯 variables.env，設置 ESC_LANGUAGES=en,zh_Hans。
+編輯 settings.py，在 LANGUAGES 中加入：
+
+## 1. 克隆 eScriptorium 源碼
+if 'zh_Hans' in ESC_LANGUAGES:
+    LANGUAGES.append(('zh_Hans', _('Simplified Chinese')))
+
+生成翻譯文件
+進入容器（假設服務名叫 web 或 app，根據你的 docker-compose.yml 爲準）：
+docker compose exec web bash
+
+在項目根目錄（如 /usr/src/app）運行：
+python manage.py makemessages -l zh_Hans
+
+會生成 locale/zh_Hans/LC_MESSAGES/django.po。
+
+docker-compose.yml 裏 app 目錄沒有掛載到容器（- ./app/:/usr/src/app/ 這行被註釋掉了），所以容器內外的文件系統是分離的。
+在主機上生成的翻譯文件，只有在主機上運行服務或重新掛載卷時才會同步到容器內。
+
+# - ./app/:/usr/src/app/
+
+翻譯內容
+編輯 django.po，將 msgstr "" 填寫為對應的中文翻譯。
+
+編譯翻譯文件
+運行：python manage.py compilemessages
+
+或者运行： django-admin compilemessages
+
+生成 .mo 文件供 Django 使用。
+
+重啟服務
+使配置生效：
+
+docker compose down
+docker compose up -d
+
