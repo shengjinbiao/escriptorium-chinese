@@ -816,23 +816,28 @@ export default {
             /*
                Finish dragging lines, save new positions
              */
-            if(ev.newIndicies.length == 0 && ev.newIndex != ev.oldIndex) {
-                let diploLine = this.$refs.diploLineComponents.find(
-                    (dl)=>dl.line.order==ev.oldIndex
-                );
+            if(ev.newIndicies.length === 0 && ev.newIndex != ev.oldIndex) {
+                // single drag: if newIndex is -1, fallback to oldIndex.
+                let finalIndex = (ev.newIndex === -1 ? ev.oldIndex : ev.newIndex);
+                if (finalIndex === -1) console.log('fallback to old index,single drag', ev.oldIndex);
+                let diploLine = this.$refs.diploLineComponents.find(dl=>dl.line.order==ev.oldIndex);
                 this.movedLines.push({
                     "pk": diploLine.line.pk,
-                    "order": ev.newIndex
+                    "order": finalIndex
                 });
             } else {
+                // multidrag case: check each new index, and if it's -1, fallback to the old index
                 for(let i=0; i< ev.newIndicies.length; i++) {
-
+                    let newIndex = ev.newIndicies[i].index;
+                    if (newIndex === -1) {
+                        newIndex = ev.oldIndicies[i].index;
+                    }
                     let diploLine = this.$refs.diploLineComponents.find(
-                        (dl)=>dl.line.order==ev.oldIndicies[i].index
+                        dl=>dl.line.order==ev.oldIndicies[i].index
                     );
                     this.movedLines.push({
                         "pk": diploLine.line.pk,
-                        "order": ev.newIndicies[i].index
+                        "order": newIndex
                     });
                 }
             }
