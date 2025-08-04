@@ -10,7 +10,7 @@ import "dropzone/dist/min/dropzone.min.css";
 import "lodash";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "moment-timezone/builds/moment-timezone-with-data-10-year-range.min.js";
-import "@teklia/virtual-keyboard/dist-lib/content.js";
+import "@escriptorium/virtual-keyboard/dist-lib/content.js";
 import "bootstrap-select/dist/css/bootstrap-select.css";
 
 // JQuery needs to be explicitly set on window, as it's used at boot time
