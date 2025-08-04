@@ -113,6 +113,8 @@ def find_block(baseline: str, regions: List[Block]):
 
 
 def merge_lines(lines: List[Line]):
+    if not lines:
+        raise ValueError("merge_lines() called with an empty list of lines")
     if len(lines) > MAX_MERGE_SIZE:
         raise ValueError(f"Can't merge {len(lines)} lines, can only merge up to {MAX_MERGE_SIZE} lines")
 

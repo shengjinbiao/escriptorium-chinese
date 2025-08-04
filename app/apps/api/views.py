@@ -1183,7 +1183,7 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     def merge(self, request, document_pk=None, part_pk=None):
         original_lines = request.data.get("lines")
 
-        if original_lines is None:
+        if not original_lines:
             return Response({'status': 'error', 'error': _("'lines' is mandatory.")}, status=status.HTTP_400_BAD_REQUEST)
 
         if len(original_lines) > MAX_MERGE_SIZE:

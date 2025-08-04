@@ -1048,6 +1048,13 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.assertIsNone(Line.objects.filter(pk=self.orphan.pk).first())
         self.assertIsNotNone(Line.objects.filter(pk=self.line2.pk).first())
 
+    def test_merge_empty_list_returns_400(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:line-merge', kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        resp = self.client.post(uri, {'lines': []}, content_type="application/json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("mandatory", resp.json()['error'])
+
 
 class TranscriptionViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
