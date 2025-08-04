@@ -681,6 +681,13 @@ class LineListSerializer(serializers.ListSerializer):
         line_mapping = {line.pk: line for line in qs}
         data_mapping = {item['pk']: item for item in validated_data}
 
+        # Detect missing PKs
+        missing = set(data_mapping) - set(line_mapping)
+        if missing:
+            raise serializers.ValidationError({
+                'lines': f"These line IDs do not exist or do not belong to this part: {sorted(missing)}"
+            })
+
         # Perform updates.
         ret = []
         for line_id, data in data_mapping.items():
