@@ -482,10 +482,11 @@ class TaskGroupSerializer(serializers.ModelSerializer):
     created_by = serializers.SerializerMethodField()
     tasks = serializers.SerializerMethodField()
     method = serializers.SerializerMethodField()
+    page_count = serializers.SerializerMethodField()
 
     class Meta:
         model = TaskGroup
-        fields = ('pk', 'method', 'created_at', 'created_by', 'tasks')
+        fields = ('pk', 'method', 'created_at', 'created_by', 'tasks', 'page_count')
 
     def get_created_by(self, task_group):
         return task_group.created_by.username if task_group.created_by else None
@@ -504,6 +505,10 @@ class TaskGroupSerializer(serializers.ModelSerializer):
             return task_group.taskreport_set.values_list('method').first()[0]
         except TypeError:
             return None
+
+    def get_page_count(self, task_group):
+        trs = task_group.taskreport_set.exclude(document_part__isnull=True)
+        return trs.values_list('document_part', flat=True).distinct().count()
 
 
 class TaskReportSerializer(serializers.ModelSerializer):

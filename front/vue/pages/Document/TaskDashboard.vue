@@ -83,16 +83,16 @@ export default {
          * It will also specify the status icon, a label for the type of task,
          * a brief message about the current status, and which timestamp to use.
          */
-        getWorkflowStatus(states, method) {
+        getWorkflowStatus(states, method, page_count) {
             let taskStatus = {};
             // get a total count of all states
             const totalCount = states.reduce((acc, t) => acc + t.count, 0);
+            const elementCount = page_count != null ? page_count : totalCount;
             // generate a string for the task label (method)
             let m = method.split(".").pop();
             if (["segment", "transcribe"].includes(m)) {
                 // these two taskgroups have one task per element
-                m = `${m} ${totalCount} Element`;
-                if (totalCount > 1) m = `${m}s`;
+                m = `${m} ${elementCount} Element${elementCount > 1 ? 's' : ''}`;
             }
             if (m === "segtrain") {
                 taskStatus.method = "Train Segmenter Model";

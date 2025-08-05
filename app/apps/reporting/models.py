@@ -128,7 +128,7 @@ class TaskReport(models.Model):
 
         task_id = self.task_id
         if task_id in task_cpu_times:
-            start_cpu_times = task_cpu_times.pop(task_id)
+            start_cpu_times = task_cpu_times[task_id]
             end_cpu_times = psutil.Process().cpu_times()
             user_cpu_time = end_cpu_times.user - start_cpu_times.user
             system_cpu_time = end_cpu_times.system - start_cpu_times.system

@@ -866,7 +866,12 @@ def replace_line_transcriptions_text(
 
     # Get the associated TaskReport
     TaskReport = apps.get_model('reporting', 'TaskReport')
-    report = TaskReport.objects.get(task_id=task.request.id)
+    try:
+        report = TaskReport.objects.get(task_id=task.request.id)
+    except TaskReport.MultipleObjectsReturned:
+        report = TaskReport.objects.filter(task_id=task.request.id).order_by('-started_at').first()
+    except TaskReport.DoesNotExist:
+        report = None
 
     user = User.objects.get(pk=user_pk)
     user.notify(_('Your replacements are being applied...'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-running', level='info')
