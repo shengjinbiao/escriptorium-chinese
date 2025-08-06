@@ -14,77 +14,75 @@
                     :options="modeOptions"
                     :on-change-selection="onChangeMode"
                 />
-
-                <!-- toggle line numbers -->
-                <VDropdown
-                    id="line-numbers-toggle"
-                    class="new-section"
-                    theme="escr-tooltip-small"
-                    placement="bottom"
-                    :distance="8"
-                    :triggers="['hover']"
-                >
-                    <ToggleButton
-                        color="primary"
-                        :checked="lineNumberingEnabled"
-                        :disabled="disabled"
-                        :on-change="onToggleLineNumbering"
+                <!-- grouped toggles: line numbers, auto-order, manual-order -->
+                <div class="seg-toolbar-btn-group new-section">
+                    <!-- toggle line numbers -->
+                    <VDropdown
+                        id="line-numbers-toggle"
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
                     >
-                        <template #button-icon>
-                            <LineNumberingIcon style="width: 24px; height: 24px;" />
+                        <ToggleButton
+                            color="primary"
+                            :checked="lineNumberingEnabled"
+                            :disabled="disabled"
+                            :on-change="onToggleLineNumbering"
+                        >
+                            <template #button-icon>
+                                <LineNumberingIcon style="width: 24px; height: 24px;" />
+                            </template>
+                        </ToggleButton>
+                        <template #popper>
+                            Line numbering (N)
                         </template>
-                    </ToggleButton>
-                    <template #popper>
-                        Line numbering (N)
-                    </template>
-                </VDropdown>
-                <VDropdown
-                    id="toggle-auto-order"
-                    class="new-section"
-                    theme="escr-tooltip-small"
-                    placement="bottom"
-                    :distance="8"
-                    :triggers="['hover']"
-                >
-                    <ToggleButton
-                        color="primary"
-                        :checked="autoOrder"
-                        :disabled="disabled"
-                        :on-change="onToggleAutoOrder"
+                    </VDropdown>
+                    <VDropdown
+                        id="toggle-auto-order"
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
                     >
-                        <template #button-icon>
-                            <i class="fas fa-robot" />
+                        <ToggleButton
+                            color="primary"
+                            :checked="autoOrder"
+                            :disabled="disabled"
+                            :on-change="onToggleAutoOrder"
+                        >
+                            <template #button-icon>
+                                <i class="fas fa-robot" />
+                            </template>
+                        </ToggleButton>
+                        <template #popper>
+                            Toggle automatic reordering on line creation/deletion.
                         </template>
-                    </ToggleButton>
-                    <template #popper>
-                        Toggle automatic reordering on line creation/deletion.
-                    </template>
-                </VDropdown>
-                <!-- manual reorder when auto-order off -->
-                <VDropdown
-                    v-if="!autoOrder"
-                    id="manual-order"
-                    class="new-section"
-                    theme="escr-tooltip-small"
-                    placement="bottom"
-                    :distance="8"
-                    :triggers="['hover']"
-                >
-                    <EscrButton
-                        aria-label="reorder lines"
-                        color="primary"
-                        :on-click="onRecalculateOrdering"
-                        :disabled="disabled"
+                    </VDropdown>
+                    <!-- manual reorder when auto-order off -->
+                    <VDropdown
+                        v-if="!autoOrder"
+                        id="manual-order"
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
                     >
-                        <template #button-icon>
-                            <i class="fas fa-magic"></i>
+                        <EscrButton
+                            aria-label="reorder lines"
+                            color="primary"
+                            :on-click="onRecalculateOrdering"
+                            :disabled="disabled"
+                        >
+                            <template #button-icon>
+                                <i class="fas fa-magic"></i>
+                            </template>
+                        </EscrButton>
+                        <template #popper>
+                            Reorder lines manually
                         </template>
-                    </EscrButton>
-                    <template #popper>
-                        Reorder lines manually
-                    </template>
-                </VDropdown>
-
+                    </VDropdown>
+                </div>
                 <!-- calculate masks -->
                 <VDropdown
                     v-if="!hasMasks && lines.length > 0"

@@ -77,8 +77,8 @@ class SegmenterRegion {
         this.tooltipText = this.type;
         this.segmenter.attachTooltip(this, this.polygonPath);
         const b = this.polygonPath.bounds;
-        const pad = 4 / this.segmenter.getRatio() / window.devicePixelRatio;
-        const fontSize = 30;
+        const pad = 4 / this.segmenter.scale;
+        const fontSize = 15 / this.segmenter.scale;
 
         this.labelText = new PointText({
             content: this.type,
@@ -186,8 +186,8 @@ class SegmenterRegion {
             -50,
         );
         const b2 = this.polygonPath.bounds;
-        const p2 = 4 ;
-        const fs2 = 30;
+        const p2 = 4 / this.segmenter.scale;
+        const fs2 = 15 / this.segmenter.scale;
 
         // update text content & style
         this.labelText.content = this.type;
