@@ -60,29 +60,6 @@
                         Toggle automatic reordering on line creation/deletion.
                     </template>
                 </VDropdown>
-                <!-- toggle region labels -->
-                <VDropdown
-                    id="toggle-region-labels"
-                    class="new-section"
-                    theme="escr-tooltip-small"
-                    placement="bottom"
-                    :distance="8"
-                    :triggers="['hover']"
-                >
-                    <ToggleButton
-                        color="primary"
-                        :checked="regionLabelsEnabled"
-                        :disabled="disabled"
-                        :on-change="onToggleRegionLabels"
-                    >
-                        <template #button-icon>
-                            <i class="fas fa-tag" />
-                        </template>
-                    </ToggleButton>
-                    <template #popper>
-                        Toggle region labels
-                    </template>
-                </VDropdown>
                 <!-- manual reorder when auto-order off -->
                 <VDropdown
                     v-if="!autoOrder"
@@ -185,6 +162,8 @@
                     :has-points-selection="hasPointsSelection"
                     :has-selection="hasSelection"
                     :is-drawing="isDrawing"
+                    :region-labels-enabled="regionLabelsEnabled"
+                    :on-toggle-region-labels="onToggleRegionLabels"
                     :on-change-selection-type="onChangeSelectionType"
                     :on-delete="onDelete"
                     :on-join="onJoin"
@@ -317,13 +296,15 @@ export default {
             type: Function,
             required: true
         },
-                regionLabelsEnabled: {
+        regionLabelsEnabled: {
             type: Boolean,
             required: true,
+            default: false,
         },
-                onToggleRegionLabels: {
+        onToggleRegionLabels: {
             type: Function,
             required: true,
+            default: () => {},
         },
 
     },

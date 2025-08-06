@@ -247,6 +247,8 @@
             :toggle-toolbar-detached="toggleToolbarDetached"
             :tool="activeTool"
             :toolbar-detached="true"
+            :region-labels-enabled="segmenter.showRegionLabels"
+            :on-toggle-region-labels="toggleRegionLabels"
         />
         <div
             v-if="legacyModeEnabled"
