@@ -36,31 +36,52 @@
                 Add lines (A)
             </template>
         </VDropdown>
-
-        <!-- add region tool -->
-        <VDropdown
-            v-else-if="displayMode === 'regions'"
-            id="add-regions"
-            theme="escr-tooltip-small"
-            placement="bottom"
-            :distance="8"
-            :triggers="['hover']"
-        >
-            <ToggleButton
-                color="text"
-                :checked="tool === 'add-regions'"
-                :disabled="disabled"
-                :on-change="() => toggleTool('add-regions')"
+        <template v-if="displayMode === 'regions'">
+            <!-- toggle region labels -->
+            <VDropdown
+                id="toggle-region-labels"
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
             >
-                <template #button-icon>
-                    <RegionToolIcon />
+                <ToggleButton
+                    color="primary"
+                    :checked="regionLabelsEnabled"
+                    :disabled="disabled"
+                    :on-change="onToggleRegionLabels"
+                >
+                    <template #button-icon>
+                        <i class="fas fa-tag" />
+                    </template>
+                </ToggleButton>
+                <template #popper>
+                    Toggle region labels
                 </template>
-            </ToggleButton>
-            <template #popper>
-                Add region (A)
-            </template>
-        </VDropdown>
-
+            </VDropdown>
+            <!-- add region tool -->
+            <VDropdown
+                id="add-regions"
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
+            >
+                <ToggleButton
+                    color="text"
+                    :checked="tool === 'add-regions'"
+                    :disabled="disabled"
+                    :on-change="() => toggleTool('add-regions')"
+                >
+                    <template #button-icon>
+                        <RegionToolIcon />
+                    </template>
+                </ToggleButton>
+                <template #popper>
+                    Add region (A)
+                </template>
+            </VDropdown>
+        </template>
         <!-- cut tool -->
         <VDropdown
             theme="escr-tooltip-small"
@@ -400,6 +421,20 @@ export default {
         startDrag: {
             type: Function,
             default: () => {},
+        },
+        /**
+         * True if region-labels are currently shown
+         */
+        regionLabelsEnabled: {
+            type: Boolean,
+            default: false
+        },
+        /**
+         * Toggle callback for region labels
+         */
+        onToggleRegionLabels: {
+            type: Function,
+            default: () => {}
         },
         /**
          * True if a drawing is currently in progress, in which case the toolbar should

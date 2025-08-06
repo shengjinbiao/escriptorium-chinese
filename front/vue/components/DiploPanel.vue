@@ -83,7 +83,7 @@
                             :on-change="toggleSort"
                         >
                             <template #button-icon>
-                                <LineOrderingIcon />
+                                <i class="fas fa-sort"></i>
                             </template>
                         </ToggleButton>
                         <template #popper>

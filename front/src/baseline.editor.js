@@ -23,6 +23,16 @@ function generateUniqueId() {
     return lastId++;
 }
 
+function contrastingBW(hex) {
+    const c = hex.charAt(0)==="#" ? hex.substring(1) : hex;
+    const num = parseInt(c, 16);
+    const r = num >> 16;
+    const g = (num >> 8) & 0xff;
+    const b = num & 0xff;
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    // threshold ~ 186 (out of 255)
+    return lum > 186 ? "#000000" : "#FFFFFF";
+}
 function polyEq(poly1, poly2) {
     // compares polygons point by point
     let noPoly = poly1 == null && poly2 == null; // note: null is a singleton.. so we have to compare them separately
@@ -66,6 +76,33 @@ class SegmenterRegion {
 
         this.tooltipText = this.type;
         this.segmenter.attachTooltip(this, this.polygonPath);
+        const b = this.polygonPath.bounds;
+        const pad = 4 / this.segmenter.scale;
+        const fontSize = 15 / this.segmenter.scale;
+
+        this.labelText = new PointText({
+            content: this.type,
+            fontSize: fontSize,
+            justification: 'center',
+            fillColor: contrastingBW(this.color),
+            visible: false
+        });
+
+        // measure and build a box just above the region
+        const tb = this.labelText.bounds;
+        this.labelBg = new Path.Rectangle({
+            point: [b.x - pad, b.y - tb.height - pad * 2],
+            size: [tb.width + pad * 2, tb.height + pad * 2],
+            fillColor: this.color,
+            visible: false
+        });
+        const boxCenter = this.labelBg.bounds.center;
+        this.labelText.point = new Point(
+            boxCenter.x,
+            boxCenter.y + fontSize / 3
+        );
+        this.segmenter.regionsLayer.addChild(this.labelBg);
+        this.segmenter.regionsLayer.addChild(this.labelText);
     }
 
     select() {
@@ -116,6 +153,8 @@ class SegmenterRegion {
     }
 
     remove() {
+        if (this.labelBg)   this.labelBg.remove();
+        if (this.labelText) this.labelText.remove();
         this.unselect();
         this.polygonPath.remove();
         if (this.orderDisplay) this.orderDisplay.remove();
@@ -146,6 +185,32 @@ class SegmenterRegion {
             this.color,
             -50,
         );
+        const b2 = this.polygonPath.bounds;
+        const p2 = 4 / this.segmenter.scale;
+        const fs2 = 15 / this.segmenter.scale;
+
+        // update text content & style
+        this.labelText.content = this.type;
+        this.labelText.fontSize = fs2;
+        this.labelText.fillColor = contrastingBW(this.color);
+
+        // remeasure and reposition
+        const tb2 = this.labelText.bounds;
+        this.labelBg.fillColor = this.color;
+        this.labelBg.size = new Size(tb2.width + p2 * 2, tb2.height + p2 * 2);
+        this.labelBg.point = new Point(
+            b2.x - p2,
+            b2.y - tb2.height - p2 * 2
+        );
+
+        const center2 = this.labelBg.bounds.center;
+        this.labelText.point = new Point(
+            center2.x,
+            center2.y + fs2 / 3
+        );
+        const on = this.segmenter.showRegionLabels;
+        this.labelBg.visible = on;
+        this.labelText.visible = on;
     }
 
     get() {
@@ -613,6 +678,7 @@ export class Segmenter {
         this.loaded = false;
         this.img = image;
         this.mode = "lines"; // | 'regions'
+        this.showRegionLabels = false;
         this.lines = [];
         this.regions = [];
 
@@ -2141,6 +2207,15 @@ export class Segmenter {
             this.toggleOrderingBtn.classList.add("btn-info");
             this.toggleOrderingBtn.classList.remove("btn-success");
         }
+    }
+    toggleRegionLabels(force) {
+        if (force !== undefined) {
+            this.showRegionLabels = force;
+        } else {
+            this.showRegionLabels = !this.showRegionLabels;
+        }
+        // refresh all existing regions so they show/hide
+        this.regions.forEach(r => r.refresh());
     }
 
     applyRegionMode() {

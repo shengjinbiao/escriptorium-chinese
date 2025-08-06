@@ -14,31 +14,75 @@
                     :options="modeOptions"
                     :on-change-selection="onChangeMode"
                 />
-
-                <!-- toggle line numbers -->
-                <VDropdown
-                    id="line-numbers-toggle"
-                    class="new-section"
-                    theme="escr-tooltip-small"
-                    placement="bottom"
-                    :distance="8"
-                    :triggers="['hover']"
-                >
-                    <ToggleButton
-                        color="primary"
-                        :checked="lineNumberingEnabled"
-                        :disabled="disabled"
-                        :on-change="onToggleLineNumbering"
+                <!-- grouped toggles: line numbers, auto-order, manual-order -->
+                <div class="seg-toolbar-btn-group new-section">
+                    <!-- toggle line numbers -->
+                    <VDropdown
+                        id="line-numbers-toggle"
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
                     >
-                        <template #button-icon>
-                            <LineNumberingIcon />
+                        <ToggleButton
+                            color="primary"
+                            :checked="lineNumberingEnabled"
+                            :disabled="disabled"
+                            :on-change="onToggleLineNumbering"
+                        >
+                            <template #button-icon>
+                                <LineNumberingIcon style="width: 24px; height: 24px;" />
+                            </template>
+                        </ToggleButton>
+                        <template #popper>
+                            Line numbering (N)
                         </template>
-                    </ToggleButton>
-                    <template #popper>
-                        Line numbering (N)
-                    </template>
-                </VDropdown>
-
+                    </VDropdown>
+                    <VDropdown
+                        id="toggle-auto-order"
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
+                    >
+                        <ToggleButton
+                            color="primary"
+                            :checked="autoOrder"
+                            :disabled="disabled"
+                            :on-change="onToggleAutoOrder"
+                        >
+                            <template #button-icon>
+                                <i class="fas fa-robot" />
+                            </template>
+                        </ToggleButton>
+                        <template #popper>
+                            Toggle automatic reordering on line creation/deletion.
+                        </template>
+                    </VDropdown>
+                    <!-- manual reorder when auto-order off -->
+                    <VDropdown
+                        v-if="!autoOrder"
+                        id="manual-order"
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
+                    >
+                        <EscrButton
+                            aria-label="reorder lines"
+                            color="primary"
+                            :on-click="onRecalculateOrdering"
+                            :disabled="disabled"
+                        >
+                            <template #button-icon>
+                                <i class="fas fa-magic"></i>
+                            </template>
+                        </EscrButton>
+                        <template #popper>
+                            Reorder lines manually
+                        </template>
+                    </VDropdown>
+                </div>
                 <!-- calculate masks -->
                 <VDropdown
                     v-if="!hasMasks && lines.length > 0"
@@ -116,6 +160,8 @@
                     :has-points-selection="hasPointsSelection"
                     :has-selection="hasSelection"
                     :is-drawing="isDrawing"
+                    :region-labels-enabled="regionLabelsEnabled"
+                    :on-toggle-region-labels="onToggleRegionLabels"
                     :on-change-selection-type="onChangeSelectionType"
                     :on-delete="onDelete"
                     :on-join="onJoin"
@@ -236,6 +282,29 @@ export default {
             type: Function,
             required: true,
         },
+        autoOrder: {
+            type: Boolean,
+            required: true
+        },
+        onToggleAutoOrder: {
+            type: Function,
+            required: true
+        },
+        onRecalculateOrdering: {
+            type: Function,
+            required: true
+        },
+        regionLabelsEnabled: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
+        onToggleRegionLabels: {
+            type: Function,
+            required: true,
+            default: () => {},
+        },
+
     },
     computed: {
         ...mapState({

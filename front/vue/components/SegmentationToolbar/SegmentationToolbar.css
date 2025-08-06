@@ -37,6 +37,11 @@
     background-color: var(--background1);
 }
 
+/* automatic reordering special styling */
+#toggle-auto-order .escr-toggle-button:not([class*="active"]):not(:hover) {
+  background-color: var(--background1);
+}
+
 /* undo/redo buttons special styling, no background when disabled */
 .escr-segmentation-toolbar .escr-button#undo-button:disabled,
 .escr-segmentation-toolbar .escr-button#redo-button:disabled {
@@ -82,4 +87,22 @@
 #type-select-menu {
     overflow: auto;
     max-height: 350px;
+}
+
+/* grouped toggle-buttons container */
+.seg-toolbar-btn-group {
+  display: inline-flex;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-left: 0;
+}
+.seg-toolbar-btn-group > VDropdown {
+  margin-left: 0;
+}
+.seg-toolbar-btn-group .escr-toggle-button,
+.seg-toolbar-btn-group .escr-button {
+  border-radius: 0 !important;
+}
+.seg-toolbar-btn-group.new-section {
+  margin: 0 8px;
 }
