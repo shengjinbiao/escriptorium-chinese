@@ -128,13 +128,8 @@ class AcceptInvitation(CreateView):
         return response
 
 
-class InviteView(LoginRequiredMixin, TemplateView):
+class InviteView(LoginRequiredMixin, SuccessMessageMixin, TemplateView):
     template_name = 'users/invitation_form.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_perm('users.can_invite'):
-            raise PermissionDenied(_("You do not have permission to invite users."))
-        return super().dispatch(request, *args, **kwargs)
 
     def _default_mode(self):
         path = self.request.path.rstrip('/')
@@ -146,19 +141,18 @@ class InviteView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         from .forms import BulkInvitationForm, InvitationForm
         ctx = super().get_context_data(**kwargs)
-
-        single = InvitationForm(request=self.request)
-        bulk = BulkInvitationForm(request=self.request)
-
-        ctx['active_mode'] = self.get_mode()
-        ctx['single_form'] = single
-        ctx['bulk_form'] = bulk
-        ctx['form'] = single
+        mode = kwargs.get('active_mode') or self.get_mode()
+        ctx['active_mode'] = mode
+        if mode == 'bulk':
+            form = kwargs.get('form') or BulkInvitationForm(request=self.request)
+        else:
+            form = kwargs.get('form') or InvitationForm(request=self.request)
+        ctx['form'] = form
         return ctx
 
     def post(self, request, *args, **kwargs):
         from .forms import BulkInvitationForm, InvitationForm
-        mode = request.POST.get('mode', 'single')
+        mode = request.POST.get('mode') or self._default_mode()
 
         if mode == 'bulk':
             bulk_form = BulkInvitationForm(request.POST, request.FILES, request=request)
@@ -170,12 +164,8 @@ class InviteView(LoginRequiredMixin, TemplateView):
                     messages.warning(request, msg)
                 else:
                     messages.success(request, msg)
-                return self.render_to_response(self.get_context_data())
-
-            ctx = self.get_context_data()
-            ctx['bulk_form'] = bulk_form
-            ctx['active_mode'] = 'bulk'
-            return self.render_to_response(ctx)
+                return HttpResponseRedirect(request.get_full_path())
+            return self.render_to_response(self.get_context_data(active_mode='bulk', form=bulk_form))
 
         # single user invitation
         single_form = InvitationForm(request.POST, request=request)
@@ -185,13 +175,8 @@ class InviteView(LoginRequiredMixin, TemplateView):
                 request,
                 _("Invitation sent to %(email)s.") % {'email': invitation.recipient_email}
             )
-            return self.render_to_response(self.get_context_data())
-
-        ctx = self.get_context_data()
-        ctx['single_form'] = single_form
-        ctx['form'] = single_form
-        ctx['active_mode'] = 'single'
-        return self.render_to_response(ctx)
+            return HttpResponseRedirect(request.get_full_path())
+        return self.render_to_response(self.get_context_data(active_mode='single', form=single_form))
 
 
 class AcceptGroupInvitation(LoginRequiredMixin, DetailView):

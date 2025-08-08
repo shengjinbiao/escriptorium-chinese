@@ -7,109 +7,66 @@
 <div class="row container">
   <div class="col-md-8 col-md-offset-2">
 
-    <!-- Toggle buttons -->
+    <!-- Toggle buttons: reload with ?mode=... so only one form is instantiated -->
     <div class="btn-group my-3" role="group" aria-label="{% trans 'Invite mode' %}">
-      <button
-        id="btn-single"
-        type="button"
-        class="btn {% if active_mode == 'single' %}btn-primary{% else %}btn-outline-primary{% endif %}"
-        data-invite-mode="single"
-      >
+      <a href="?mode=single"
+         class="btn {% if active_mode == 'single' %}btn-primary{% else %}btn-outline-primary{% endif %}">
         {% trans "Single" %}
-      </button>
-      <button
-        id="btn-bulk"
-        type="button"
-        class="btn {% if active_mode == 'bulk' %}btn-primary{% else %}btn-outline-primary{% endif %}"
-        data-invite-mode="bulk"
-      >
+      </a>
+      <a href="?mode=bulk"
+         class="btn {% if active_mode == 'bulk' %}btn-primary{% else %}btn-outline-primary{% endif %}">
         {% trans "Bulk" %}
-      </button>
+      </a>
     </div>
 
     {# single invite #}
-    <form method="post" novalidate id="single-section" style="{% if active_mode != 'single' %}display:none{% endif %}">
-      {% csrf_token %}
-      <input type="hidden" name="mode" value="single">
-      <fieldset>
-        <label class="my-1" for="group">{% trans "Recipient's information" %}</label>
-        {% render_field form.recipient_email %}
-        {% render_field form.recipient_first_name %}
-        {% render_field form.recipient_last_name %}
-        {% render_field form.group %}
-        {% render_field form.expiry_date %}
+    {% if active_mode == 'single' %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="single">
+        <fieldset>
+          <label class="my-1" for="group">{% trans "Recipient's information" %}</label>
+          {% render_field form.recipient_email %}
+          {% render_field form.recipient_first_name %}
+          {% render_field form.recipient_last_name %}
+          {% render_field form.group %}
+          {% render_field form.expiry_date %}
 
-        <input type="submit" value="{% trans 'Send' %}" class="btn btn-lg btn-success btn-block">
-      </fieldset>
-    </form>
+          <input type="submit" value="{% trans 'Send' %}" class="btn btn-lg btn-success btn-block">
+        </fieldset>
+      </form>
 
     {# bulk invite #}
-    <form
-      id="bulk-section"
-      method="post"
-      enctype="multipart/form-data"
-      style="{% if active_mode != 'bulk' %}display:none{% endif %}"
-      novalidate
-    >
-      {% csrf_token %}
-      <input type="hidden" name="mode" value="bulk">
+    {% elif active_mode == 'bulk' %}
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="bulk">
+        <fieldset>
+          {{ form.non_field_errors }}
 
-      <fieldset>
-        {{ bulk_form.non_field_errors }}
+          <label class="my-1">{% trans "Upload CSV file" %}</label>
+          {% render_field form.file %}
 
-        <label class="my-1">{% trans "Upload CSV file" %}</label>
-        {% render_field bulk_form.file %}
+          <p class="text-center"><em>{% trans "OR" %}</em></p>
 
-        <p class="text-center"><em>{% trans "OR" %}</em></p>
+          <label class="my-1">{% trans "Paste emails (one per line)" %}</label>
+          {% render_field form.emails %}
 
-        <label class="my-1">{% trans "Paste emails (one per line)" %}</label>
-        {% render_field bulk_form.emails %}
+          <label class="my-1" for="{{ form.group.id_for_label }}">{% trans "Team" %}</label>
+          {% render_field form.group %}
 
-        <label class="my-1" for="{{ bulk_form.group.id_for_label }}">{% trans "Team" %}</label>
-        {% render_field bulk_form.group %}
+          <label class="my-1" for="{{ form.expiry_date.id_for_label }}">{% trans "Expiry date (optional)" %}</label>
+          {% render_field form.expiry_date %}
 
-        <label class="my-1" for="{{ bulk_form.expiry_date.id_for_label }}">{% trans "Expiry date (optional)" %}</label>
-        {% render_field bulk_form.expiry_date %}
+          <input
+            type="submit"
+            value="{% trans 'Send Invitations' %}"
+            class="btn btn-lg btn-success btn-block"
+          >
+        </fieldset>
+      </form>
+    {% endif %}
 
-        <input
-          type="submit"
-          value="{% trans 'Send Invitations' %}"
-          class="btn btn-lg btn-success btn-block"
-        >
-      </fieldset>
-    </form>
   </div>
 </div>
-
-<script>
-  (function() {
-    const singleBtn = document.getElementById('btn-single');
-    const bulkBtn = document.getElementById('btn-bulk');
-    const single = document.getElementById('single-section');
-    const bulk = document.getElementById('bulk-section');
-
-    function activate(mode) {
-      const isSingle = mode === 'single';
-      single.style.display = isSingle ? '' : 'none';
-      bulk.style.display = isSingle ? 'none' : '';
-
-      // swap button classes
-      if (isSingle) {
-        singleBtn.classList.remove('btn-outline-primary');
-        singleBtn.classList.add('btn-primary');
-        bulkBtn.classList.remove('btn-primary');
-        bulkBtn.classList.add('btn-outline-primary');
-      } else {
-        bulkBtn.classList.remove('btn-outline-primary');
-        bulkBtn.classList.add('btn-primary');
-        singleBtn.classList.remove('btn-primary');
-        singleBtn.classList.add('btn-outline-primary');
-      }
-    }
-
-    singleBtn?.addEventListener('click', () => activate('single'));
-    bulkBtn?.addEventListener('click', () => activate('bulk'));
-
-  })();
-</script>
 {% endblock %}
