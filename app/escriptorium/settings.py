@@ -90,6 +90,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
+    'escriptorium.middleware.AccountExpiryMiddleware',
 ]
 
 PROMETHEUS_EXPORT_MIGRATIONS = False

@@ -6,6 +6,7 @@ from users.views import (
     AcceptInvitation,
     ContactUsView,
     GroupDetail,
+    InviteView,
     LeaveGroup,
     ProfileApiKey,
     ProfileFiles,
@@ -13,7 +14,6 @@ from users.views import (
     ProfileInfos,
     ProfileInvitations,
     RemoveFromGroup,
-    SendInvitation,
     TransferGroupOwnership,
 )
 
@@ -31,7 +31,7 @@ urlpatterns = [
          TransferGroupOwnership.as_view(),
          name='team-transfer-ownership'),
     path('invite/',
-         permission_required('users.can_invite', raise_exception=True)(SendInvitation.as_view()),
+         permission_required('users.can_invite', raise_exception=True)(InviteView.as_view()),
          name='send-invitation'),
     path('accept/<token>/', AcceptInvitation.as_view(), name='accept-invitation'),
     path('accept/group/<slug>/', AcceptGroupInvitation.as_view(), name='accept-group-invitation'),
