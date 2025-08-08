@@ -140,11 +140,6 @@
                                 <span>Invite Users</span>
                             </a>
                         </li>
-                        <li v-if="canInvite">
-                            <a href="/invite/bulk/">
-                                <span>Bulk Invite Users</span>
-                            </a>
-                        </li>
                         <li
                             v-if="isStaff"
                             class="new-section"
