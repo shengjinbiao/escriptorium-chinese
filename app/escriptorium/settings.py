@@ -171,12 +171,12 @@ LOGOUT_REDIRECT_URL = '/'
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-ESC_LANGUAGES = os.getenv('ESC_LANGUAGES', 'en').split(',')
+ESC_LANGUAGES = os.getenv('ESC_LANGUAGES', 'en,zh-hans').split(',')
 LANGUAGES = [
     ('en', _('English')),
 ]
@@ -184,8 +184,8 @@ if 'fr' in ESC_LANGUAGES:
     LANGUAGES.append(('fr', _('French')))
 if 'de' in ESC_LANGUAGES:
     LANGUAGES.append(('de', _('German')))
-if 'cn' in ESC_LANGUAGES:
-    LANGUAGES.append(('cn', _('中文')))
+if 'zh-hans' in ESC_LANGUAGES:
+    LANGUAGES.append(('zh-hans', _('中文')))
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
