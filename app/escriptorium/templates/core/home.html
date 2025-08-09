@@ -46,28 +46,36 @@
     </div>
 
 </div>
-<hr/>
-<div class="container my-5">
-    <div class="row g-4">
-        {% if CUSTOM_CONTRIBUTORS %}
-            {% include "service_hosting.html" %}
-        {%endif%}
-      <!-- Originally developed by -->
-      <div class="col-lg-6">
-        <div class="card h-100 border-0 text-center p-4">
-          <h3 class="mb-3">{% trans "Service originally developed by" %}</h3>
-          <p class="text-muted mb-3">{% trans "École Pratique des Hautes Études (EPHE)" %}</p>
-          <div class="d-flex justify-content-center">
-              <a href="https://www.ephe.psl.eu" class="pl-4" target="_blank"><img src="{% static "images/ephe.png" %}" alt="EPHE logo" height="100"></a>
-          </div>
-          <p class="text-muted mt-3">
-            {% trans "See" %} <a href="{% url 'contributors' %}">{% trans "contributors history" %}</a>  {% trans "or" %} <a href="{% url 'credits' %}">{% trans "credits" %}</a>.
-          </p>
+<div style="display:flex; gap:2rem; flex-wrap:wrap;">
+    {% if CUSTOM_CONTRIBUTORS %}
+        <!-- hosted by -->
+        <div class="container my-5 home-contrib-container d-flex align-items-center min-vh-25" style="flex:1;">
+            <div class="row g-4 justify-content-center w-100">
+                {% include "service_hosting.html" %}
+            </div>
         </div>
-      </div>
-    </div>
+    {% endif %}
 
-  </div>
+    <!-- Originally developed by -->
+    <div class="container my-5 home-contrib-container d-flex align-items-center min-vh-25" style="flex:1;">
+        <div class="row g-4 justify-content-center w-100">
+            <div class="col-lg-12">
+                <div class="card h-100 border-0 text-center">
+                    <h3 class="mb-3">{% trans "Service originally developed by" %}</h3>
+                    <p class="text-muted mb-3">{% trans "École Pratique des Hautes Études (EPHE)" %}</p>
+                    <div class="d-flex justify-content-center">
+                        <a href="https://www.ephe.psl.eu" class="pl-4" target="_blank">
+                            <img src="{% static "images/ephe.png" %}" alt="EPHE logo" height="100">
+                        </a>
+                    </div>
+                    <p class="text-muted mt-3">
+                        {% trans "See" %} <a href="{% url 'contributors' %}">{% trans "contributors history" %}</a> {% trans "or" %} <a href="{% url 'credits' %}">{% trans "credits" %}</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="row">
     <div class="my-5 container-fluid text-center">

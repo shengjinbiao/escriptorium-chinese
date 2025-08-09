@@ -289,6 +289,9 @@ STATICFILES_DIRS = [
 if CUSTOM_HOME:
     # custom homepage directory
     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'homepage'))
+if CUSTOM_CONTRIBUTORS:
+    # custom contributors directory
+    STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'contributors'))
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

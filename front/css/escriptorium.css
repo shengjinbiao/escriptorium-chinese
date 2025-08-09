@@ -1089,6 +1089,10 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) .container:not(table) {
     padding: 16px;
     max-width: 50%;
 }
+main:has(.escr-vue-enabled):not(:has(.escr-page))
+.container.home-contrib-container:not(table) {
+    margin-top: 32px !important;
+}
 main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-8,
 main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-6,
 main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-4 {
