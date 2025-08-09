@@ -37,6 +37,18 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         wpk = self.witness.pk
         self.outdir = f"{settings.MEDIA_ROOT}/alignments/document-{dpk}/t{tpk}+w{wpk}"
 
+    def test_filename_uses_basename(self):
+        """DocumentPart.filename should fall back to image basename."""
+        part = self.factory.make_part()
+
+        # Without an original filename, the basename of the image path is used.
+        expected = os.path.basename(part.image.path)
+        self.assertEqual(part.filename, expected)
+
+        # When an original filename is present, it takes precedence.
+        part.original_filename = "original.png"
+        self.assertEqual(part.filename, "original.png")
+
     @patch("core.models.hex")
     @patch("core.models.subprocess")
     def test_align(self, mock_subprocess, mock_hex):

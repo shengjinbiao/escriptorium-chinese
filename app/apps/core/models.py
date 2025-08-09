@@ -976,10 +976,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
 
     @property
     def filename(self):
-        # TODO: os.path.split(self.image.path)[1] looks like it could sometime
-        # produce an error. Maybe use Path().name, or at the very least
-        # os.path.split(self.image.path)[-1]?
-        return self.original_filename or os.path.split(self.image.path)[1]
+        """Return the basename of the associated image file.
+
+        ``os.path.split(...)[1]`` raises ``IndexError`` when the path does
+        not contain a directory component. ``os.path.basename`` safely
+        extracts the filename and avoids that error.
+        """
+        return self.original_filename or os.path.basename(self.image.path)
 
     def calculate_progress(self):
         total = self.lines.count()
