@@ -59,6 +59,7 @@ DEBUG_TOOLBAR_PANELS = [
 # LOGGING['loggers']['kraken']['level'] = 'DEBUG'
 
 # CUSTOM_HOME = True
+# CUSTOM_CONTRIBUTORS = True
 
 # Uncomment the two following variables to enable customized OpenITI export modes
 # EXPORT_OPENITI_MARKDOWN_ENABLED = True

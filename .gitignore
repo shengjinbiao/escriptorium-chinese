@@ -10,6 +10,7 @@ app/static/
 app/media/
 app/test_media/
 app/homepage/
+app/contributors/
 *.log
 front/node_modules
 front/dist

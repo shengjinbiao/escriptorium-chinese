@@ -28,6 +28,7 @@ COPY ./app/apps /usr/src/app/apps
 COPY ./app/escriptorium /usr/src/app/escriptorium
 COPY ./app/locale /usr/src/app/locale
 COPY ./app/homepage /usr/src/app/homepage
+COPY ./app/contributors /usr/src/app/contributors
 COPY --from=frontend /build/dist /usr/src/app/front
 
 # run entrypoint.sh

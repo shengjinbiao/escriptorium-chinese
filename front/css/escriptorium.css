@@ -1089,6 +1089,10 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) .container:not(table) {
     padding: 16px;
     max-width: 50%;
 }
+main:has(.escr-vue-enabled):not(:has(.escr-page))
+.container.home-contrib-container:not(table) {
+    margin-top: 32px !important;
+}
 main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-8,
 main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-6,
 main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-4 {
@@ -1183,6 +1187,12 @@ body.homepage main:has(.escr-vue-enabled) .jumbotron {
 body.homepage main:has(.escr-vue-enabled) footer {
     background-color: transparent !important;
     margin: 2rem 0 1rem !important;
+}
+
+/* homepage: make all list-group items theme-aware */
+body.homepage main:has(.escr-vue-enabled) .list-group-item {
+    background-color: var(--background1) !important;
+    color:            var(--text1)       !important;
 }
 
 /* search page */

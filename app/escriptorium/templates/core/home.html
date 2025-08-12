@@ -45,7 +45,36 @@
         </div>
     </div>
 
-    <hr/>
+</div>
+<div style="display:flex; gap:2rem; flex-wrap:wrap;">
+    {% if CUSTOM_CONTRIBUTORS %}
+        <!-- hosted by -->
+        <div class="container my-5 home-contrib-container d-flex align-items-center min-vh-25" style="flex:1;">
+            <div class="row g-4 justify-content-center w-100">
+                {% include "service_hosting.html" %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Originally developed by -->
+    <div class="container my-5 home-contrib-container d-flex align-items-center min-vh-25" style="flex:1;">
+        <div class="row g-4 justify-content-center w-100">
+            <div class="col-lg-12">
+                <div class="card h-100 border-0 text-center">
+                    <h3 class="mb-3">{% trans "Service originally developed by" %}</h3>
+                    <p class="text-muted mb-3">{% trans "École Pratique des Hautes Études (EPHE)" %}</p>
+                    <div class="d-flex justify-content-center">
+                        <a href="https://www.ephe.psl.eu" class="pl-4" target="_blank">
+                            <img src="{% static "images/ephe.png" %}" alt="EPHE logo" height="100">
+                        </a>
+                    </div>
+                    <p class="text-muted mt-3">
+                        {% trans "See" %} <a href="{% url 'contributors' %}">{% trans "contributors history" %}</a> {% trans "or" %} <a href="{% url 'credits' %}">{% trans "credits" %}</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
@@ -92,7 +121,7 @@
 <footer class="bg-light mt-5 pt-1">
     <div class="container">
         <div class="row">
-            <div class="col-6">
+            <div class="col-4">
                 <h5>{% trans "Resources" %}</h5>
                 <ul class="list-unstyled">
                     <li><a href="https://escriptorium.readthedocs.io/" target="_blank">{% trans "Tutorial" %}</a></li>
@@ -104,7 +133,15 @@
                 </ul>
             </div>
 
-            <div class="col-6">
+            <div class="col-4">
+                <h5>{% trans "Acknowledgements" %}</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'contributors' %}">{% trans "Contributors" %}</a></li>
+                        <li><a href="{% url 'credits' %}">{% trans "Credits" %}</a></li>
+                    </ul>
+            </div>
+
+            <div class="col-4">
                 <h5>{% trans "Legal mentions" %}</h5>
                 <ul class="list-unstyled text-muted text-sm" style="font-size: 80%;">
                     <li>Ce travail a bénéficié d’une aide de l’État gérée par l’Agence Nationale de la Recherche au titre du Programme d’Investissements d’Avenir portant la référence ANR-21-ESRE-0005.</li>
