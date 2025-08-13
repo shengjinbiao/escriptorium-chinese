@@ -570,11 +570,13 @@ class XMLParser(ParserDocument):
                 try:
                     xmlschema = etree.XMLSchema(schema_root)
                     xmlschema.assertValid(self.root)
-                except (
-                    AttributeError,
-                    etree.DocumentInvalid,
-                    etree.XMLSyntaxError,
-                ) as e:
+                except etree.XMLSchemaParseError as e:
+                    logger.warning("Skipping schema validation (XSD compile failed): %s", e)
+                    if self.report:
+                        self.report.append(
+                            "Skipping schema validation (validator unavailable). %s" % OWN_RISK
+                        )
+                except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
                     if self.report:
                         self.report.append("Document didn't validate. %s, %s" % (e.args[0], OWN_RISK))
         else:

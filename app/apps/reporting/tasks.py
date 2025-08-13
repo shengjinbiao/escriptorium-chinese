@@ -15,6 +15,8 @@ def update_client_state(task_kwargs, task_name, status, task_id=None, data=None)
     part_pks = []
     if task_kwargs.get("instance_pk"):
         part_pks = [task_kwargs["instance_pk"]]
+    elif task_kwargs.get("instance_pks"):
+        part_pks = task_kwargs["instance_pks"]
     elif task_kwargs.get("part_pks"):
         part_pks = task_kwargs["part_pks"]
 
@@ -87,11 +89,14 @@ def create_task_reporting(sender, body, **kwargs):
         except DocumentImport.DoesNotExist:
             pass
     elif task_kwargs.get("part_pks"):
-        # They should all belong to the same document
-        first_part = (DocumentPart.objects
-                      .prefetch_related('document')
-                      .get(pk=task_kwargs["part_pks"][0]))
-        document = first_part.document
+        part = None  # we create per-part reports
+        part_pks = task_kwargs.get("part_pks", [])
+        # They should all belong to the same document, grab from first
+        try:
+            first_part = (DocumentPart.objects.select_related('document').get(pk=part_pks[0]))
+            document = first_part.document
+        except DocumentPart.DoesNotExist:
+            document = None
 
     task_group = None
     if task_kwargs.get("task_group_pk"):
@@ -101,16 +106,38 @@ def create_task_reporting(sender, body, **kwargs):
     update_client_state(task_kwargs, sender, "pending")
 
     default_report_label = f"Report for celery task {task_id} of type {sender}"
-    TaskReport.objects.create(
-        user=user,
-        group=task_group,
-        label=task_kwargs.get("report_label", default_report_label),
-        document=document,
-        document_part=part,
-        ocr_model=model,
-        task_id=task_id,
-        method=sender
-    )
+    iterable_pks = None
+    if task_kwargs.get("part_pks"):
+        iterable_pks = task_kwargs["part_pks"]
+    elif task_kwargs.get("instance_pks"):
+        iterable_pks = task_kwargs["instance_pks"]
+    if iterable_pks:
+        for pk in iterable_pks:
+            try:
+                p = DocumentPart.objects.get(pk=pk)
+            except DocumentPart.DoesNotExist:
+                continue
+            TaskReport.objects.create(
+                user=user,
+                group=task_group,
+                label=task_kwargs.get("report_label", default_report_label),
+                document=p.document,
+                document_part=p,
+                ocr_model=model,
+                task_id=task_id,
+                method=sender
+            )
+    else:
+        TaskReport.objects.create(
+            user=user,
+            group=task_group,
+            label=task_kwargs.get("report_label", default_report_label),
+            document=document,
+            document_part=part,
+            ocr_model=model,
+            task_id=task_id,
+            method=sender
+        )
 
 
 @task_prerun.connect
@@ -121,13 +148,13 @@ def start_task_reporting(task_id, task, *args, **kwargs):
 
     TaskReport = apps.get_model('reporting', 'TaskReport')
 
-    try:
-        report = TaskReport.objects.get(task_id=task_id)
-    except TaskReport.DoesNotExist:
+    reports = TaskReport.objects.filter(task_id=task_id)
+    if not reports.exists():
         logger.error(f"Couldn't retrieve any TaskReport object associated with celery task {task_id}")
         return
 
-    report.start()
+    for report in reports:
+        report.start()
 
     # Update the frontend display consequently
     update_client_state(kwargs.get("kwargs", {}), task.name, "ongoing", task_id=task_id)
@@ -141,8 +168,11 @@ def end_task_reporting(task_id, task, *args, **kwargs):
     TaskReport = apps.get_model('reporting', 'TaskReport')
 
     try:
-        report = TaskReport.objects.get(task_id=task_id)
-    except TaskReport.DoesNotExist:
+        reports = TaskReport.objects.filter(task_id=task_id)
+    except Exception:
+        reports = TaskReport.objects.none()
+
+    if not reports.exists():
         logger.warning(f"Couldn't retrieve any TaskReport object associated with celery task {task_id}")
         return
 
@@ -150,22 +180,35 @@ def end_task_reporting(task_id, task, *args, **kwargs):
     # or canceled by the Document.cancel_tasks API endpoint
     from reporting.models import TASK_FINAL_STATES
 
-    if report.workflow_state not in TASK_FINAL_STATES:
-        if kwargs.get("state") == states.SUCCESS:
-            report.end()
-        else:
-            report.error(str(kwargs.get("retval")))
+    # track if any report has error/done to decide client state
+    any_error = False
+    all_done = True
+
+    for report in reports:
+        if report.workflow_state not in TASK_FINAL_STATES:
+            if kwargs.get("state") == states.SUCCESS:
+                report.end()
+            else:
+                report.error(str(kwargs.get("retval")))
+
+        if report.workflow_state == TaskReport.WORKFLOW_STATE_ERROR:
+            any_error = True
+        if report.workflow_state != TaskReport.WORKFLOW_STATE_DONE:
+            all_done = False
+
+    # Determine aggregated client status
+    if any_error:
+        client_status = 'error'
+    elif all_done:
+        client_status = 'done'
+    else:
+        client_status = 'ongoing'
 
     # Update the frontend display consequently
-    client_status_mapping = {
-        TaskReport.WORKFLOW_STATE_ERROR: 'error',
-        TaskReport.WORKFLOW_STATE_DONE: 'done'
-    }
+    update_client_state(kwargs.get("kwargs", {}), task.name, client_status, task_id=task_id, data=kwargs.get('result'))
 
-    if report.workflow_state in client_status_mapping:
-        update_client_state(kwargs.get("kwargs", {}), task.name, client_status_mapping[report.workflow_state], task_id=task_id, data=kwargs.get('result'))
-
-    report.calc_cpu_cost()
-    # Listing tasks parametrized to run on 'gpu' Celery queue
-    if task.name in [route for route, queue in settings.CELERY_TASK_ROUTES.items() if queue == {'queue': 'gpu'}]:
-        report.calc_gpu_cost()
+    for report in reports:
+        report.calc_cpu_cost()
+        # Listing tasks parametrized to run on gpu
+        if task.name in [route for route, queue in settings.CELERY_TASK_ROUTES.items() if queue == {'queue': 'gpu'}]:
+            report.calc_gpu_cost()

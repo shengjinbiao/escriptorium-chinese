@@ -1,4 +1,5 @@
 from django.contrib import admin
+from solo.admin import SingletonModelAdmin
 
 from core.models import (
     AnnotationComponent,
@@ -11,6 +12,7 @@ from core.models import (
     DocumentPartType,
     DocumentTag,
     DocumentType,
+    InstanceSettings,
     LineTranscription,
     LineType,
     Metadata,
@@ -93,6 +95,20 @@ class DocumentTagAdmin(admin.ModelAdmin):
     list_display = ['name', 'color', 'project']
 
 
+class InstanceSettingsAdmin(SingletonModelAdmin):
+    list_display = ('page_batch_segmentation', 'page_batch_recognition')
+    actions = None
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
@@ -112,3 +128,4 @@ admin.site.register(AnnotationComponent)
 admin.site.register(DocumentTag, DocumentTagAdmin)
 admin.site.register(TextualWitness)
 admin.site.register(Transcription)
+admin.site.register(InstanceSettings)

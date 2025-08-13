@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'language_flags',
     'reporting',
     'django_prometheus',
+    'solo',
 ]
 
 MIDDLEWARE = [

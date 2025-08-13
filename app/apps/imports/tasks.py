@@ -93,7 +93,12 @@ def document_export(task, file_format, part_pks,
         assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
 
     document = Document.objects.get(pk=document_pk)
-    report = TaskReport.objects.get(task_id=task.request.id)
+    try:
+        report = TaskReport.objects.get(task_id=task.request.id)
+    except TaskReport.MultipleObjectsReturned:
+        report = TaskReport.objects.filter(task_id=task.request.id).order_by('-started_at').first()
+    except TaskReport.DoesNotExist:
+        report = None
 
     try:
         send_event('document', document.pk, "export:start", {
