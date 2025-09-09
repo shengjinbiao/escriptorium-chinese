@@ -1,0 +1,2821 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: eScriptorium 0.11.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-09 00:00+0000\n"
+"PO-Revision-Date: 2025-09-09 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Chinese\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: apps/api/serializers.py
+msgid "PDF is not a valid image, please use the dedicated Import function."
+msgstr "PDF不是有效的图像，请使用专用导入功能。"
+
+#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
+#: escriptorium/templates/core/document_images.html
+msgid "You don't have any disk storage left."
+msgstr "您没有任何磁盘存储空间。"
+
+#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
+msgid "You don't have any CPU minutes left."
+msgstr "您没有任何CPU分钟。"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You don't have any GPU minutes left."
+msgstr "您没有GPU分钟。"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Lines and regions"
+msgstr "线和区域类型"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Lines Baselines and Masks"
+msgstr "文本行、基线和掩模"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Only lines Masks"
+msgstr "只有文本行和掩模"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Regions"
+msgstr "版面区域"
+
+#: apps/api/serializers.py apps/core/forms.py apps/core/models.py
+msgid "Horizontal l2r"
+msgstr "水平横排L2R左到右"
+
+#: apps/api/serializers.py apps/core/forms.py apps/core/models.py
+msgid "Horizontal r2l"
+msgstr "横排R2L右到左"
+
+#: apps/api/serializers.py apps/core/forms.py apps/core/models.py
+msgid "Vertical l2r"
+msgstr "竖排L2R左到右"
+
+#: apps/api/serializers.py apps/core/forms.py apps/core/models.py
+msgid "Vertical r2l"
+msgstr "竖排R2L右到左"
+
+#: apps/api/serializers.py
+msgid ""
+"Either use model_name to create a new model, add a model pk to retrain an "
+"existing one, or both to create a new model from an existing one."
+msgstr "要么使用model_name创建新模型，添加模型PK来重新训练现有模型，也可以两者兼具从现有模型中创建新模型。"
+
+#: apps/api/serializers.py
+msgid ""
+"Either use model_name to create a new model, or add a model pk to retrain an"
+" existing one."
+msgstr "要么使用model_name创建新模型，要么添加模型PK来重新训练现有模型。"
+
+#: apps/api/views.py apps/core/models.py
+msgid "Canceled."
+msgstr "取消了。"
+
+#: apps/core/forms.py
+#, python-brace-format
+msgid ""
+"You requested to search text in a {self.obj_name} you don't have access to."
+msgstr "您要求在{self.obj_name}中搜索您无权访问的文本。"
+
+#: apps/core/forms.py
+#, python-brace-format
+msgid "You requested to search text in a {self.obj_name} that doesn't exist."
+msgstr "您要求在不存在的{self.obj_name}中搜索文本。"
+
+#: apps/core/forms.py
+msgid "Text to search in all of your projects"
+msgstr "在所有项目中要搜索的文本"
+
+#: apps/core/forms.py
+msgid "All projects"
+msgstr "所有项目"
+
+#: apps/core/forms.py
+msgid ""
+", surround one or more terms with quotation marks to deactivate fuzziness"
+msgstr ""
+
+#: apps/core/forms.py escriptorium/templates/core/models_list/rights/main.html
+msgid "Type"
+msgstr "类型"
+
+#: apps/core/forms.py
+msgid "Color"
+msgstr "颜色"
+
+#: apps/core/forms.py
+msgid "Allow Comments"
+msgstr "允许评论"
+
+#: apps/core/forms.py
+msgid "The provided model could not be loaded."
+msgstr "提供的模型无法加载。"
+
+#: apps/core/forms.py
+msgid ""
+"Invalid model (Couldn't determine whether it's a segmentation or recognition"
+" model)."
+msgstr "无效的模型(无法确定它是分割还是识别模型)。"
+
+#: apps/core/forms.py
+msgid "eScriptorium is not compatible with bounding box models."
+msgstr "Escriptorium与边界框模型不兼容。"
+
+#: apps/core/forms.py
+msgid ""
+"Increase it for low contrast documents, if the letters are not visible "
+"enough."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Uploaded image with more than one selected image."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Uploaded image should be black and white."
+msgstr ""
+
+#: apps/core/forms.py
+#, python-brace-format
+msgid "Uploaded image should be the same size as original image {size}."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Model"
+msgstr "模型"
+
+#: apps/core/forms.py
+msgid ""
+"If checked, deletes existing segmentation <b>and bound transcriptions</b> "
+"first!"
+msgstr "如果已检查，请先删除现有的分割<b>和绑定的转录</b>首先！"
+
+#: apps/core/forms.py
+msgid "-- New --"
+msgstr "-  新的  -"
+
+#: apps/core/forms.py
+msgid "The transcription on which to perform alignment."
+msgstr "进行对齐的转录。"
+
+#: apps/core/forms.py
+msgid "The reference text for alignment; must be a .txt file."
+msgstr "对齐的参考文本；必须是.txt文件。"
+
+#: apps/core/forms.py
+msgid "Reuse a previously-uploaded reference text."
+msgstr "重复使用先前的参考文本。"
+
+#: apps/core/forms.py
+msgid "N-gram"
+msgstr "n-gram"
+
+#: apps/core/forms.py
+msgid ""
+"Length (2–25) of token sequences to compare; 25 should work well for at "
+"least moderately clean OCR. For very poor OCR, lower to 3 or 4."
+msgstr "代币序列的长度(2-25)；25应至少适度清洁的OCR效果很好。对于非常差的OCR，较低至3或4。"
+
+#: apps/core/forms.py
+msgid "Max offset"
+msgstr "最大偏移"
+
+#: apps/core/forms.py
+msgid ""
+"Enables max-offset and disables beam search. Maximum number of characters "
+"(20–80) difference between the aligned witness text and the original "
+"transcription."
+msgstr "启用最大偏移量并禁用光束搜索。对齐的证人文本和原始转录之间的最大字符数(20-80)差异。"
+
+#: apps/core/forms.py
+msgid "Beam size"
+msgstr "梁尺寸"
+
+#: apps/core/forms.py
+msgid ""
+"Enables beam search; if this and max offset are left unset, beam search will"
+" be on and beam size set to 20. Higher beam size (1-100) will result in "
+"slower computation but more accurate results."
+msgstr ""
+"启用光束搜索；如果将其和最大偏移保持不设定，则梁搜索将打开，并且光束尺寸设置为20。较高的光束尺寸(1-100)将导致计算较慢，但结果更准确。"
+
+#: apps/core/forms.py
+msgid "Gap"
+msgstr "差距"
+
+#: apps/core/forms.py
+msgid ""
+"The distance between matching unique n-grams; 600 should work well for clean"
+" OCR or texts where passages align to different portions of the witness "
+"text. To force end-to-end alignment of two documents, increase to 1,000,000."
+msgstr ""
+"匹配唯一的n-"
+"gram之间的距离；600应该适合清洁的OCR或文本与证人文本的不同部分保持一致的文本。要强制两个文件的端到端对齐，请增加到1,000,000。"
+
+#: apps/core/forms.py
+msgid "Merge aligned text with existing transcription"
+msgstr "合并对齐文本与现有转录"
+
+#: apps/core/forms.py
+msgid ""
+"If checked, the aligner will reuse the text of the original transcription "
+"when alignment could not be performed; if unchecked, those lines will be "
+"blank."
+msgstr "如果检查了，当无法执行对齐时，对准器将重复使用原始转录的文本；如果未选中，这些行将为空白。"
+
+#: apps/core/forms.py
+msgid "Use full transcribed document"
+msgstr "使用完整转录的文档"
+
+#: apps/core/forms.py
+msgid ""
+"If checked, the aligner will use all transcribed pages of the document to "
+"find matches. If unchecked, it will compare each page to the text "
+"separately."
+msgstr "如果已检查，对准器将使用文档的所有转录页面查找匹配项。如果未选中，它将分别将每个页面与文本进行比较。"
+
+#: apps/core/forms.py
+msgid "Line length match threshold"
+msgstr "线长匹配阈值"
+
+#: apps/core/forms.py
+msgid ""
+"Minimum proportion (0.0–1.0) of aligned line length to original "
+"transcription, below which matches are ignored. At 0.0, all matches are "
+"accepted."
+msgstr "对齐线长度与原始转录的最小比例(0.0-1.0)，下面忽略了匹配。在0.0时，所有匹配都被接受。"
+
+#: apps/core/forms.py
+msgid "Region types to include in the alignment."
+msgstr "在对齐中包括的区域类型。"
+
+#: apps/core/forms.py
+msgid "Layer name"
+msgstr "图层名称"
+
+#: apps/core/forms.py
+msgid ""
+"Name for the new transcription layer produced by this alignment. If you "
+"reuse an existing layer name, the layer will be overwritten; use caution."
+msgstr "该对齐产生的新转录层的名称。如果您重复使用现有层名称，则该图层将被覆盖；谨慎行事。"
+
+#: apps/core/forms.py
+msgid "You must supply a textual witness (reference text)."
+msgstr "您必须提供文字见证人(参考文本)。"
+
+#: apps/core/forms.py
+msgid "You may only supply one witness text (file upload or existing text)."
+msgstr "您只能提供一个证人文本(文件上传或现有文本)。"
+
+#: apps/core/forms.py
+msgid ""
+"Alignment layer name cannot be the same as the transcription you are trying "
+"to align."
+msgstr "对齐层名称不能与您要对齐的转录相同。"
+
+#: apps/core/forms.py
+msgid "Max offset and beam size cannot both be non-zero."
+msgstr "最大偏移量和光束尺寸不能均不为零。"
+
+#: apps/core/forms.py
+msgid "The model is already training."
+msgstr "该模型已经在培训。"
+
+#: apps/core/forms.py
+msgid "Either choose a model name or overwrite an existing one."
+msgstr "选择一个模型名称或覆盖现有的名称。"
+
+#: apps/core/forms.py
+msgid ""
+"You need to choose a model to override if the override option is checked."
+msgstr "如果检查了覆盖选项，则需要选择一个模型来覆盖。"
+
+#: apps/core/forms.py
+msgid "You can't overwrite the existing file of a model you don't own."
+msgstr "您不能覆盖您不拥有的模型的现有文件。"
+
+#: apps/core/forms.py
+msgid "Empty Ground Truth data."
+msgstr "空的地面真相数据。"
+
+#: apps/core/models.py
+msgid "Comma separated list of possible value, leave it empty for free input."
+msgstr "逗号分隔可能的值列表，将其空置为免费输入。"
+
+#: apps/core/models.py
+msgid "Rectangle"
+msgstr "长方形"
+
+#: apps/core/models.py
+msgid "Polygon"
+msgstr "多边形"
+
+#: apps/core/models.py
+msgid "Background Color"
+msgstr "背景颜色"
+
+#: apps/core/models.py
+msgid "Text Color"
+msgstr "文字颜色"
+
+#: apps/core/models.py
+msgid "Bold"
+msgstr "大胆的"
+
+#: apps/core/models.py
+msgid "Italic"
+msgstr "斜体"
+
+#: apps/core/models.py
+msgid "Top to bottom"
+msgstr "上到底"
+
+#: apps/core/models.py
+msgid "Share with users"
+msgstr "与用户共享"
+
+#: apps/core/models.py
+msgid "Share with teams"
+msgstr "与团队分享"
+
+#: apps/core/models.py
+msgid "Draft"
+msgstr "草稿"
+
+#: apps/core/models.py
+msgid "Published"
+msgstr "出版"
+
+#: apps/core/models.py
+msgid "Archived"
+msgstr "存档"
+
+#: apps/core/models.py
+msgid "Left to right"
+msgstr "从左到右"
+
+#: apps/core/models.py
+msgid "Right to left"
+msgstr "向左到左"
+
+#: apps/core/models.py
+msgid "Baseline"
+msgstr "基线"
+
+#: apps/core/models.py
+msgid "Topline"
+msgstr "顶线"
+
+#: apps/core/models.py
+msgid "Centered"
+msgstr "集中"
+
+#: apps/core/models.py
+msgid ""
+"The read direction describes the order of the elements in the document, in "
+"opposition with the text direction which describes the order of the words in"
+" a line and is set by the script."
+msgstr "读取方向描述了文档中元素的顺序，与文本方向相反，该方向描述了行中的单词顺序，并由脚本设置。"
+
+#: apps/core/models.py
+msgid "The position of the line relative to the polygon."
+msgstr "线相对于多边形的位置。"
+
+#: apps/core/models.py
+msgid "Show confidence visualizations"
+msgstr "显示信心可视化"
+
+#: apps/core/models.py
+msgid ""
+"If checked, enable toggling on and off colorized overlays for automatic "
+"transcription (OCR/HTR) confidences."
+msgstr "如果已检查，请启用打开和关闭着色的覆盖层以进行自动转录(OCR/HTR)信心。"
+
+#: apps/core/models.py
+msgid "Couldn't find the alignment task."
+msgstr "找不到对齐任务。"
+
+#: apps/core/models.py
+msgid "Binarized image needs to be the same size as original image."
+msgstr ""
+
+#: apps/core/models.py apps/users/models.py
+msgid "Created"
+msgstr "创建"
+
+#: apps/core/models.py
+msgid "Converting"
+msgstr "转换"
+
+#: apps/core/models.py
+msgid "Converted"
+msgstr "转换"
+
+#: apps/core/models.py
+msgid "Segmenting"
+msgstr "细分"
+
+#: apps/core/models.py
+msgid "Segmented"
+msgstr "分段"
+
+#: apps/core/models.py
+msgid "Transcribing"
+msgstr "转录"
+
+#: apps/core/models.py
+msgid "Aligning"
+msgstr "对齐"
+
+#: apps/core/models.py
+msgid "Aligned"
+msgstr "对齐"
+
+#: apps/core/models.py
+msgid "Element"
+msgstr "元素"
+
+#: apps/core/models.py
+#, python-format
+msgid "%(value)s is not a polygon - a 2 dimensional array."
+msgstr "%(value)s不是多边形-2维数阵列。"
+
+#: apps/core/models.py
+#, python-format
+msgid "Polygon needs to have at least 2 points, it has %(length)d: %(value)s."
+msgstr "多边形需要至少2分，它具有%(length)d: %(value)s。"
+
+#: apps/core/models.py
+#, python-format
+msgid "Polygon needs to have at least 3 points, it has %(length)d: %(value)s."
+msgstr "多边形需要至少3分，它具有%(length)d: %(value)s。"
+
+#: apps/core/models.py
+msgid "Both baseline and mask are empty."
+msgstr "基线和面具都是空的。"
+
+#: apps/core/models.py escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/segment.html
+msgid "Segment"
+msgstr "部分"
+
+#: apps/core/models.py
+msgid "Recognize"
+msgstr "认出"
+
+#: apps/core/models.py
+msgid "Couldn't find the training task."
+msgstr "找不到培训任务。"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the binarization!"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Binarization done!"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Training didn't get better results than base model!"
+msgstr "培训没有比基本模型更好的结果！"
+
+#: apps/core/tasks.py
+msgid "The model did not converge, probably because of lack of data."
+msgstr "该模型没有收敛，可能是由于缺乏数据。"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the segmenter training process!"
+msgstr "在分段培训过程中出现了问题！"
+
+#: apps/core/tasks.py
+msgid "Training finished!"
+msgstr "培训完成！"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the segmentation!"
+msgstr "分段期间出现了问题！"
+
+#: apps/core/tasks.py
+msgid "Segmentation done!"
+msgstr "分段完成！"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the training process!"
+msgstr "在培训过程中出现了问题！"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the transcription!"
+msgstr "转录期间出现了问题！"
+
+#: apps/core/tasks.py
+msgid "Transcription done!"
+msgstr "转录完成了！"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the alignment!"
+msgstr "对齐期间出现了问题！"
+
+#: apps/core/tasks.py
+msgid "Alignment done!"
+msgstr "对准了！"
+
+#: apps/core/views.py
+msgid "Project created successfully!"
+msgstr "项目成功创建！"
+
+#: apps/core/views.py
+msgid "Document created successfully!"
+msgstr "文档成功创建了！"
+
+#: apps/core/views.py
+msgid "Document saved successfully!"
+msgstr "文档成功保存了！"
+
+#: apps/core/views.py
+msgid "Ontology saved successfully!"
+msgstr "本体保存成功了！"
+
+#: apps/core/views.py
+msgid "Something went wrong during the ontology import..."
+msgstr "在本体导入期间出现了问题..."
+
+#: apps/core/views.py
+msgid "Ontology import finished with warnings."
+msgstr "本体论导入结束警告。"
+
+#: apps/core/views.py
+msgid "Ontology import finished successfully!"
+msgstr "本体学导入成功完成！"
+
+#: apps/core/views.py
+msgid "Document shared successfully!"
+msgstr "文档成功共享！"
+
+#: apps/core/views.py
+msgid "Project shared successfully!"
+msgstr "项目成功共享！"
+
+#: apps/core/views.py
+msgid "Document archived successfully!"
+msgstr "文档成功存档！"
+
+#: apps/core/views.py
+msgid "Document published successfully!"
+msgstr "已成功发布的文档！"
+
+#: apps/core/views.py
+msgid "Model uploaded successfully!"
+msgstr "模型成功上传了！"
+
+#: apps/core/views.py
+msgid "Model deleted successfully!"
+msgstr "模型成功删除了！"
+
+#: apps/core/views.py
+msgid "Right added successfully!"
+msgstr "正确添加了！"
+
+#: apps/core/views.py
+msgid "Right deleted successfully!"
+msgstr "正确删除了！"
+
+#: apps/core/views.py
+msgid "Document was successfully migrated to the selected project!"
+msgstr "文档已成功迁移到所选项目！"
+
+#: apps/imports/forms.py
+msgid "The document is unreachable, unreadable or the host timed out."
+msgstr "该文档是无法到达的，无法读取的，或者是主机的时间。"
+
+#: apps/imports/forms.py
+msgid ""
+"The document pointed to by the given uri doesn't seem to be valid json."
+msgstr "给定URI指向的文档似乎并不是有效的JSON。"
+
+#: apps/imports/forms.py
+msgid "Couldn't parse the given file or its validation failed"
+msgstr "无法解析给定文件或其验证失败"
+
+#: apps/imports/forms.py
+#, python-brace-format
+msgid ""
+"The name of the target transcription. Will default to '{format} Import'."
+msgstr "目标转录的名称。将默认为'{format}导入'。"
+
+#: apps/imports/forms.py
+msgid "A single ALTO or PAGE XML file, or a zip file."
+msgstr "单个中音或页面XML文件或zip文件。"
+
+#: apps/imports/forms.py
+msgid "Override existing segmentation."
+msgstr "覆盖现有的细分。"
+
+#: apps/imports/forms.py
+msgid ""
+"Destroys existing regions, lines and any bound transcription before "
+"importing."
+msgstr "在导入之前破坏现有区域，线路和任何约束转录。"
+
+#: apps/imports/forms.py
+msgid "IIIF manifest URI"
+msgstr "iiif表现为燃烧"
+
+#: apps/imports/forms.py
+msgid ""
+"exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
+msgstr ""
+"EXP: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
+
+#: apps/imports/forms.py
+msgid "Resume previous import"
+msgstr "恢复以前的导入"
+
+#: apps/imports/forms.py
+msgid "METS file URI"
+msgstr "Mets文件URI"
+
+#: apps/imports/forms.py
+msgid "A single ALTO or PAGE XML file."
+msgstr "单个中音或页面XML文件。"
+
+#: apps/imports/forms.py
+msgid ""
+"You're not allowed to import files from this domain, please contact your "
+"instance administrator."
+msgstr "您不允许从该域中导入文件，请联系您的实例管理员。"
+
+#: apps/imports/forms.py
+msgid "Choose one type of import."
+msgstr "选择一种类型的导入。"
+
+#: apps/imports/forms.py
+#, python-format
+msgid "Import in %(document_name)s"
+msgstr "在%(document_name)s中导入"
+
+#: apps/imports/forms.py
+msgid "Include images"
+msgstr "包括图像"
+
+#: apps/imports/forms.py
+msgid ""
+"Will significantly increase the time to produce and download the export."
+msgstr "将大大增加生产和下载导出的时间。"
+
+#: apps/imports/forms.py
+msgid "Select at least one image to export."
+msgstr ""
+
+#: apps/imports/forms.py
+#, python-format
+msgid "Export %(document_name)s"
+msgstr "导出%(document_name)s"
+
+#: apps/imports/forms.py
+msgid "A file containing a document ontology in JSON format"
+msgstr "包含JSON格式的文档本体的文件"
+
+#: apps/imports/parsers.py
+msgid "Invalid PDF file."
+msgstr "无效的PDF文件。"
+
+#: apps/imports/parsers.py
+msgid ""
+"You ran out of disk storage. {n_pages - page_nb} pages were left to import "
+"(over {n_pages - start_at})"
+msgstr "您用光了磁盘存储。{n_pages -page_nb}页面要导入({n_pages -start_at})"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Parse error in {filename}: {page}: {error}, skipping it."
+msgstr "{filename}中的解析错误: {page}:{error}，跳过它。"
+
+#: apps/imports/parsers.py
+msgid "Zip Import"
+msgstr "zip导入"
+
+#: apps/imports/parsers.py
+msgid "File appears to not be a valid zip."
+msgstr "文件似乎不是有效的邮政编码。"
+
+#: apps/imports/parsers.py
+msgid "Zip file appears to be corrupted."
+msgstr "zip文件似乎已损坏。"
+
+#: apps/imports/parsers.py
+msgid ""
+"You ran out of disk storage. {total - index} files were left to import (over"
+" {total - start_at})"
+msgstr "您用光了磁盘存储。{total -index}文件要导入(超过{总计 -  start_at})"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+msgstr "{filename}中的解析错误: {xmlfile}:{error}，跳过它。"
+
+#: apps/imports/parsers.py
+msgid "METS Import"
+msgstr "METS 导入"
+
+#: apps/imports/parsers.py
+msgid "No match found for file {} with filename \"{}\"."
+msgstr "未找到用于文件{}的fileName“ {}”的匹配。"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Block in '{filen}' line N°{line} was skipped because: {error}"
+msgstr "跳过了“ {filen}”行N°{line}的块，因为:{error} "
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid ""
+"Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
+msgstr "跳过了“ {filen}”行N°{line}(id: {lineid})的行，因为: {error}"
+
+#: apps/imports/parsers.py
+msgid "Default ALTO Import"
+msgstr "默认ALTO导入"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Block type {0} was automatically added to the ontology"
+msgstr "块类型{0}自动添加到本体学"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Invalid baseline {baseline} in {filen} line {linen}"
+msgstr "{filen} line {linen}中的无效基线{baseline}"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Line type {0} was automatically added to the ontology"
+msgstr "线类型{0}自动添加到本体学"
+
+#: apps/imports/parsers.py
+msgid "Default PAGE Import"
+msgstr "默认页面导入"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid ""
+"Line without baseline in {filen} line #{linen}, very likely that it will not"
+" be usable!"
+msgstr "在{filen}行＃{linen}中没有基线的行很可能是不可用的！"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Invalid coordinates for {tag} in {filen} line {line}"
+msgstr "{filen} line {line}中{tag}的无效坐标"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Couldn't decode invalid manifest ({error})"
+msgstr "无法解码无效的清单({error})"
+
+#: apps/imports/parsers.py
+msgid "Empty or invalid manifest, no images found."
+msgstr "空或无效的清单，找不到图像。"
+
+#: apps/imports/parsers.py
+msgid ""
+"You ran out of disk storage. {total - i} canvases were left to import (over "
+"{total - start_at})"
+msgstr "您用光了磁盘存储。{总计 -  i}画布被留下来导入(超过{总计 -  start_at})"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Error while fetching {filename}: {error}"
+msgstr "获取{filename}时错误: {error}"
+
+#: apps/imports/tasks.py
+msgid "Something went wrong during the import!"
+msgstr "导入期间出了问题！"
+
+#: apps/imports/tasks.py
+msgid "Import finished with warnings!"
+msgstr "导入结束警告！"
+
+#: apps/imports/tasks.py escriptorium/templates/reporting/taskreport_list.html
+msgid "Details"
+msgstr "细节"
+
+#: apps/imports/tasks.py
+msgid "Import done!"
+msgstr "导入！"
+
+#: apps/imports/tasks.py
+msgid "Something went wrong during the export!"
+msgstr "导出期间出了问题！"
+
+#: apps/imports/tasks.py
+msgid "Export done!"
+msgstr "导出完成！"
+
+#: apps/imports/tasks.py escriptorium/templates/core/models_list/table.html
+msgid "Download"
+msgstr "下载"
+
+#: apps/reporting/models.py
+msgid "Queued"
+msgstr "排队"
+
+#: apps/reporting/models.py
+msgid "Running"
+msgstr "跑步"
+
+#: apps/reporting/models.py
+msgid "Crashed"
+msgstr "坠毁"
+
+#: apps/reporting/models.py
+msgid "Finished"
+msgstr "完成的"
+
+#: apps/reporting/models.py
+msgid "Canceled"
+msgstr "取消"
+
+#: apps/users/admin.py
+#, python-format
+msgid "%d user disabled."
+msgid_plural "%d users disabled."
+msgstr[0] ""
+
+#: apps/users/admin.py
+#, python-format
+msgid "%d invitation was resent."
+msgid_plural "%d invitations were resent."
+msgstr[0] ""
+
+#: apps/users/forms.py
+msgid "Email or username."
+msgstr "电子邮件或用户名。"
+
+#: apps/users/forms.py
+msgid ""
+"Message : Please precise your institution or research center if applicable"
+msgstr "消息: 如果适用，请确定您的机构或研究中心"
+
+#: apps/users/management/commands/check_quotas.py
+msgid "Disk storage"
+msgstr "磁盘存储"
+
+#: apps/users/management/commands/check_quotas.py
+msgid "CPU minutes"
+msgstr "CPU分钟"
+
+#: apps/users/management/commands/check_quotas.py
+msgid "GPU minutes"
+msgstr "GPU分钟"
+
+#: apps/users/models.py
+msgid "email address"
+msgstr "电子邮件"
+
+#: apps/users/models.py
+msgid "Error"
+msgstr "错误"
+
+#: apps/users/models.py
+msgid "Sent"
+msgstr "发送"
+
+#: apps/users/models.py
+msgid "Received"
+msgstr "已收到"
+
+#: apps/users/models.py
+msgid "Accepted"
+msgstr "公认"
+
+#: apps/users/models.py
+msgid "Team"
+msgstr "团队"
+
+#: apps/users/models.py
+#, python-brace-format
+msgid "{username} accepted your invitation!"
+msgstr "{username}接受了您的邀请！"
+
+#: apps/users/views.py
+msgid "Invitation sent successfully!"
+msgstr "邀请成功发送了！"
+
+#: apps/users/views.py
+msgid "Successfully registered, you can now log in!"
+msgstr "成功注册，您现在可以登录！"
+
+#: apps/users/views.py
+#, python-brace-format
+msgid "You are now a member of Team {team_name}!"
+msgstr "您现在是团队{team_name}的成员！"
+
+#: apps/users/views.py
+#, python-brace-format
+msgid "User {user} successfully removed from the team {team_name}."
+msgstr "用户{user}成功地从团队{team_name}中删除。"
+
+#: apps/users/views.py
+#, python-brace-format
+msgid "You successfully left {team}."
+msgstr "您成功离开{team}。"
+
+#: apps/users/views.py
+#, python-brace-format
+msgid "Successfully transferred ownership to {user}."
+msgstr "成功将所有权转移到{user}。"
+
+#: apps/users/views.py
+msgid "Profile successfully saved."
+msgstr "个人资料成功保存。"
+
+#: apps/users/views.py
+msgid "Team successfully created."
+msgstr "团队成功创建了。"
+
+#: apps/users/views.py
+msgid "User successfully invited to the team."
+msgstr "用户成功地邀请了团队。"
+
+#: apps/users/views.py
+msgid "Message successfully sent."
+msgstr "消息成功发送。"
+
+#: escriptorium/settings.py
+msgid "English"
+msgstr "英语"
+
+#: escriptorium/settings.py
+msgid "French"
+msgstr "法语"
+
+#: escriptorium/settings.py
+msgid "German"
+msgstr "德语"
+
+#: escriptorium/templates/403.html
+msgid "You don't have permission to view or edit this document."
+msgstr "您无权查看或编辑此文档。"
+
+#: escriptorium/templates/404.html
+msgid "Page not found."
+msgstr "找不到页面。"
+
+#: escriptorium/templates/base.html
+msgid "About"
+msgstr "关于"
+
+#: escriptorium/templates/base.html
+msgid "Contact"
+msgstr "接触"
+
+#: escriptorium/templates/base.html
+msgid "Search in all your projects"
+msgstr "在所有项目中搜索"
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/core/project_list.html
+msgid "My Projects"
+msgstr "我的项目"
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/core/models_list/main.html
+msgid "My Models"
+msgstr "我的模型"
+
+#: escriptorium/templates/base.html
+#, python-format
+msgid "Hello %(username)s"
+msgstr "您好%(username)s"
+
+#: escriptorium/templates/base.html
+msgid "Change password"
+msgstr "更改密码"
+
+#: escriptorium/templates/base.html
+msgid "Profile"
+msgstr "轮廓"
+
+#: escriptorium/templates/base.html
+msgid "Task reports"
+msgstr "任务报告"
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/core/documents_tasks_list.html
+msgid "Tasks monitoring"
+msgstr "任务监视"
+
+#: escriptorium/templates/base.html
+msgid "Leaderboard"
+msgstr "排行榜"
+
+#: escriptorium/templates/base.html
+msgid "Site administration"
+msgstr "现场管理"
+
+#: escriptorium/templates/base.html
+msgid "Invite"
+msgstr "邀请"
+
+#: escriptorium/templates/base.html
+msgid "Logout"
+msgstr "注销"
+
+#: escriptorium/templates/base.html
+msgid "Login"
+msgstr "登录"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/document_part_edit.html
+msgid "Update a Document"
+msgstr "更新文档"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/document_part_edit.html
+msgid "Create a new Document"
+msgstr "创建一个新文档"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Share this Document"
+msgstr "分享此文档"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/migrate/migrate_document.html
+msgid "Migrate to another project"
+msgstr "迁移到另一个项目"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_list.html
+msgid "Do you really want to delete the document?"
+msgstr "您真的想删除文档吗？"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_list.html
+msgid "Delete"
+msgstr "删除"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Metadata"
+msgstr "元数据"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_ontology.html
+#: escriptorium/templates/core/project_form.html
+msgid "Update"
+msgstr "更新"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_ontology.html
+#: escriptorium/templates/core/project_form.html
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Create"
+msgstr "创造"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Drop images here or click to upload."
+msgstr "在此处放置图像或单击上传。"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Select all"
+msgstr "选择全部"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Unselect all"
+msgstr "取消选择"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Loading"
+msgstr "加载中"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Selected"
+msgstr "选定"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "You don't have any CPU minutes left"
+msgstr "您没有任何CPU分钟"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/document_ontology.html
+#: escriptorium/templates/core/ontology/import_ontology.html
+msgid "Import"
+msgstr "导入"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Importing"
+msgstr "正在导入"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/document_ontology.html
+#: escriptorium/templates/core/wizards/export.html
+msgid "Export"
+msgstr "导出"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "You don't have any GPU minutes left"
+msgstr "您没有GPU分钟"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "You don't have any disk storage left"
+msgstr "您没有任何磁盘存储空间"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Train a segmenter/recognizer model."
+msgstr "训练分段/识别器模型。"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/segtrain.html
+#: escriptorium/templates/core/wizards/train.html
+msgid "Train"
+msgstr "训练"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/models_list/table.html
+msgid "Cancel training"
+msgstr "取消培训"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Binarize selected images."
+msgstr ""
+
+#: escriptorium/templates/core/document_images.html
+msgid "Binarize"
+msgstr ""
+
+#: escriptorium/templates/core/document_images.html
+msgid "Segment selected images."
+msgstr "部分选定的图像。"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Start transcribing selected images."
+msgstr "开始转录选定的图像。"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/transcribe.html
+msgid "Transcribe"
+msgstr "录制"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Align transcribed images to a textual witness (reference text)."
+msgstr "将转录的图像与文本见证(参考文本)相结合。"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/align.html
+msgid "Align"
+msgstr "对齐"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Delete this image and all its data (segmentation, transcriptions)"
+msgstr "删除此图像及其所有数据(分割，转录)"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Cancel tasks"
+msgstr "取消任务"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/search/base.html
+msgid "Edit"
+msgstr "编辑"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Compressing"
+msgstr "压缩"
+
+#: escriptorium/templates/core/document_list.html
+msgid "My Documents"
+msgstr "我的文件"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Create new Document"
+msgstr "创建新文档"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Manage tags"
+msgstr "管理标签"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Share this Project"
+msgstr "分享这个项目"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Filters"
+msgstr "过滤器"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Select"
+msgstr "选择"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Preview"
+msgstr "预览"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Name"
+msgstr "姓名"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/core/project_list.html
+msgid "Owner"
+msgstr "所有者"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Last modified"
+msgstr "最后修改"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Image count"
+msgstr "图像计数"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Tags"
+msgstr "标签"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Actions"
+msgstr "动作"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Shared with"
+msgstr "与之共享"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Last modified on"
+msgstr "最后修改"
+
+#: escriptorium/templates/core/document_list.html
+#, python-format
+msgid "1 image."
+msgid_plural "%(n)s images."
+msgstr[0] ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Edit last updated Element"
+msgstr "编辑最后更新的元素"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Do you really want to remove the document from your list?"
+msgstr "您真的想从列表中删除文档吗？"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/core/project_list.html
+msgid "Remove from list"
+msgstr "从列表中删除"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Back to document list"
+msgstr "返回文档列表"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Description"
+msgstr "描述"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Ontology"
+msgstr "本体论"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Images"
+msgstr "图像"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Models"
+msgstr "型号"
+
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
+msgid "Reports"
+msgstr "报告"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Select a specific transcription to search in."
+msgstr "选择一个特定的转录以进行搜索。"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "All levels"
+msgstr "所有级别"
+
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
+#, python-format
+msgid "Search in %(name)s"
+msgstr "在%(name)s里搜索"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Document Ontology"
+msgstr "文档本体论"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Lines and Regions typologies:"
+msgstr "线和区域类型: "
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "The default configuration only contains semantic types."
+msgstr "默认配置仅包含语义类型。"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "It is not recommended to mix semantic, stylistic and layout types."
+msgstr "不建议混合语义，风格和布局类型。"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid ""
+"<b>It is required to hit 'Update' to add your new types to the document.</b>"
+msgstr "<b>需要点击“更新”才能将您的新类型添加到文档中。</b>"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Annotations:"
+msgstr "注释: "
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Each Annotation can store values for different components."
+msgstr "每个注释可以存储不同组件的值。"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid ""
+"<b>Components needs to be saved first before adding them to Annotation "
+"definitions.</b>"
+msgstr "<b>组件需要先保存，然后再将其添加到注释定义中。</b>"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid ""
+"Annotation types allow to regroup the corresponding buttons in the editing "
+"interface (and may be used as a hint for import/export)."
+msgstr "注释类型允许在编辑接口中重组相应的按钮(并且可以用作导入/导出的提示)。"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Region types"
+msgstr "区域类型"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Add a region type"
+msgstr "添加区域类型"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Line types"
+msgstr "行类型"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Add a line type"
+msgstr "添加行类型"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Part types"
+msgstr "零件类型"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Add a part type"
+msgstr "添加零件类型"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Annotations components"
+msgstr "注释组件"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Image Annotations"
+msgstr "图像注释"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Text Annotations"
+msgstr "文本注释"
+
+#: escriptorium/templates/core/home.html
+msgid "Homepage"
+msgstr "首页"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"eScriptorium: A Digital Text Production Pipeline for Print and Handwritten "
+"Texts using machine learning techniques."
+msgstr "Escriptorium: 使用机器学习技术的数字文本生产管道，用于打印和手写文本。"
+
+#: escriptorium/templates/core/home.html
+msgid "Automatic<br>Transcription"
+msgstr "自动<br>转录"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"Apply OCR/HTR to images of printed and handwritten documents using shared "
+"open models."
+msgstr "将OCR/HTR应用于使用共享的打开模型的印刷和手写文档的图像。"
+
+#: escriptorium/templates/core/home.html
+msgid "Manual<br>Transcription"
+msgstr "手册<br>转录"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"Make use of an ergonomic user interface leveraging modern browser technology"
+" to edit segmentations and transcriptions."
+msgstr "利用现代浏览器技术编辑分割和识别的符合人体工程学的用户界面。"
+
+#: escriptorium/templates/core/home.html
+msgid "Train<br>Models"
+msgstr "训练<br>模型"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"Create new models or finetune existing ones to improve automatic "
+"recognition."
+msgstr "创建新的模型或Finetune现有模型以改善自动识别。"
+
+#: escriptorium/templates/core/home.html
+msgid "Import/<br>Export"
+msgstr "导入/<br>导出"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"Import and export models and texts transcriptions in a variety of formats. "
+"Access data through a full REST API."
+msgstr "导入和导出模型和文本以各种格式的转录。通过完整的REST API访问数据。"
+
+#: escriptorium/templates/core/home.html
+msgid "Resources"
+msgstr "资源"
+
+#: escriptorium/templates/core/home.html
+msgid "Tutorial"
+msgstr "教程"
+
+#: escriptorium/templates/core/home.html
+msgid "eScriptorium open source code"
+msgstr "escimctorium开源代码"
+
+#: escriptorium/templates/core/home.html
+msgid "eScriptorium Blog"
+msgstr "Escriptorium博客"
+
+#: escriptorium/templates/core/home.html
+msgid "Legal mentions"
+msgstr "法律提及"
+
+#: escriptorium/templates/core/migrate/migrate_document.html
+msgid "Migrate"
+msgstr "迁移"
+
+#: escriptorium/templates/core/models_list/main.html
+#: escriptorium/templates/core/ocrmodel_form.html
+msgid "Upload a model"
+msgstr "上传模型"
+
+#: escriptorium/templates/core/models_list/rights/delete.html
+msgid "Delete right"
+msgstr "正确删除"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "shares"
+msgstr "股票"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Full name or identifier"
+msgstr "全名或标识符"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Recipient type"
+msgstr "收件人类型"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+#: escriptorium/templates/registration/login.html
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Username"
+msgstr "用户名"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "User full name"
+msgstr "用户全名"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Group name"
+msgstr "组名"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Group identifier"
+msgstr "组标识符"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Stop sharing"
+msgstr "停止共享"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "or"
+msgstr "或者"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Add right"
+msgstr "正确添加"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Role"
+msgstr "角色"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Script"
+msgstr "脚本"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Size"
+msgstr "尺寸"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Trained from"
+msgstr "接受训练"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Training Status"
+msgstr "培训状况"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Accuracy"
+msgstr "准确性"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Right"
+msgstr "正确的"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Model name"
+msgstr "模型名称"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Model role"
+msgstr "模型角色"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Model script"
+msgstr "模型脚本"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Filter by script"
+msgstr "通过脚本过滤"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Parent from which the model was trained"
+msgstr "训练模型的父母"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Is currently training"
+msgstr "目前正在训练"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Is done training"
+msgstr "完成培训"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Gathering data"
+msgstr "收集数据"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Toggle versions"
+msgstr "切换版本"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Share model"
+msgstr "共享模型"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Unbind model from the document"
+msgstr "从文档中解开模型"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Delete model"
+msgstr "删除模型"
+
+#: escriptorium/templates/core/ocrmodel_form.html
+msgid "Upload"
+msgstr "上传"
+
+#: escriptorium/templates/core/ontology/import_ontology.html
+msgid "Import an ontology in this document"
+msgstr "在本文档中导入本体论"
+
+#: escriptorium/templates/core/project_form.html
+msgid "Update a Project"
+msgstr "更新项目"
+
+#: escriptorium/templates/core/project_form.html
+msgid "Create a new Project"
+msgstr "创建一个新项目"
+
+#: escriptorium/templates/core/project_list.html
+msgid "Create new Project"
+msgstr "创建新项目"
+
+#: escriptorium/templates/core/project_list.html
+#, python-format
+msgid "1 document."
+msgid_plural "%(n)s documents."
+msgstr[0] ""
+
+#: escriptorium/templates/core/project_list.html
+msgid "Do you really want to remove the project from your list?"
+msgstr "您真的想从列表中删除项目吗？"
+
+#: escriptorium/templates/core/project_nav.html
+msgid "Documents"
+msgstr "文件"
+
+#: escriptorium/templates/core/search/base.html
+#, python-format
+msgid ""
+"\n"
+"          Currently searching entered text in the document named <strong>%(name)s</strong>.\n"
+"        "
+msgstr ""
+"\n"
+" 当前搜索的文档中输入的文本名为<strong>%(name)s</strong>。\n"
+"        "
+
+#: escriptorium/templates/core/search/base.html
+#, python-format
+msgid "And on the transcription level <strong>%(name)s</strong>."
+msgstr "在转录级别<strong>%(name)s</strong>。"
+
+#: escriptorium/templates/core/search/base.html
+#, python-format
+msgid "And in the part named <strong>%(name)s</strong>."
+msgstr "并在名为<strong>%(name)s</strong>的部分中。"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Results"
+msgstr "结果"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Content"
+msgstr "内容"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Image preview"
+msgstr "图像预览"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Score"
+msgstr "分数"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Previous line"
+msgstr "以前的行"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Line transcription"
+msgstr "线转录"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Search terms found in previous or next line."
+msgstr "在上线或下一行中找到的搜索词。"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Next line"
+msgstr "下线"
+
+#: escriptorium/templates/core/search/base.html
+#, python-format
+msgid "Line <strong>#%(line)s</strong> of"
+msgstr "线<strong>#%(line)s </strong>"
+
+#: escriptorium/templates/core/search/base.html
+msgid "in document"
+msgstr "在文档中"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Filter results by this document"
+msgstr "该文档的过滤结果"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Filter results by this transcription level"
+msgstr "通过此转录级别的过滤结果"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Full image cropped according to the transcription bounding box"
+msgstr "根据转录边界框裁剪的完整图像"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Image preview is not available for this search result"
+msgstr "图像预览无法用于此搜索结果"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Search score"
+msgstr "搜索分数"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Go to document part editing page"
+msgstr "转到文档零件编辑页面"
+
+#: escriptorium/templates/core/search/base.html
+msgid "No results matched your search."
+msgstr "没有结果与您的搜索相匹配。"
+
+#: escriptorium/templates/core/search/find_and_replace.html
+msgid "Find and replace in projects"
+msgstr "查找和替换项目"
+
+#: escriptorium/templates/core/search/find_and_replace.html
+msgid "Find and replace text in projects"
+msgstr "在项目中查找并替换文本"
+
+#: escriptorium/templates/core/search/find_and_replace.html
+msgid "Find"
+msgstr "寻找"
+
+#: escriptorium/templates/core/search/find_and_replace.html
+msgid "Filter results by this part"
+msgstr "按此部分的过滤结果"
+
+#: escriptorium/templates/core/search/search.html
+msgid "Search in projects"
+msgstr "在项目中搜索"
+
+#: escriptorium/templates/core/search/search.html
+msgid "Search text in projects"
+msgstr "项目中的搜索文字"
+
+#: escriptorium/templates/core/search/search.html
+msgid "Search feature is deactivated on this instance."
+msgstr "搜索功能在此实例上停用。"
+
+#: escriptorium/templates/core/search/search.html
+msgid "Search"
+msgstr "搜索"
+
+#: escriptorium/templates/core/search/search.html
+msgid ""
+"Couldn't connect to Elasticsearch, please contact your instance "
+"administrator."
+msgstr "无法连接到Elasticsearch,请联系您的实例管理员。"
+
+#: escriptorium/templates/core/search/search.html
+#: escriptorium/templates/core/wizards/import.html
+msgid "Reason:"
+msgstr "原因: "
+
+#: escriptorium/templates/core/share/share_base.html
+msgid "Share with"
+msgstr "与"
+
+#: escriptorium/templates/core/share/share_base.html
+#: escriptorium/templates/users/profile.html
+msgid "Teams"
+msgstr "团队"
+
+#: escriptorium/templates/core/share/share_base.html
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Users"
+msgstr "用户"
+
+#: escriptorium/templates/core/share/share_base.html
+msgid "Close"
+msgstr "关闭"
+
+#: escriptorium/templates/core/share/share_base.html
+msgid "Share"
+msgstr "分享"
+
+#: escriptorium/templates/core/wizards/_base.html
+msgid "image(s) selected."
+msgstr "选择的图像。"
+
+#: escriptorium/templates/core/wizards/align.html
+msgid ""
+"Choose a transcription and a textual witness (reference text) to align to "
+"the transcription."
+msgstr "选择转录和文本证人(参考文本)以与转录保持一致。"
+
+#: escriptorium/templates/core/wizards/align.html
+#: escriptorium/templates/core/wizards/transcribe.html
+msgid "Select a transcription"
+msgstr "选择转录"
+
+#: escriptorium/templates/core/wizards/align.html
+msgid "Upload or select a textual witness"
+msgstr "上传或选择文本证人"
+
+#: escriptorium/templates/core/wizards/align.html
+msgid "Settings"
+msgstr "设置"
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid ""
+"Binarization is NOT a mandatory step any more, and might even decrease "
+"quality."
+msgstr ""
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid "Manually"
+msgstr ""
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid "Or automatically"
+msgstr ""
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid "Contrast"
+msgstr ""
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid "Upload or Binarize"
+msgstr ""
+
+#: escriptorium/templates/core/wizards/import.html
+#, python-format
+msgid "See %(opentag)sthe import documentation%(closetag)s for details."
+msgstr "有关详细信息，请参见%(opentag)sthe导入文档%(closetag)s。"
+
+#: escriptorium/templates/core/wizards/import.html
+msgid ""
+"Import is already ongoing, please wait for it to be finished or cancel it."
+msgstr "导入已经在进行中，请等待完成或取消它。"
+
+#: escriptorium/templates/core/wizards/import.html
+msgid "Resume previous import."
+msgstr "恢复以前的导入。"
+
+#: escriptorium/templates/core/wizards/import.html
+#, python-format
+msgid "Previous import (%(filename)s) failed at step %(progress)s/%(total)s."
+msgstr "先前的导入(%(filename)s)在step%(progress)s/%(total)s上失败。"
+
+#: escriptorium/templates/core/wizards/import.html
+msgid "Or"
+msgstr "或者"
+
+#: escriptorium/templates/core/wizards/import.html
+#: escriptorium/templates/core/wizards/import_file.html
+#: escriptorium/templates/core/wizards/import_mets.html
+#: escriptorium/templates/core/wizards/import_pdf.html
+msgid "Start importing"
+msgstr "开始导入"
+
+#: escriptorium/templates/core/wizards/import_file.html
+msgid "Import segmentation & transcriptions from XML."
+msgstr "XML的导入细分和转录。"
+
+#: escriptorium/templates/core/wizards/import_iiif.html
+msgid "Import images from IIIF."
+msgstr "从IIIF导入图像。"
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "Import images/segmentation/transcriptions described by METS."
+msgstr "导入图像/分割/转录由Mets描述。"
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "The prefix of the target transcription. Will default to \"METS Import\""
+msgstr "目标转录的前缀。将默认为“ Mets Import”"
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "From a remote METS file"
+msgstr "从远程mets文件"
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "Or from a local archive"
+msgstr "或来自当地档案"
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "A single ZIP archive described by a METS file contained inside it."
+msgstr "其中包含的MetS文件描述的单个ZIP存档。"
+
+#: escriptorium/templates/core/wizards/import_pdf.html
+msgid "Import images from a PDF document."
+msgstr "从PDF文档导入图像。"
+
+#: escriptorium/templates/core/wizards/import_pdf.html
+msgid "A single pdf with one image per page."
+msgstr "每个页面一个图像的单个PDF。"
+
+#: escriptorium/templates/core/wizards/segment.html
+msgid "Beware that re-segmenting will delete any existing transcriptions!"
+msgstr "请注意，重新分割将删除任何现有的转录！"
+
+#: escriptorium/templates/core/wizards/segment.html
+#: escriptorium/templates/core/wizards/transcribe.html
+msgid "Select a model"
+msgstr "选择一个模型"
+
+#: escriptorium/templates/core/wizards/segtrain.html
+msgid "(PLACEHOLDER)"
+msgstr "(占位符)"
+
+#: escriptorium/templates/core/wizards/segtrain.html
+#: escriptorium/templates/core/wizards/train.html
+msgid "New model"
+msgstr "新型号"
+
+#: escriptorium/templates/core/wizards/segtrain.html
+#: escriptorium/templates/core/wizards/train.html
+msgid "Or select an existing one"
+msgstr "或选择现有的"
+
+#: escriptorium/templates/core/wizards/train.html
+msgid ""
+"The training data will be generated from the selected images and "
+"transcription."
+msgstr "训练数据将从选定的图像和转录中生成。"
+
+#: escriptorium/templates/core/wizards/train.html
+msgid "Empty lines will be ignored."
+msgstr "空线将被忽略。"
+
+#: escriptorium/templates/core/wizards/train.html
+msgid ""
+"Gathering data can take time and the model won't be available in the models "
+"tab until then."
+msgstr "收集数据可能需要时间，并且在此之前的“模型”选项卡中无法使用该模型。"
+
+#: escriptorium/templates/core/wizards/transcribe.html
+msgid ""
+"Make sure that the segmentation is good before going forward because "
+"resegmenting will delete all bound transcriptions."
+msgstr "在进行之前，请确保细分良好，因为重新召集将删除所有绑定的转录。"
+
+#: escriptorium/templates/includes/help/baseline_editor.html
+msgid ""
+"\n"
+"<p>\n"
+"    <b>Left click</b> on the image to <u>create</u> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> again to <u>finish</u> it.\n"
+"    <br/>You can keep the mouse button pressed for free drawing.\n"
+"    <br/>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.\n"
+"    <br/>If regions matter to you switch to region mode first <i class=\"fas fa-th-large\"></i> (R key).\n"
+"    <br/>when in region mode <b>Left click</b> to create a new rectangular region, left click again to finish it.\n"
+"    <br/>lines drawn inside a region will automatically be bound to it.\n"
+"    <br/>When the quality of the segmentation is good, you can prompt the system to calculate masks <i class=\"text-success fas fa-thumbs-up\"></i>,\n"
+"    <br/>once a page already has masks new lines will automatically get a mask and updating a line will also recalculate its mask.\n"
+"    <br/><b>Note</b> that the quality of the masks is highly dependent on the quality of the whole segmentation, not only the corresponding line,\n"
+"    <br/>so make sure to draw all the lines before calculating the masks.\n"
+"    <br>You can also have the option to calculate the masks <i>en masse</i> in the Images tab -> segment -> choose 'Only masks'.\n"
+"</p>\n"
+"<p>\n"
+"    <b>Left click</b> on a line to select it, then you can drag its closest control point.\n"
+"    <br/><b>Double click</b> on the line will create a <u>new control point</u> at the mouse location.\n"
+"    <br/>You can reverse the order of the line's points by selecting a line (or multiple) and using reverse <i class=\"fas fa-arrow-alt-h\"></i> (I key).\n"
+"    <br/>When in region mode, Regions can be edited the same way.\n"
+"    <br/>Selected lines can be linked or unlinked to regions with the corresponding buttons <i class=\"fas fa-link\"></i>(Y key) <i class=\"fas fa-unlink\"> (U key).</i>\n"
+"    <br/>By using the cut mode <i class=\"text-warning fas fa-cut\"></i> (C key) you can cut through lines, splitting them in two or removing part of them.\n"
+"    <br/>If at least two lines are selected an option to join them becomes available <i class=\"fas fa-compress-arrows-alt\"></i> (J key).\n"
+"    <br/>You can go through your changes <u>history</u> back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons <i class=\"fas fa-undo\"></i><i class=\"fas fa-redo\"></i>.\n"
+"</p>\n"
+"<p>\n"
+"    <b>Shift+click</b> allows to add or remove a line from the <u>selection</u>,\n"
+"    <br/>Clicking on an empty space clears the selection,\n"
+"    <br/><b>shift and drag</b> creates a <u>lasso</u> selection tool that allows to select control points (they then appear black).\n"
+"    <br/><b>Note:</b> If lines are already selected the lasso will only select points in those lines.\n"
+"    <br/><b>Ctrl+drag</b> allows to move all the selected control points at once (or the selected lines if no control points are selected).\n"
+"\n"
+"    <br/>The red trash <i class=\"text-danger fas fa-trash\"></i> button <b>deletes</b> all selected <b>lines/regions</b>,\n"
+"    <br/>The yellow trash button <i class=\"text-warning fas fa-trash\"></i> only <b>deletes</b> selected control <b>points</b>.\n"
+"</p>\n"
+msgstr ""
+"\n"
+"<p>\n"
+"<b>图像上的左键单击</b> <u>创建新行，<b>右键单击</b> <b> <b>添加点</b> and <b> <b> <b>再次单击</b>再次单击</b>到<u> teright </u> it </u> IT。\n"
+"<br/>您可以按下鼠标按钮免费绘图。\n"
+"<br/>敲击<b>逃脱</b>绘制线路<u>取消</u> it。\n"
+"<br/>如果区域与您至关重要，请切换到区域模式，首先<i class =“ fas fa-thlage”> </i>(r键)。\n"
+"<br/>在区域模式下<b>左键单击</b>以创建一个新的矩形区域，请再次单击以完成它。\n"
+"<br/>在区域内绘制的线将自动与之绑定。\n"
+"<br/>当分割的质量良好时，您可以提示系统计算掩码<i class =“ text-success fas fa-thumbs-up”> </i>,\n"
+"<br/>一页已经有一个掩码后，新行将自动获取掩码，并且更新线路还将重新计算其面罩。\n"
+"<br/> <b> note </b> </b>掩码的质量高度取决于整个分割的质量，不仅是相应的行，\n"
+"<br/>因此，请确保在计算口罩之前绘制所有线条。\n"
+"<br>您还可以选择在“图像”选项卡 - > segment->中计算蒙版<i> en Masse </i>  - >选择“仅蒙版”。\n"
+"</p>\n"
+"<p>\n"
+"<b>左键单击</b>在一条线上选择它，然后可以拖动其最接近的控制点。\n"
+"<br/> <b>双点击</b>在行上将在鼠标位置创建一个新的控制点</u>。\n"
+"<br/>您可以通过选择一条线(或多个)并使用反向<i class =“ fas fa-arrow-alt-h”> </i>(i键)来逆转行点的顺序。\n"
+"<br/>在区域模式下，可以以相同的方式编辑区域。\n"
+"<br/>选定的行可以通过相应的按钮<i class =“ fas fa-link”> </i>(y键)<i class =“ fas fa-unlink”>(u键)。\n"
+"<br/>通过使用剪切模式<i class =“文本绘制fas fa-cut”> </i>(c键)，您可以切开线，将它们分成两个或删除部分。\n"
+"<br/>如果选择了至少两行以加入它们的选项，则可以使用<i class =“ fas fa-compress-arrows-alt”> </i>(j键)。\n"
+"<br/>您可以使用<b> ctrl+z </b>(undo)和<b> ctrl+y </b>(redo)或使用相应的按钮<i class =“ fa-undo”> fa-undo“> </i> class =” fa-fa-redo fa-redo </> </> </> </> </> </> <\n"
+"</p>\n"
+"<p>\n"
+"<b> shift+单击</b>允许从<u>选择</u>中添加或删除一行\n"
+"<br/>单击空白空间可以清除选择，\n"
+"<br/> <b> shift and drag </b>创建<u> lasso </u>选择工具，可以选择控制点(然后它们出现黑色)。\n"
+"<br/> <b>注意: </b>如果已经选择了行，则套索仅在这些行中选择点。\n"
+"<br/> <b> ctrl+drag </b>允许一次移动所有选定的控制点(或者如果未选择控制点，则选择的行)。\n"
+"\n"
+"<br/>红色垃圾<i class =“ text-danger fas fa-trash”> </i> button <b> deletes </b>所有选定的<b> lines/regions </b>,\n"
+"<br/>黄色垃圾按钮<i class =“文本绘制FA-FA-TRASH”> </i>仅<b> deletes </b>选定的控件<b>点</b>。\n"
+"</p>\n"
+
+#: escriptorium/templates/includes/help/compare_transcriptions.html
+msgid ""
+"\n"
+"<p style=\"direction:ltr\">\n"
+"    Each line is a different transcription as checked in the transcription management window <i class=\"fas fa-cog\"></i>\n"
+"    <br>The colors represent the difference with the current transcription,\n"
+"    <br><font color=\"green\">green</font> characters are not present in the current (editable) transcription while <font color=\"red\">red</font> characters are not present in the compared transcription.\n"
+"</p>\n"
+msgstr ""
+"\n"
+"<p style =“方向: ltr”>\n"
+"每行都是不同的转录，如在“转录管理”窗口中检查的，<i class =“ fas fa-cog”> </i>\n"
+"<br>颜色代表与当前转录的差异，\n"
+"<br> <font color =“绿色”>绿色</font>字符在当前(可编辑)转录中不存在，而<font color =“ red”> red </font> red </font>在比较的转录中不存在。\n"
+"</p>\n"
+
+#: escriptorium/templates/includes/help/versions.html
+msgid ""
+"\n"
+"<p style=\"direction:ltr\">\n"
+"    Each line corresponds to an edition of the content, in inverse chronological order (Most recent at the top).\n"
+"    <br>The colors represent the difference with the previous version,\n"
+"    <br><font color=\"green\">green</font> are <b>additions</b> while <font color=\"red\">red</font> are <b>deletions</b>,\n"
+"    <br>meaning red characters are not actually part of the line anymore, they are displayed to easily spot the differences.\n"
+"    <br>You can mouse over the text to see the actual content.\n"
+"    <br>The load state button <i class=\"fas fa-file-upload\"></i> simply revert the content of the line to the corresponding text version.\n"
+"</p>\n"
+msgstr ""
+"\n"
+"<p style =“方向: ltr”>\n"
+"每行以反时间顺序(最新的最新时间)对应于内容的版本。\n"
+"<br>颜色代表了上一个版本的区别，\n"
+"<br> <font color =“绿色”>绿色</font>是<b>加法</b>而<font color =“ red”> red </font>是<b>删除</b>,\n"
+"<br>意味着红色字符实际上不再是该行的一部分，而是显示它们以轻松发现差异。\n"
+"<br>您可以在文本上鼠标以查看实际内容。\n"
+"<br> load状态按钮<i class =“ FA FA FA-FILE-UPLOAD”> </i>只需将行的内容还原为相应的文本版本即可。\n"
+"</p>\n"
+
+#: escriptorium/templates/includes/help/versions_diff.html
+msgid ""
+"\n"
+"lala\n"
+msgstr ""
+"\n"
+"拉拉\n"
+
+#: escriptorium/templates/includes/pagination.html
+#, python-format
+msgid ""
+"\n"
+"          Show %(page)s\n"
+"          "
+msgstr ""
+"\n"
+"显示%(page)s"
+
+#: escriptorium/templates/includes/pagination.html
+msgid "First page"
+msgstr "第一页"
+
+#: escriptorium/templates/includes/pagination.html
+msgid "Previous"
+msgstr "以前的"
+
+#: escriptorium/templates/includes/pagination.html
+#, python-format
+msgid ""
+"\n"
+"                %(page_number)s out of %(num_pages)s\n"
+"              "
+msgstr ""
+"\n"
+"%(page_number)s out%(num_pages)s"
+
+#: escriptorium/templates/includes/pagination.html
+#, python-format
+msgid ""
+"\n"
+"                %(counter)s out of %(num_pages)s\n"
+"              "
+msgstr ""
+"\n"
+"%(counter)s in%(num_pages)s"
+
+#: escriptorium/templates/includes/pagination.html
+msgid "Next"
+msgstr "下一个"
+
+#: escriptorium/templates/includes/pagination.html
+msgid "Last page"
+msgstr "最后一页"
+
+#: escriptorium/templates/registration/login.html
+msgid "Please Sign In"
+msgstr "请登录"
+
+#: escriptorium/templates/registration/login.html
+msgid "Your username and password didn't match. Please try again."
+msgstr "您的用户名和密码不匹配。请重试。"
+
+#: escriptorium/templates/registration/login.html
+msgid "Please login to see this page."
+msgstr "请登录以查看此页面。"
+
+#: escriptorium/templates/registration/login.html
+msgid "Password"
+msgstr "密码"
+
+#: escriptorium/templates/registration/login.html
+msgid "Lost password?"
+msgstr "丢失密码？"
+
+#: escriptorium/templates/registration/password_change_done.html
+msgid "Your password has successfully been changed."
+msgstr "您的密码已成功更改。"
+
+#: escriptorium/templates/registration/password_change_form.html
+#: escriptorium/templates/registration/password_reset_form.html
+msgid "Change your password"
+msgstr "更改密码"
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid ""
+"\n"
+"                  Please correct the error below.\n"
+"              "
+msgid_plural ""
+"\n"
+"                  Please correct the errors below.\n"
+"              "
+msgstr[0] ""
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid ""
+"Please enter your old password, for security's sake, and then enter your new"
+" password twice so we can verify you typed it in correctly."
+msgstr "为了安全起见，请输入您的旧密码，然后两次输入新密码，以便我们可以正确验证您的键入。"
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid "Old password:"
+msgstr "旧密码: "
+
+#: escriptorium/templates/registration/password_change_form.html
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid "New password:"
+msgstr "新密码: "
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid "New password confirmation:"
+msgstr "新密码确认: "
+
+#: escriptorium/templates/registration/password_change_form.html
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid "Change my password"
+msgstr "更改我的密码"
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid "Lost your password?"
+msgstr "丢失了密码？"
+
+#: escriptorium/templates/registration/password_reset_complete.html
+msgid "Your password has been set.  You may go ahead and "
+msgstr "您的密码已设置。您可能会继续"
+
+#: escriptorium/templates/registration/password_reset_complete.html
+msgid "log in"
+msgstr "登录"
+
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid "Reset your password"
+msgstr "重置您的密码"
+
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid ""
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr "请两次输入您的新密码，以便我们可以正确验证您的键入。"
+
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid "Confirm password:"
+msgstr "确认密码: "
+
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used.  Please request a new password reset."
+msgstr "密码重置链接无效，可能是因为已经使用了。请请求新密码重置。"
+
+#: escriptorium/templates/registration/password_reset_done.html
+msgid ""
+"We’ve emailed you instructions for setting your password, if an account "
+"exists with the email you entered. You should receive them shortly."
+msgstr "如果您输入的电子邮件中存在帐户，我们已通过电子邮件向您发送了有关设置密码的说明。您应该很快收到它们。"
+
+#: escriptorium/templates/registration/password_reset_done.html
+msgid ""
+"If you don’t receive an email, please make sure you’ve entered the address "
+"you registered with, and check your spam folder."
+msgstr "如果您没有收到电子邮件，请确保您输入了注册的地址，并检查垃圾邮件文件夹。"
+
+#: escriptorium/templates/registration/password_reset_form.html
+msgid ""
+"Forgotten your password? Enter your email address below, and we’ll email "
+"instructions for setting a new one."
+msgstr "忘记了您的密码？在下面输入您的电子邮件地址，我们将通过电子邮件说明用于设置新的电子邮件。"
+
+#: escriptorium/templates/registration/password_reset_form.html
+msgid "Email address:"
+msgstr "电子邮件: "
+
+#: escriptorium/templates/registration/password_reset_form.html
+msgid "Reset my password"
+msgstr "重置我的密码"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "Document report"
+msgstr "文件报告"
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Data metrics"
+msgstr "数据指标"
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of document parts"
+msgstr "文档零件总数"
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "A document part corresponds to one image loaded within a document."
+msgstr "文档部分对应于文档中加载的一个图像。"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "Transcribed document parts"
+msgstr "转录文档部分"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "The number of transcribed images in the selected transcription(s)."
+msgstr "选定转录中的转录图像数量。"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "Average transcription confidence"
+msgstr "平均转录信心"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid ""
+"Confidence is an estimate of the automatic transcription model to "
+"approximate its own accuracy per character."
+msgstr "置信度是对自动转录模型的估计，以近似其每个字符的精度。"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid ""
+"The validity of this figure will depend on specific cases and models and is "
+"not necessarily an indication of result quality."
+msgstr "该数字的有效性将取决于特定的情况和模型，不一定是结果质量的指示。"
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Vocabulary"
+msgstr "词汇"
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Reload vocabulary"
+msgstr "重新加载词汇"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "No vocabulary found in the selected transcription(s)."
+msgstr "在选定的转录中未发现词汇。"
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"The vocabulary is the list of all the characters currently used in the "
+"transcription of the document along with their frequency."
+msgstr "词汇是文档转录中当前使用的所有字符及其频率的列表。"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project reports"
+msgstr "项目报告"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of regions"
+msgstr "区域总数"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A region is a polygon drawn on a document part, grouping one, several or no "
+"line(s)."
+msgstr "区域是在文档零件上绘制的多边形，分组一个，几条或没有线。"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of lines"
+msgstr "线总数"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A line is a segment of text identified on a document part, usually "
+"associated with a polygon (mask) and a transcription."
+msgstr "线是在文档部分上标识的文本段，通常与多边形(掩码)和转录相关联。"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of words"
+msgstr "单词总数"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A word is any series of one or more characters, excepted punctuation signs "
+"and white spaces."
+msgstr "一个单词是一个或多个字符的任何系列，除了标点符号和白色空间。"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of characters"
+msgstr "字符总数"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A character is any symbol used in the transcription, including punctuation, "
+"excepted white spaces."
+msgstr "字符是转录中使用的任何符号，包括标点符号，除白色空间外。"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Annotation"
+msgstr "注解"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of document tags"
+msgstr "目前使用文档标签"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of part tags"
+msgstr "当前使用零件标签"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of regions type"
+msgstr "当前使用区域类型"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of lines type"
+msgstr "线类型的当前使用"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project activity"
+msgstr "项目活动"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Created on"
+msgstr "创建"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Last update on"
+msgstr "最后更新"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 user"
+msgid_plural "Project shared with %(n)s users"
+msgstr[0] ""
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 group"
+msgid_plural "Project shared with %(n)s groups"
+msgstr[0] ""
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 user"
+msgid_plural "Documents shared with %(n)s users"
+msgstr[0] ""
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 group"
+msgid_plural "Documents shared with %(n)s groups"
+msgstr[0] ""
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Total"
+msgstr "全部的"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Last week"
+msgstr "上星期"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Last day"
+msgstr "最后一天"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "User ID"
+msgstr "用户身份"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Disk usage"
+msgstr "磁盘用法"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+#: escriptorium/templates/reporting/taskreport_detail.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "CPU usage"
+msgstr "CPU用法"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+#: escriptorium/templates/reporting/taskreport_detail.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "GPU usage"
+msgstr "GPU的使用"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "No. of tasks"
+msgstr "任务数"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Runtime"
+msgstr "运行时"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "All time"
+msgstr "一直以来"
+
+#: escriptorium/templates/reporting/taskreport_detail.html
+msgid "Status:"
+msgstr "地位: "
+
+#: escriptorium/templates/reporting/taskreport_detail.html
+msgid "Queued at:"
+msgstr "排队在: "
+
+#: escriptorium/templates/reporting/taskreport_detail.html
+msgid "Started at:"
+msgstr "开始于: "
+
+#: escriptorium/templates/reporting/taskreport_detail.html
+msgid "Ended at:"
+msgstr "结束于: "
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Calculated from your images and models"
+msgstr "根据您的图像和模型计算"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "CPU usage over the last week"
+msgstr "上周使用CPU"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "GPU usage over the last week"
+msgstr "上周使用GPU"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid ""
+"CPU/GPU usage values also include automatic processing of the images on "
+"upload, those tasks aren't listed below."
+msgstr "CPU/GPU使用值还包括上传图像的自动处理, 这些任务尚未列出以下。"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Task report"
+msgstr "任务报告"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Started at"
+msgstr "开始"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Done at"
+msgstr "完成"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Duration"
+msgstr "期间"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "State"
+msgstr "状态"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "CPU cost"
+msgstr "CPU成本"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "GPU cost"
+msgstr "GPU成本"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "You don't have any task report yet."
+msgstr "您还没有任何任务报告。"
+
+#: escriptorium/templates/users/contactus.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "Send"
+msgstr "发送"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "Hello "
+msgstr "你好"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "is inviting you to join"
+msgstr "邀请你加入"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "his/her team"
+msgstr "他/她的团队"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "on"
+msgstr "在"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "eScriptorium!"
+msgstr "用品！"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "All you need to do is click on the link below:"
+msgstr "您需要做的就是单击下面的链接: "
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "Sincerely, the eScriptorium team."
+msgstr "真诚的，是章节团队。"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Back to profile"
+msgstr "返回个人资料"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Team:"
+msgstr "团队: "
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Invite a user to this team."
+msgstr "邀请用户加入该团队。"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid ""
+"Make sure to use a correct email as you will not receive an error message if"
+" it is not the case (in order to avoid phishing)."
+msgstr "确保使用正确的电子邮件，因为如果不是这样(为了避免网络钓鱼)，您将不会收到错误消息。"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Send invitation"
+msgstr "发送邀请"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Transfer ownership"
+msgstr "转移所有权"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Remove"
+msgstr "消除"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Remove user from group"
+msgstr "从组中删除用户"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "No other user in this team."
+msgstr "该团队中没有其他用户。"
+
+#: escriptorium/templates/users/invitation_accept_register.html
+msgid "Register to eScriptorium"
+msgstr "注册到抽屉"
+
+#: escriptorium/templates/users/invitation_accept_register.html
+#, python-format
+msgid ""
+"\n"
+"      You received an invitation from %(sender)s, please fill the form below to register.\n"
+"    "
+msgstr ""
+
+#: escriptorium/templates/users/invitation_accept_register.html
+msgid "Signup"
+msgstr "报名"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Recipient's information"
+msgstr "收件人的信息"
+
+#: escriptorium/templates/users/profile.html
+msgid "Information"
+msgstr "信息"
+
+#: escriptorium/templates/users/profile.html
+msgid "API key"
+msgstr "API键"
+
+#: escriptorium/templates/users/profile.html
+msgid "Files"
+msgstr "文件"
+
+#: escriptorium/templates/users/profile.html
+msgid "Invitations"
+msgstr "邀请"
+
+#: escriptorium/templates/users/profile.html
+msgid "Save"
+msgstr "节省"
+
+#: escriptorium/templates/users/profile_api_key.html
+msgid "API Authentication Token:"
+msgstr "API身份验证令牌: "
+
+#: escriptorium/templates/users/profile_api_key.html
+msgid "Copy to clipboard."
+msgstr "复制到剪贴板。"
+
+#: escriptorium/templates/users/profile_api_key.html
+msgid "Regenerate Token."
+msgstr "再生令牌。"
+
+#: escriptorium/templates/users/profile_api_key.html
+msgid "example: "
+msgstr "例子: "
+
+#: escriptorium/templates/users/profile_files.html
+msgid "You don't have any saved files yet."
+msgstr "您还没有任何保存的文件。"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Create a new Team"
+msgstr "创建一个新团队"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Pending Invitations"
+msgstr "等待邀请"
+
+#: escriptorium/templates/users/profile_group_list.html
+#, python-format
+msgid ""
+"\n"
+"            Invited to %(team_name)s by %(sender)s\n"
+"            "
+msgstr ""
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Accept"
+msgstr "接受"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "My Teams"
+msgstr "我的团队"
+
+#: escriptorium/templates/users/profile_group_list.html
+#, python-format
+msgid "Owned by %(owner)s"
+msgstr "由%(owner)s拥有"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Leave"
+msgstr "离开"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "You are not part of any team yet."
+msgstr "您还不是任何团队的一部分。"
+
+#: escriptorium/templates/users/profile_invitations.html
+msgid "You didn't send any invitations yet."
+msgstr "您尚未发送任何邀请。"
+
+#: homepage_example/additional_footer.html
+msgid "Powered by"
+msgstr "开发者"
+
+msgid "Show onboarding"
+msgstr ""
+
+msgid "Errors"
+msgstr ""
+
+msgid "Number of errors/Total number of characters"
+msgstr ""
+
+msgid "Reset onboarding"
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid "No match found for file {} with filename \\\"{}\\\"."
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid ""
+"\\n          Currently searching entered text in the document named "
+"<strong>%(name)s</strong>.\\n        "
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid "The prefix of the target transcription. Will default to \\\"METS Import\\\""
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid ""
+"\\n<p>\\n    <b>Left click</b> on the image to <u>create</u> new line, "
+"<b>Right click</b> to <b>add points</b> and <b>Left click</b> again to "
+"<u>finish</u> it.\\n    <br/>You can keep the mouse button pressed for free "
+"drawing.\\n    <br/>Hitting <b>escape</b> while drawing a line "
+"<u>cancels</u> it.\\n    <br/>If regions matter to you switch to region mode"
+" first <i class=\\\"fas fa-th-large\\\"></i> (R key).\\n    <br/>when in "
+"region mode <b>Left click</b> to create a new rectangular region, left click"
+" again to finish it.\\n    <br/>lines drawn inside a region will "
+"automatically be bound to it.\\n    <br/>When the quality of the "
+"segmentation is good, you can prompt the system to calculate masks <i "
+"class=\\\"text-success fas fa-thumbs-up\\\"></i>,\\n    <br/>once a page "
+"already has masks new lines will automatically get a mask and updating a "
+"line will also recalculate its mask.\\n    <br/><b>Note</b> that the quality"
+" of the masks is highly dependent on the quality of the whole segmentation, "
+"not only the corresponding line,\\n    <br/>so make sure to draw all the "
+"lines before calculating the masks.\\n    <br>You can also have the option "
+"to calculate the masks <i>en masse</i> in the Images tab -> segment -> "
+"choose 'Only masks'.\\n</p>\\n<p>\\n    <b>Left click</b> on a line to "
+"select it, then you can drag its closest control point.\\n    <br/><b>Double"
+" click</b> on the line will create a <u>new control point</u> at the mouse "
+"location.\\n    <br/>You can reverse the order of the line's points by "
+"selecting a line (or multiple) and using reverse <i class=\\\"fas fa-arrow-"
+"alt-h\\\"></i> (I key).\\n    <br/>When in region mode, Regions can be "
+"edited the same way.\\n    <br/>Selected lines can be linked or unlinked to "
+"regions with the corresponding buttons <i class=\\\"fas fa-link\\\"></i>(Y "
+"key) <i class=\\\"fas fa-unlink\\\"> (U key).</i>\\n    <br/>By using the "
+"cut mode <i class=\\\"text-warning fas fa-cut\\\"></i> (C key) you can cut "
+"through lines, splitting them in two or removing part of them.\\n    <br/>If"
+" at least two lines are selected an option to join them becomes available <i"
+" class=\\\"fas fa-compress-arrows-alt\\\"></i> (J key).\\n    <br/>You can "
+"go through your changes <u>history</u> back and forth with "
+"<b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding "
+"buttons <i class=\\\"fas fa-undo\\\"></i><i class=\\\"fas fa-"
+"redo\\\"></i>.\\n</p>\\n<p>\\n    <b>Shift+click</b> allows to add or remove"
+" a line from the <u>selection</u>,\\n    <br/>Clicking on an empty space "
+"clears the selection,\\n    <br/><b>shift and drag</b> creates a "
+"<u>lasso</u> selection tool that allows to select control points (they then "
+"appear black).\\n    <br/><b>Note:</b> If lines are already selected the "
+"lasso will only select points in those lines.\\n    <br/><b>Ctrl+drag</b> "
+"allows to move all the selected control points at once (or the selected "
+"lines if no control points are selected).\\n\\n    <br/>The red trash <i "
+"class=\\\"text-danger fas fa-trash\\\"></i> button <b>deletes</b> all "
+"selected <b>lines/regions</b>,\\n    <br/>The yellow trash button <i "
+"class=\\\"text-warning fas fa-trash\\\"></i> only <b>deletes</b> selected "
+"control <b>points</b>.\\n</p>\\n"
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid ""
+"\\n<p style=\\\"direction:ltr\\\">\\n    Each line is a different "
+"transcription as checked in the transcription management window <i "
+"class=\\\"fas fa-cog\\\"></i>\\n    <br>The colors represent the difference "
+"with the current transcription,\\n    <br><font "
+"color=\\\"green\\\">green</font> characters are not present in the current "
+"(editable) transcription while <font color=\\\"red\\\">red</font> characters"
+" are not present in the compared transcription.\\n</p>\\n"
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid ""
+"\\n<p style=\\\"direction:ltr\\\">\\n    Each line corresponds to an edition"
+" of the content, in inverse chronological order (Most recent at the top).\\n"
+"    <br>The colors represent the difference with the previous version,\\n"
+"    <br><font color=\\\"green\\\">green</font> are <b>additions</b> while "
+"<font color=\\\"red\\\">red</font> are <b>deletions</b>,\\n    <br>meaning "
+"red characters are not actually part of the line anymore, they are displayed"
+" to easily spot the differences.\\n    <br>You can mouse over the text to "
+"see the actual content.\\n    <br>The load state button <i class=\\\"fas fa-"
+"file-upload\\\"></i> simply revert the content of the line to the "
+"corresponding text version.\\n</p>\\n"
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid "\\nlala\\n"
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid "\\n          Show %(page)s\\n          "
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid "\\n                %(page_number)s out of %(num_pages)s\\n              "
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid "\\n                %(counter)s out of %(num_pages)s\\n              "
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid "\\n                  Please correct the error below.\\n              "
+msgid_plural ""
+"\\n                  Please correct the errors below.\\n              "
+msgstr[0] ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid ""
+"\\n      You received an invitation from %(sender)s, please fill the form "
+"below to register.\\n    "
+msgstr ""
+
+#. (orphaned - not in current source)
+#: (from de)
+msgid "\\n            Invited to %(team_name)s by %(sender)s\\n            "
+msgstr ""

@@ -10,7 +10,7 @@ FROM registry.gitlab.com/scripta/escriptorium/base:dj-solo
 # try to autodetect number of cpus available
 # ENV NGINX_WORKER_PROCESSES auto
 
-ARG VERSION_DATE="passthistobuildcmd"
+ARG VERSION_DATE="2025-08-28"
 ENV VERSION_DATE=$VERSION_DATE
 ENV FRONTEND_DIR=/usr/src/app/front
 ENV LANG=C.UTF-8

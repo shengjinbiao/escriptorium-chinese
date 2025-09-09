@@ -1,0 +1,29 @@
+# Chinese translations for eScriptorium.
+# This file was created as a skeleton by an automated tool.
+# You can merge an existing Chinese translation with msgmerge or populate it
+# by running Django's makemessages (see instructions below).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: eScriptorium 0.11.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-09 00:00+0000\n"
+"PO-Revision-Date: 2025-09-09 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Chinese\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# NOTE: This file is intentionally created with no msgid/msgstr entries.
+# To populate translations, either
+# 1) run `django-admin makemessages -l zh` in your Django project root to
+#    extract messages into `locale/zh/LC_MESSAGES/django.po` (recommended),
+# or
+# 2) merge an existing Chinese PO file into the project's POT using `msgmerge`:
+#    msgmerge --update /home/sheng/escriptorium/app/locale/zh/LC_MESSAGES/django.po path/to/extracted.pot
+#
+# If you already have a previous `django.po` for Chinese, I can merge it for
+# you — upload it or point to its path and I'll run a merge.

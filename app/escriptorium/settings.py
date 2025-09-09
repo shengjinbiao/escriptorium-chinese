@@ -177,7 +177,7 @@ LOGOUT_REDIRECT_URL = '/'
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = os.getenv('LANGUAGE_CODE', 'en-us')
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
@@ -190,6 +190,9 @@ if 'fr' in ESC_LANGUAGES:
     LANGUAGES.append(('fr', _('French')))
 if 'de' in ESC_LANGUAGES:
     LANGUAGES.append(('de', _('German')))
+if 'zh' in ESC_LANGUAGES:
+    # use a generic label; translators can provide a localized name
+    LANGUAGES.append(('zh', _('Chinese')))
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
