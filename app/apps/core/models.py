@@ -1038,7 +1038,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
             based on x lines origins clustering. Key parameters of the algorithm:
             x_cluster: tolerance used to gather lines in a column
             line_height_decrease: scaling factor to avoid over gathering of lines"""
-            x_cluster, line_height_decrease = 0.1, 0.8
+
+            lines_in_block = list(lines_in_block)
+            line_height_decrease = 0.8
 
             origins_np = np.array(
                 list(map(lambda line: line_origin_pt(line, read_direction_), lines_in_block))
@@ -1046,6 +1048,22 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
 
             # Devise the number of columns by performing DBSCAN clustering on x coordinate of line origins
             x_origins_np = origins_np[:, 0].reshape(-1, 1)
+
+            # compute adaptive clustering tolerance based on average line width
+            x_min, x_max = x_origins_np.min(), x_origins_np.max()
+            x_range = x_max - x_min or 1
+            line_widths = []
+            for line in lines_in_block:
+                coords = line.mask or line.baseline
+                if coords:
+                    xs = [pt[0] for pt in coords]
+                    line_widths.append(max(xs) - min(xs))
+            if line_widths:
+                avg_line_width = sum(line_widths) / len(line_widths)
+            else:
+                avg_line_width = x_range
+            x_cluster = min(0.3, max(0.05, avg_line_width / x_range))
+
             scaler = preprocessing.MinMaxScaler()
             scaler.fit(x_origins_np)
             x_scaled = scaler.transform(x_origins_np)
