@@ -3,7 +3,14 @@ import os.path
 import celery.app.trace
 from celery import signals
 
-from reporting.tasks import create_task_reporting
+# Import reporting hooks; fall back to local stub if the optional
+# ``reporting`` package is unavailable.
+try:
+    from reporting.tasks import create_task_reporting
+except ModuleNotFoundError:  # pragma: no cover - executed only when reporting missing
+    def create_task_reporting(*args, **kwargs):  # type: ignore[override]
+        """Fallback no-op used when reporting is not installed."""
+        pass
 
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
