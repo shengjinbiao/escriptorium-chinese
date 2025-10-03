@@ -59,6 +59,7 @@ from core.tasks import (
     transcribe,
 )
 from core.utils import ColorField
+from core.reading_order import order_document_lines
 from core.validators import JSONSchemaValidator
 from escriptorium.celery import app as celery_app
 from reporting.models import TASK_FINAL_STATES, TaskReport
@@ -996,6 +997,16 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         read_direction = read_direction or self.document.read_direction
         # imgbox = ((0, 0), (self.image.width, self.image.height))
 
+        script_code = ''
+        script_name = ''
+        if self.document.main_script:
+            script_code = (getattr(self.document.main_script, 'script_code', '') or getattr(self.document.main_script, 'script', '') or '').lower()
+            script_name = (getattr(self.document.main_script, 'name', '') or '').lower()
+        use_new_reading_order = (
+            read_direction == Document.READ_DIRECTION_RTL and
+            (script_code == 'hant' or 'han (traditional variant)' in script_name)
+        )
+
         origin_box = [
             self.image.width if read_direction == Document.READ_DIRECTION_RTL else 0,
             0,
@@ -1079,6 +1090,21 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         if len(ls) == 0:
             return
 
+        # 若主脚本为繁体汉字且阅读方向为 RTL，则启用新的双列/双行排序算法
+        if use_new_reading_order:
+            try:
+                ordered_lines = order_document_lines(ls, column_desc=True)
+            except Exception:  # pragma: no cover - safeguard against unexpected geometry
+                logger.exception("Failed to compute reading order for DocumentPart %s", self.pk)
+            else:
+                if len(ordered_lines) == len(ls):
+                    for order, line in enumerate(ordered_lines):
+                        if line.order != order:
+                            line.order = order
+                            line.save()
+                    return
+
+        # 否则退回原有 DBSCAN + 距离规则排序，保持既有行为
         dict_avg_heights = avg_lines_heights_dict(ls, read_direction)
 
         def cmp_lines(a, b):

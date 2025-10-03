@@ -5,7 +5,9 @@
 {% if MODELS_VERSION_RETENTION %}
 <div class="jumbotron text-center bg-light">
   <p class="lead">
-    Please be aware that the epoch versions of the models will only be available for {{ MODELS_VERSION_RETENTION }} days.
+    {% blocktrans with days=MODELS_VERSION_RETENTION %}
+    Please be aware that the epoch versions of the models will only be available for {{ days }} days.
+    {% endblocktrans %}
   </p>
 </div>
 {% endif %}
