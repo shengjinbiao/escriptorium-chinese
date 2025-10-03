@@ -1,48 +1,66 @@
-eScriptorium is part of the [Scripta](https://www.psl.eu/en/scripta), [RESILIENCE](https://www.resilience-ri.eu) and [Biblissima+](https://projet.biblissima.fr/) projects, and has received funding from Université PSL and from The European Union's [Horizon 2020 Research and Innovation Programme](https://ec.europa.eu/programmes/horizon2020/en/what-horizon-2020) under Grant Agreement no. 871127, from the Programme d'investissements d'avenir of the [Agence Nationale de Recheche](https://anr.fr/fr/france-2030/france-2030/) under Grant Reference no. ANR-21-ESRE-0005, as well as from other contributors listed below. Its goal is provide researchers in the humanities with an integrated set of tools to transcribe, annotate, translate and publish historical documents.
-The eScriptorium app itself is at the 'center'. It is a work in progress but will implement at least automatic transcriptions through kraken, indexation for complex search and filtering, annotation and some simple forms of collaborative working such as sharing and versioning.
 
-## The stack
+# eScriptorium 中文汉化版介绍
+
+eScriptorium 是 [Scripta](https://www.psl.eu/en/scripta)、[RESILIENCE](https://www.resilience-ri.eu) 和 [Biblissima+](https://projet.biblissima.fr/) 项目的一部分，并获得了巴黎文理大学（Université PSL）以及欧盟 [Horizon 2020 研究与创新计划](https://ec.europa.eu/programmes/horizon2020/en/what-horizon-2020)（资助协议编号：871127）、法国国家研究署（[Agence Nationale de Recherche](https://anr.fr/fr/france-2030/france-2030/)）“未来投资计划”（资助参考编号：ANR-21-ESRE-0005）等资助，以及其他下方列出的合作机构的支持。  
+本项目旨在为人文研究者提供一个整合化的工具集合，用于识别、标注、翻译和发布历史文献。
+
+eScriptorium 应用本身是整个系统的“核心”。该项目仍在开发中，已实现或计划实现的功能包括：通过 Kraken 进行自动转写、面向复杂搜索与筛选的索引、文献标注、以及如共享与版本管理等基本的协作功能。
+
+---
+
+## 技术栈
+
 - nginx
 - uwsgi
 - [django](https://www.djangoproject.com/)
-- [daphne](https://github.com/django/daphne) (channel server for websockets)
+- [daphne](https://github.com/django/daphne)（WebSocket 通道服务器）
 - [celery](http://www.celeryproject.org/)
-- postgres
+- postgres（PostgreSQL 数据库）
 - [elasticsearch](https://www.elastic.co/)
-- redis (cache, celery broker, other disposable data)
-- [kraken](http://kraken.re)
-- [docker](https://www.docker.com/) (deployment)
+- redis（用于缓存、celery 通信和其他临时数据）
+- [kraken](http://kraken.re)（OCR 引擎）
+- [docker](https://www.docker.com/)（部署环境）
 
+---
 
-## Install
-Two options,
-- [install with Docker](https://gitlab.com/scripta/escriptorium/-/wikis/docker-install), or a
-- [full local install](https://gitlab.com/scripta/escriptorium/-/wikis/full-install).
+## 安装方式
 
-eScriptorium needs either Linux, macOS or Windows (with WSL).
+你有两个选择：
 
+- [使用 Docker 安装](https://gitlab.com/scripta/escriptorium/-/wikis/docker-install)
+- [完整本地安装（Full Install）](https://gitlab.com/scripta/escriptorium/-/wikis/full-install)
 
-## Contributing
-See [Contributing to eScriptorium](https://gitlab.com/scripta/escriptorium/-/wikis/contributing).
+eScriptorium 可运行于 Linux、macOS 或 Windows（需启用 WSL）。
 
-## Steering Committee
+---
 
-- Daniel Stoekl Ben Ezra (EPHE-PSL, UMR AOROC 8546)
-- Peter Stokes (EPHE-PSL, UMR AOROC 8546)
-- Benjamin Kiessling (EPHE-PSL, UMR AOROC 8546)
-- Robin Tissot (EPHE-PSL, UMR AOROC 8546)
-- Mathew Barber (Aga Khan University, Institute for the Study of Muslim Civilisations)
-- David Smith (Northeastern University)
-- Thibault Clérice (Inria)
-- Hassen Aguili (Inria)
+## 如何参与贡献
 
-## Current financial and technical contributors include:
-- [École Pratique des Hautes Études (EPHE)](https://www.ephe.psl.eu)
-- [Biblissima+](https://projet.biblissima.fr/)
-- [Resilience](https://www.resilience-ri.eu/)
-- [PSL Scripta](https://scripta.psl.eu/en/)
-- [Institut national de recherche en sciences et technologies du numérique (INRIA)](https://inria.fr/en)
-- [Archives nationales de France](https://www.archives-nationales.culture.gouv.fr/)
-- [L’Institut de recherche et d’histoire des textes](https://www.irht.cnrs.fr/)
-- [Open Islamicate Texts Initiative (OpenITI)](https://openiti.org/)
-- [The Andrew W. Mellon Foundation](https://mellon.org/grants/)
+详见：[参与 eScriptorium 贡献指南](https://gitlab.com/scripta/escriptorium/-/wikis/contributing)
+
+---
+
+## 指导委员会成员
+
+- Daniel Stoekl Ben Ezra（巴黎高等实践学院，UMR AOROC 8546）
+- Peter Stokes（巴黎高等实践学院，UMR AOROC 8546）
+- Benjamin Kiessling（巴黎高等实践学院，UMR AOROC 8546）
+- Robin Tissot（巴黎高等实践学院，UMR AOROC 8546）
+- Mathew Barber（阿迦汗大学，穆斯林文明研究所）
+- David Smith（美国东北大学）
+- Thibault Clérice（法国国家信息与自动化研究院 Inria）
+- Hassen Aguili（法国国家信息与自动化研究院 Inria）
+
+---
+
+## 当前资金与技术支持机构包括：
+
+- [巴黎高等实践学院（EPHE）](https://www.ephe.psl.eu)
+- [Biblissima+ 项目](https://projet.biblissima.fr/)
+- [RESILIENCE 欧洲研究基础设施](https://www.resilience-ri.eu)
+- [巴黎文理大学 Scripta](https://scripta.psl.eu/en/)
+- [法国国家信息与自动化研究院（Inria）](https://inria.fr/en)
+- [法国国家档案馆](https://www.archives-nationales.culture.gouv.fr/)
+- [法国文献与文献学研究所](https://www.irht.cnrs.fr/)
+- [伊斯兰文献开放计划（OpenITI）](https://openiti.org/)
+- [安德鲁·W·梅隆基金会](https://mellon.org/grants/)
