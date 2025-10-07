@@ -16,12 +16,13 @@ from users.models import User
 logger = logging.getLogger("es_indexing")
 logger.setLevel(logging.ERROR)
 
+# SmartCN 中文分词器会在索引与查询时按词切分文本，提升汉语搜索准确度。
 INDEX_MAPPING = {
     "properties": {
         "bounding_box": {"type": "long"},
-        "context": {"type": "text"},
-        "context_after": {"type": "text"},
-        "context_before": {"type": "text"},
+        "context": {"type": "text", "analyzer": "smartcn"},
+        "context_after": {"type": "text", "analyzer": "smartcn"},
+        "context_before": {"type": "text", "analyzer": "smartcn"},
         "document_archived": {"type": "boolean"},
         "document_id": {"type": "long"},
         "document_name": {"type": "keyword"},
@@ -33,7 +34,7 @@ INDEX_MAPPING = {
         "line_number": {"type": "long"},
         "part_title": {"type": "keyword"},
         "project_id": {"type": "long"},
-        "raw_content": {"type": "text"},
+        "raw_content": {"type": "text", "analyzer": "smartcn"},
         "transcription_id": {"type": "long"},
         "transcription_name": {"type": "keyword"},
     }
@@ -94,15 +95,23 @@ class Command(BaseCommand):
                 index=settings.ELASTICSEARCH_COMMON_INDEX, ignore_unavailable=True
             )
 
+        created = False
         if not indices.exists(index=settings.ELASTICSEARCH_COMMON_INDEX):
-            indices.create(index=settings.ELASTICSEARCH_COMMON_INDEX)
+            indices.create(
+                index=settings.ELASTICSEARCH_COMMON_INDEX,
+                body={"mappings": INDEX_MAPPING},
+            )
+            created = True
             logger.info(
                 f"Created a new index named {settings.ELASTICSEARCH_COMMON_INDEX}"
             )
 
         try:
             # Explicitly set the index mapping
-            indices.put_mapping(INDEX_MAPPING, index=settings.ELASTICSEARCH_COMMON_INDEX)
+            if not created:
+                indices.put_mapping(
+                    INDEX_MAPPING, index=settings.ELASTICSEARCH_COMMON_INDEX
+                )
 
             # Assert that the current index mapping really match INDEX_MAPPING constant
             real_index_mapping = (

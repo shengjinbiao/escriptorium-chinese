@@ -7,7 +7,7 @@ x-app:
     context: .
   env_file: variables.env
   volumes:
-    # - ./app/:/usr/src/app/
+    - ./app/:/usr/src/app/ # for development, comment out for production 开发环境使用，生产环境注释掉
     - static:/usr/src/app/static
     - media:/usr/src/app/media
   command: /bin/true

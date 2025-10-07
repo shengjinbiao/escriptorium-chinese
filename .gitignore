@@ -11,6 +11,7 @@ app/media/
 app/test_media/
 app/homepage/
 app/contributors/
+app/label-studio-ml-backend/
 *.log
 front/node_modules
 front/dist
