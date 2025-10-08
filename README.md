@@ -6,6 +6,7 @@ eScriptorium 是 [Scripta](https://www.psl.eu/en/scripta)、[RESILIENCE](https:/
 
 eScriptorium 应用本身是整个系统的“核心”。该项目仍在开发中，已实现或计划实现的功能包括：通过 Kraken 进行自动转写、面向复杂搜索与筛选的索引、文献标注、以及如共享与版本管理等基本的协作功能。
 
+[eScriptorium安装使用笔记](docs/eScriptorium-历史手稿数字化平台.md)
 ---
 
 
