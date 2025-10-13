@@ -251,23 +251,32 @@ const actions = {
      * Queue the transcription task for a document.
      */
     async transcribeDocument({ rootState }, { documentId, parts }) {
-        // first, create a transcription layer by POSTing the name to the endpoint
-        const { data } = await createTranscriptionLayer({
-            documentId,
-            layerName: rootState.forms.transcribe.layerName,
-        });
-        // then, use the result to set the "transcription" param to new layer's pk
-        if (data) {
-            const transcription = data.pk;
-            await transcribeDocument({
-                documentId,
-                model: rootState?.forms?.transcribe?.model,
-                transcription,
-                parts,
-            });
+        const existingLayer = rootState.forms.transcribe.existingLayer;
+        let transcriptionPk = null;
+        if (existingLayer) {
+            transcriptionPk = Number(existingLayer);
+            if (Number.isNaN(transcriptionPk)) {
+                throw new Error("Invalid transcription layer selected.");
+            }
         } else {
-            throw new Error("Unable to create transcription layer.");
+            // first, create a transcription layer by POSTing the name to the endpoint
+            const { data } = await createTranscriptionLayer({
+                documentId,
+                layerName: rootState.forms.transcribe.layerName,
+            });
+            // then, use the result to set the "transcription" param to new layer's pk
+            if (data) {
+                transcriptionPk = data.pk;
+            } else {
+                throw new Error("Unable to create transcription layer.");
+            }
         }
+        await transcribeDocument({
+            documentId,
+            model: rootState?.forms?.transcribe?.model,
+            transcription: transcriptionPk,
+            parts,
+        });
     },
 };
 
