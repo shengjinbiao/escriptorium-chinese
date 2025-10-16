@@ -4,7 +4,9 @@ Utilities for running AI-based punctuation and translation on document parts.
 
 from __future__ import annotations
 
+import json
 import logging
+import re
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
@@ -393,6 +395,111 @@ def _merge_punctuation_text(
     return merged_lines
 
 
+def _extract_json_array(text: str) -> Optional[str]:
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        parts = cleaned.split("```")
+        for part in parts:
+            snippet = part.strip()
+            if not snippet or snippet.lower().startswith("json"):
+                continue
+            if snippet.startswith("[") and snippet.endswith("]"):
+                return snippet
+    match = re.search(r"\[[\s\S]*\]", text)
+    if match:
+        return match.group(0)
+    return None
+
+
+def _parse_translation_response(text: str, expected_count: int) -> Optional[List[str]]:
+    candidate = _extract_json_array(text) or text
+    try:
+        data = json.loads(candidate)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, list):
+        return None
+    normalized = [str(item) if item is not None else "" for item in data]
+    if len(normalized) < expected_count:
+        normalized.extend([""] * (expected_count - len(normalized)))
+    elif len(normalized) > expected_count:
+        normalized = normalized[:expected_count]
+    return normalized
+
+
+_TRANSLATION_SPLIT_HINTS = frozenset("。！？；：，,.!?;\n")
+
+
+def _find_split_index(text: str, target: float, window: int = 30) -> int:
+    length = len(text)
+    if length == 0:
+        return 0
+    idx = max(1, min(length - 1, int(round(target))))
+    for offset in range(window + 1):
+        left = idx - offset
+        if left > 0 and text[left - 1] in _TRANSLATION_SPLIT_HINTS:
+            return left
+        if 0 <= left < length and text[left] in _TRANSLATION_SPLIT_HINTS:
+            return min(left + 1, length)
+        right = idx + offset
+        if right < length and text[right] in _TRANSLATION_SPLIT_HINTS:
+            return min(right + 1, length)
+        if right + 1 < length and text[right + 1] in _TRANSLATION_SPLIT_HINTS:
+            return min(right + 2, length)
+    return idx
+
+
+def _split_translation_proportionally(
+    original_lines: Sequence[str],
+    translated_text: str,
+) -> List[str]:
+    count = len(original_lines)
+    normalized = translated_text.strip()
+    if count == 0:
+        return []
+    if not normalized:
+        return [""] * count
+    if count == 1:
+        return [normalized]
+
+    weights: List[int] = []
+    for line in original_lines:
+        weight = len(line.strip())
+        weights.append(weight if weight > 0 else 1)
+
+    total_weight = sum(weights)
+    if total_weight <= 0:
+        total_weight = count
+        weights = [1] * count
+
+    total_length = len(normalized)
+    boundaries: List[int] = []
+    accumulated = 0.0
+    last_idx = 0
+    for weight in weights[:-1]:
+        accumulated += weight
+        raw_idx = accumulated / total_weight * total_length
+        split_idx = _find_split_index(normalized, raw_idx)
+        split_idx = max(min(split_idx, total_length), last_idx)
+        boundaries.append(split_idx)
+        last_idx = split_idx
+
+    segments: List[str] = []
+    prev = 0
+    for boundary in boundaries:
+        segments.append(normalized[prev:boundary].strip())
+        prev = boundary
+    segments.append(normalized[prev:].strip())
+
+    if len(segments) > count:
+        head = segments[: count - 1]
+        tail = " ".join(segments[count - 1 :]).strip()
+        segments = head + [tail]
+    while len(segments) < count:
+        segments.append("")
+    return segments[:count]
+
+
 def _call_punctuate_with_context(
     service: PunctuationService,
     text: str,
@@ -568,9 +675,13 @@ def enrich_document_part(
             context_before=context_before,
             context_after=context_after,
         )
-        translation_lines = _align_result_lines(
-            translation.text.splitlines(), len(lines)
-        )
+        parsed = _parse_translation_response(translation.text, len(lines))
+        if parsed is None:
+            translation_lines = _split_translation_proportionally(
+                line_texts, translation.text
+            )
+        else:
+            translation_lines = parsed
         ai_transcription = _get_destination_transcription(
             part.document,
             settings.AI_TRANSLATION_TRANSCRIPTION_NAME,
