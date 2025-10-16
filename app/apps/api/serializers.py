@@ -42,6 +42,7 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
+from core.services.ai_text import AIOperations
 from core.tasks import _chunks, segment, segtrain, train, transcribe
 from imports.forms import FileImportError, clean_import_uri, clean_upload_file
 from imports.models import DocumentImport
@@ -653,6 +654,59 @@ class PartSerializer(serializers.ModelSerializer):
             user_pk=part.document.owner and part.document.owner.pk or None)
 
         return part
+
+
+class PartAIEnrichmentSerializer(serializers.Serializer):
+    parts = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    operations = serializers.DictField(
+        child=serializers.BooleanField(),
+        required=False,
+    )
+
+    default_error_messages = {
+        "unknown_parts": _("Unknown parts for this document: %(ids)s"),
+        "no_parts": _("There are no matching pages to process."),
+        "no_operations": _("Select at least one AI operation to run."),
+    }
+
+    def validate_parts(self, value):
+        document: Document = self.context.get("document")
+        if document is None:
+            raise serializers.ValidationError("Document missing from serializer context.")
+        valid_ids = set(document.parts.values_list("pk", flat=True))
+        missing = [pk for pk in value if pk not in valid_ids]
+        if missing:
+            raise serializers.ValidationError(
+                self.error_messages["unknown_parts"] % {"ids": ", ".join(map(str, missing))}
+            )
+        return list(dict.fromkeys(value))
+
+    def validate_operations(self, value):
+        ops = AIOperations.from_payload(value)
+        if not ops.has_work():
+            raise serializers.ValidationError(self.error_messages["no_operations"])
+        return {"punctuate": ops.punctuate, "translate": ops.translate}
+
+    def validate(self, attrs):
+        document: Document = self.context.get("document")
+        if document is None:
+            raise serializers.ValidationError("Document missing from serializer context.")
+
+        if "operations" not in attrs:
+            ops = AIOperations()
+            attrs["operations"] = {"punctuate": ops.punctuate, "translate": ops.translate}
+
+        parts = attrs.get("parts")
+        if not parts:
+            parts = list(document.parts.values_list("pk", flat=True))
+            if not parts:
+                raise serializers.ValidationError(self.error_messages["no_parts"])
+            attrs["parts"] = parts
+        return attrs
 
 
 class BlockSerializer(serializers.ModelSerializer):

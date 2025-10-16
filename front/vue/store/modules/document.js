@@ -8,6 +8,7 @@ import {
     retrieveDocumentMetadata,
     retrieveDocumentModels,
     retrieveDocumentParts,
+    runAiOnParts,
     retrieveDocumentStats,
     retrieveDocumentTasks,
     retrieveTextualWitnesses,
@@ -1033,6 +1034,23 @@ const actions = {
         }
         commit("setLoading", { key: "document", loading: false });
         dispatch("closeShareModal");
+    },
+    /**
+     * Trigger AI enrichment for a set of parts.
+     */
+    async triggerAiOnParts({ state }, { parts, operations } = {}) {
+        const payload = {};
+        if (Array.isArray(parts)) {
+            payload.parts = parts;
+        }
+        if (operations) {
+            payload.operations = operations;
+        }
+        const { data } = await runAiOnParts({
+            documentId: state.id,
+            ...payload,
+        });
+        return data;
     },
     /**
      * Change the characters sort field and perform another fetch for characters.

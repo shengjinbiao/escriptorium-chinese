@@ -1,0 +1,47 @@
+FROM python:3.11-slim
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=non-interactive
+
+# set work directory
+WORKDIR /usr/src/app
+
+# Install system dependencies
+RUN apt-get update -q \
+    && apt-get -y -qq install --no-install-recommends \
+        netcat-traditional \
+        jpegoptim \
+        pngcrush \
+        libvips \
+        libffi-dev \
+        git \
+        build-essential \
+        default-jre \
+        default-jdk \
+        ant \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add non privileged user to run the app
+RUN addgroup --system uwsgi \
+    && adduser --system --no-create-home --ingroup uwsgi uwsgi
+
+RUN pip install --root-user-action ignore -q --upgrade pip
+
+# Install Python requirements
+COPY escriptorium/app/requirements.txt /tmp/requirements.txt
+RUN pip --no-cache-dir install --root-user-action ignore -q -r /tmp/requirements.txt
+
+# Install yjxz services
+COPY yjxz /usr/src/yjxz
+RUN pip --no-cache-dir install --root-user-action ignore -q -e /usr/src/yjxz
+
+# Copy application source (will be overridden by bind mount in development)
+COPY escriptorium/app /usr/src/app
+
+# Ensure AI provider configuration file is present
+RUN rm -rf /usr/src/app/config/providers.yml \
+    && mkdir -p /usr/src/app/config \
+    && cp /usr/src/yjxz/config/providers.yml /usr/src/app/config/providers.yml

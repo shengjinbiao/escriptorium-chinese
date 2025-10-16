@@ -328,6 +328,7 @@
 import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapState } from "vuex";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
+import AiActionsPanel from "../../components/AiActionsPanel/AiActionsPanel.vue";
 import ExportModal from "../../components/ExportModal/ExportModal.vue";
 import ArrowRightIcon from "../../components/Icons/ArrowRightIcon/ArrowRightIcon.vue";
 import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
@@ -340,6 +341,7 @@ import EscrPage from "../Page/Page.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import EscrTable from "../../components/Table/Table.vue";
 import ImportModal from "../../components/ImportModal/ImportModal.vue";
+import AiIcon from "../../components/Icons/AiIcon/AiIcon.vue";
 import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
 import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
@@ -362,6 +364,9 @@ import "./Document.css";
 export default {
     name: "EscrDocumentDashboard",
     components: {
+        AiActionsPanel,
+        // eslint-disable-next-line vue/no-unused-components
+        AiIcon,
         AlignModal,
         ArrowRightIcon,
         CharactersCard,
@@ -435,6 +440,7 @@ export default {
     data() {
         return {
             msgSocket: undefined,
+            aiProcessing: false,
         };
     },
     computed: {
@@ -548,6 +554,18 @@ export default {
                 {
                     data: {
                         disabled: this.loading?.document,
+                        processing: this.aiProcessing,
+                        scopeLabel: "this document",
+                        onRun: this.runAiOnDocument,
+                    },
+                    icon: AiIcon,
+                    key: "ai-tools",
+                    label: "AI Tools",
+                    panel: AiActionsPanel,
+                },
+                {
+                    data: {
+                        disabled: this.loading?.document,
                         users: this.sharedWithUsers,
                         groups: this.sharedWithGroups,
                         openShareModal: this.openShareModal,
@@ -653,9 +671,10 @@ export default {
             "setLoading",
             "shareDocument",
             "sortCharacters",
+            "triggerAiOnParts",
             "viewTasks",
         ]),
-        ...mapActions("alerts", ["addError"]),
+        ...mapActions("alerts", { addError: "addError", addAlert: "add" }),
         ...mapActions("project", ["createNewDocumentTag"]),
         ...mapActions("user", ["fetchGroups"]),
         ...mapActions("tasks", {
@@ -671,6 +690,36 @@ export default {
         },
         navigateToTasks() {
             window.location = "/quotas/";
+        },
+        describeAiOperationMessage(operations, count, scopeLabel = "this document") {
+            const actions = [];
+            if (operations?.punctuate) actions.push("punctuation");
+            if (operations?.translate) actions.push("translation");
+            const taskLabel = actions.length ? actions.join(" & ") : "AI processing";
+            const pageLabel = count === 1 ? "page" : "pages";
+            return `Queued ${taskLabel} for ${count} ${pageLabel} in ${scopeLabel}.`;
+        },
+        async runAiOnDocument(operations) {
+            if (this.aiProcessing) return;
+            this.aiProcessing = true;
+            try {
+                this.setLoading({ key: "parts", loading: true });
+                const response = await this.triggerAiOnParts({ operations });
+                const processedCount = response?.parts?.length || this.parts?.length || 0;
+                this.addAlert({
+                    color: "success",
+                    message: this.describeAiOperationMessage(
+                        operations,
+                        processedCount,
+                        "this document",
+                    ),
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.setLoading({ key: "parts", loading: false });
+                this.aiProcessing = false;
+            }
         },
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));

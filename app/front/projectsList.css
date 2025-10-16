@@ -1,0 +1,1645 @@
+.resize-observer[data-v-8859cc6c]{position:absolute;top:0;left:0;z-index:-1;width:100%;height:100%;border:none;background-color:transparent;pointer-events:none;display:block;overflow:hidden;opacity:0}.resize-observer[data-v-8859cc6c] object{display:block;position:absolute;top:0;left:0;height:100%;width:100%;overflow:hidden;pointer-events:none;z-index:-1}.v-popper__popper{z-index:10000;top:0;left:0;outline:none}.v-popper__popper.v-popper__popper--hidden{visibility:hidden;opacity:0;transition:opacity .15s,visibility .15s;pointer-events:none}.v-popper__popper.v-popper__popper--shown{visibility:visible;opacity:1;transition:opacity .15s}.v-popper__popper.v-popper__popper--skip-transition,.v-popper__popper.v-popper__popper--skip-transition>.v-popper__wrapper{transition:none!important}.v-popper__backdrop{position:absolute;top:0;left:0;width:100%;height:100%;display:none}.v-popper__inner{position:relative;box-sizing:border-box;overflow-y:auto}.v-popper__inner>div{position:relative;z-index:1;max-width:inherit;max-height:inherit}.v-popper__arrow-container{position:absolute;width:10px;height:10px}.v-popper__popper--arrow-overflow .v-popper__arrow-container,.v-popper__popper--no-positioning .v-popper__arrow-container{display:none}.v-popper__arrow-inner,.v-popper__arrow-outer{border-style:solid;position:absolute;top:0;left:0;width:0;height:0}.v-popper__arrow-inner{visibility:hidden;border-width:7px}.v-popper__arrow-outer{border-width:6px}.v-popper__popper[data-popper-placement^=top] .v-popper__arrow-inner,.v-popper__popper[data-popper-placement^=bottom] .v-popper__arrow-inner{left:-2px}.v-popper__popper[data-popper-placement^=top] .v-popper__arrow-outer,.v-popper__popper[data-popper-placement^=bottom] .v-popper__arrow-outer{left:-1px}.v-popper__popper[data-popper-placement^=top] .v-popper__arrow-inner,.v-popper__popper[data-popper-placement^=top] .v-popper__arrow-outer{border-bottom-width:0;border-left-color:transparent!important;border-right-color:transparent!important;border-bottom-color:transparent!important}.v-popper__popper[data-popper-placement^=top] .v-popper__arrow-inner{top:-2px}.v-popper__popper[data-popper-placement^=bottom] .v-popper__arrow-container{top:0}.v-popper__popper[data-popper-placement^=bottom] .v-popper__arrow-inner,.v-popper__popper[data-popper-placement^=bottom] .v-popper__arrow-outer{border-top-width:0;border-left-color:transparent!important;border-right-color:transparent!important;border-top-color:transparent!important}.v-popper__popper[data-popper-placement^=bottom] .v-popper__arrow-inner{top:-4px}.v-popper__popper[data-popper-placement^=bottom] .v-popper__arrow-outer{top:-6px}.v-popper__popper[data-popper-placement^=left] .v-popper__arrow-inner,.v-popper__popper[data-popper-placement^=right] .v-popper__arrow-inner{top:-2px}.v-popper__popper[data-popper-placement^=left] .v-popper__arrow-outer,.v-popper__popper[data-popper-placement^=right] .v-popper__arrow-outer{top:-1px}.v-popper__popper[data-popper-placement^=right] .v-popper__arrow-inner,.v-popper__popper[data-popper-placement^=right] .v-popper__arrow-outer{border-left-width:0;border-left-color:transparent!important;border-top-color:transparent!important;border-bottom-color:transparent!important}.v-popper__popper[data-popper-placement^=right] .v-popper__arrow-inner{left:-4px}.v-popper__popper[data-popper-placement^=right] .v-popper__arrow-outer{left:-6px}.v-popper__popper[data-popper-placement^=left] .v-popper__arrow-container{right:-10px}.v-popper__popper[data-popper-placement^=left] .v-popper__arrow-inner,.v-popper__popper[data-popper-placement^=left] .v-popper__arrow-outer{border-right-width:0;border-top-color:transparent!important;border-right-color:transparent!important;border-bottom-color:transparent!important}.v-popper__popper[data-popper-placement^=left] .v-popper__arrow-inner{left:-2px}.v-popper--theme-dropdown .v-popper__inner{background:#fff;color:#000;border-radius:6px;border:1px solid #ddd;box-shadow:0 6px 30px #0000001a}.v-popper--theme-dropdown .v-popper__arrow-inner{visibility:visible;border-color:#fff}.v-popper--theme-dropdown .v-popper__arrow-outer{border-color:#ddd}.v-popper--theme-tooltip .v-popper__inner{background:rgba(0,0,0,.8);color:#fff;border-radius:6px;padding:7px 12px 6px}.v-popper--theme-tooltip .v-popper__arrow-outer{border-color:#000c}
+
+/* overall */
+.escr-button {
+    border: none;
+    color: var(--button-text);
+    border-radius: 5px;
+    padding: 0px 10px;
+    font-family: "Noto Sans", sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.escr-button--round {
+    border-radius: 50%;
+}
+.escr-button:focus {
+    outline: 0;
+}
+/* icon */
+.escr-button svg {
+    fill: var(--button-text);
+    transition: fill 0.15s ease-in-out;
+}
+.escr-button svg + span,
+.escr-button span + svg {
+    margin-left: 5px;
+}
+/* size */
+.escr-button--small {
+    min-height: 32px;
+}
+.escr-button--large {
+    min-height: 38px;
+    padding: 0px 16px;
+}
+/* icon-only: should be square */
+.escr-button--icon-only.escr-button--small {
+    padding: 0;
+    min-width: 32px;
+}
+.escr-button--icon-only.escr-button--large {
+    padding: 0;
+    min-width: 38px;
+}
+/* primary, filled and outline */
+.escr-button--primary,
+.escr-button--outline-primary:hover {
+    border: 1px solid var(--primary);
+    background-color: var(--primary);
+}
+.escr-button--primary:focus,
+.escr-button--outline-primary:focus {
+    box-shadow: 0 0 0 0.2rem var(--primary-focus);
+}
+.escr-button--primary:hover,
+.escr-button--outline-primary:active {
+    border-color: var(--primary-dark);
+    background-color: var(--primary-dark);
+}
+.escr-button--primary:active {
+    border-color: var(--primary-darker);
+    background-color: var(--primary-darker);
+}
+.escr-button--outline-primary {
+    background-color: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+.escr-button--outline-primary svg {
+    fill: var(--primary);
+}
+/* secondary, filled and outline */
+.escr-button--secondary,
+.escr-button--outline-secondary:hover {
+    border: 1px solid var(--secondary);
+    background-color: var(--secondary);
+}
+.escr-button--secondary:focus,
+.escr-button--outline-secondary:focus {
+    box-shadow: 0 0 0 0.2rem var(--secondary-focus);
+}
+.escr-button--secondary:hover,
+.escr-button--outline-secondary:active {
+    border-color: var(--secondary-dark);
+    background-color: var(--secondary-dark);
+}
+.escr-button--secondary:active {
+    border-color: var(--secondary-darker);
+    background-color: var(--secondary-darker);
+}
+.escr-button--outline-secondary {
+    background-color: transparent;
+    border: 1px solid var(--secondary);
+    color: var(--secondary);
+}
+.escr-button--outline-secondary svg {
+    fill: var(--secondary);
+}
+/* tertiary, filled and outline */
+.escr-button--tertiary,
+.escr-button--outline-tertiary:hover {
+    border: 1px solid var(--tertiary);
+    background-color: var(--tertiary);
+}
+.escr-button--tertiary:focus,
+.escr-button--outline-tertiary:focus {
+    box-shadow: 0 0 0 0.2rem var(--tertiary-focus);
+}
+.escr-button--tertiary:hover,
+.escr-button--outline-tertiary:active {
+    border-color: var(--tertiary-dark);
+    background-color: var(--tertiary-dark);
+}
+.escr-button--tertiary:active {
+    border-color: var(--tertiary-darker);
+    background-color: var(--tertiary-darker);
+}
+.escr-button--outline-tertiary {
+    background-color: transparent;
+    border: 1px solid var(--tertiary);
+    color: var(--tertiary);
+}
+.escr-button--outline-tertiary svg {
+    fill: var(--tertiary);
+}
+/* danger, filled and outline */
+.escr-button--danger,
+.escr-button--outline-danger:hover {
+    border: 1px solid var(--alert);
+    background-color: var(--alert);
+}
+.escr-button--danger:focus,
+.escr-button--outline-danger:focus {
+    box-shadow: 0 0 0 0.2rem var(--alert-focus);
+}
+.escr-button--danger:hover,
+.escr-button--outline-danger:active {
+    background-color: var(--alert-dark);
+}
+.escr-button--danger:active {
+    background-color: var(--alert-darker);
+}
+.escr-button--outline-danger {
+    background-color: transparent;
+    border: 1px solid var(--alert);
+    color: var(--alert);
+}
+.escr-button--outline-danger svg {
+    fill: var(--alert);
+}
+/* outline buttons get filled on hover/active, so use bright text */
+[class*="escr-button--outline"]:hover,
+[class*="escr-button--outline"]:active {
+    color: var(--button-text);
+}
+[class*="escr-button--outline"]:hover svg,
+[class*="escr-button--outline"]:active svg {
+    fill: var(--button-text);
+}
+/* link */
+.escr-button--link-primary {
+    background-color: transparent;
+    border: none;
+    color: var(--primary);
+}
+.escr-button--link-primary svg {
+    fill: var(--primary);
+}
+.escr-button--link-primary:hover {
+    color: var(--primary-dark);
+}
+.escr-button--link-primary:hover svg {
+    fill: var(--primary-dark);
+}
+.escr-button--link-primary:active {
+    color: var(--primary-darker);
+}
+.escr-button--link-primary:active svg {
+    fill: var(--primary-darker);
+}
+.escr-button--link-primary:focus {
+    text-decoration: underline;
+}
+.escr-button--link-primary.escr-button--small {
+    font-size: 12px;
+}
+/* link secondary */
+.escr-button--link-secondary {
+    background-color: transparent;
+    border: none;
+    color: var(--secondary);
+    font-weight: 400;
+}
+.escr-button--link-secondary svg {
+    fill: var(--secondary);
+}
+.escr-button--link-secondary:hover {
+    color: var(--secondary-dark);
+}
+.escr-button--link-secondary:hover svg {
+    fill: var(--secondary-dark);
+}
+.escr-button--link-secondary:active {
+    color: var(--secondary-darker);
+}
+.escr-button--link-secondary:active svg {
+    fill: var(--secondary-darker);
+}
+.escr-button--link-secondary:focus {
+    text-decoration: underline;
+}
+/* "text" color variant */
+.escr-button--text {
+    background-color: transparent;
+    border: none;
+    color: var(--text1);
+}
+.escr-button--text svg {
+    fill: var(--text1);
+}
+.escr-button--text:hover,
+.escr-button--outline-text:hover,
+.escr-button--text-alt:hover {
+    background-color: var(--secondary-hover);
+}
+.escr-button--text:active,
+.escr-button--outline-text:active,
+.escr-button--text-alt:active {
+    background-color: var(--secondary-focus);
+}
+.escr-button--text:focus,
+.escr-button--outline-text:focus,
+.escr-button--text-alt:focus {
+    box-shadow: 0 0 0 0.2rem  var(--secondary-focus);
+}
+/* "text-alt" color variant */
+.escr-button--text-alt {
+    background-color: var(--background1);
+    border: none;
+    color: var(--text1);
+}
+.escr-button--text-alt svg {
+    fill: var(--text1);
+}
+/* "outline-text" color variant */
+.escr-button--outline-text {
+    background-color: transparent;
+    border: 1px solid var(--text1);
+    color: var(--text1);
+}
+.escr-button--outline-text svg,
+.escr-button--outline-text:hover svg,
+.escr-button--outline-text:active svg {
+    fill: var(--text1);
+}
+.escr-button--outline-text:hover,
+.escr-button--outline-text:active {
+    color: var(--text1);
+}
+/* disabled */
+.escr-button:disabled {
+    pointer-events: none;
+    color: var(--text3);
+    background-color: var(--background2);
+    border-color: var(--background2);
+}
+.escr-button:disabled svg {
+    fill: var(--text3);
+}
+.escr-button:disabled[class*="escr-button--outline"] {
+    background-color: transparent;
+    border-color: var(--text3);
+}
+.escr-button:disabled[class*="escr-button--link"] {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.escr-loader-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 0 auto;
+    overflow: hidden;
+}
+.escr-loader-container .escr-spinner {
+    width: 24px;
+    height: 24px;
+    max-width: 24px;
+    max-height: 24px;
+}
+
+/* common modal styles */
+.escr-modal-backdrop {
+    z-index: var(--modal-backdrop-z);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--modal-backdrop);
+}
+.escr-modal {
+    z-index: var(--modal-z);
+    background-color: var(--background1);
+    padding: 8px 0 16px 16px;
+    border-radius: 15px;
+    /* the following will generally be overridden, but it's similar for enough to factor out */
+    width: 460px;
+    position: fixed;
+    top: 15%;
+    left: calc(50% - 250px);
+}
+.escr-modal:not(:has(.escr-modal-backdrop)) {
+    /* apply drop shadow to modals, with the exception of modals containing other modals:
+    modal backdrop needs fixed positioning relative to viewport, but "filter" results in the
+    creation of a new containing block and breaks that */
+    filter: drop-shadow(2px 4px 4px var(--drop-shadow))
+        drop-shadow(-1px -1px 2px var(--drop-shadow));
+}
+.escr-modal .escr-modal-content {
+    overflow: auto;
+    padding-right: 16px;
+}
+.escr-modal .escr-modal-header {
+    margin: 0.5rem 16px 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.escr-modal .escr-modal-header h2 {
+    margin: 0;
+}
+.escr-modal .escr-modal-header svg {
+    width: 14px;
+    height: 14px;
+}
+
+.escr-modal .escr-form-field {
+    margin: 24px 0 0;
+}
+/* button group at end of modal */
+.escr-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 25px;
+    margin-right: 16px;
+}
+.escr-modal .modal-actions button + button {
+    margin-left: 16px;
+}
+
+.escr-x-icon {
+    display: block;
+    width: 10px;
+    height: 10px;
+    fill: var(--tag-text);
+}
+
+.escr-toast-group,
+#alerts-container {
+    display: flex;
+    flex-flow: column;
+    position: absolute;
+    left: 6rem;
+    bottom: 2rem;
+    width: auto;
+    right: auto;
+    top: auto;
+}
+.toast-group-enter, .toast-group-leave-to {
+    opacity: 0;
+}
+.escr-toast {
+    z-index: var(--toast-z);
+    background-color: var(--background2);
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 4rem;
+    box-shadow: 0px 4px 4px var(--drop-shadow);
+    border-radius: 5px;
+    padding: 0 0.5rem 0 1rem;
+    width: max-content;
+    max-width: 100%;
+    transition: opacity 0.5s;
+    gap: 0.5rem;
+}
+.escr-toast-group .escr-toast + .escr-toast {
+    margin-top: 1rem;
+}
+.escr-toast > span,
+.escr-toast > a {
+    font-weight: 600;
+}
+/* color variants */
+.escr-toast--alert {
+    background-color: var(--alert);
+    color: var(--toast-text);
+    box-shadow: 0px 4px 4px var(--alert-focus);
+}
+.escr-toast--alert a,
+.escr-toast--alert button,
+.escr-toast--alert a:hover,
+.escr-toast--alert button:hover,
+.escr-toast--alert a:active,
+.escr-toast--alert button:active {
+    color: var(--toast-text);
+    border-color: var(--toast-text);
+}
+.escr-toast--alert svg {
+    fill: var(--toast-text);
+}
+.escr-toast--success {
+    background-color: var(--primary);
+    color: var(--toast-text);
+    box-shadow: 0px 4px 4px var(--primary-focus);
+}
+.escr-toast--success svg {
+    fill: var(--toast-text);
+}
+.escr-toast--success a,
+.escr-toast--success button,
+.escr-toast--success a:hover,
+.escr-toast--success button:hover,
+.escr-toast--success a:active,
+.escr-toast--success button:active {
+    color: var(--toast-text);
+    border-color: var(--toast-text);
+}
+
+.escr-breadcrumbs {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    font-size: 14px;
+    list-style: none;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+.escr-breadcrumbs li:not(.escr-first-crumb) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+}
+.escr-breadcrumbs li:not(.escr-first-crumb)::before {
+    content: "/";
+    display: inline;
+    margin-right: 8px;
+    font-weight: 600;
+    color: var(--text2);
+}
+.escr-breadcrumbs li.escr-first-crumb {
+    min-width: 81px;
+}
+
+.escr-breadcrumbs li a {
+    font-weight: 600;
+    text-decoration-line: underline;
+    color: var(--text1);
+}
+.escr-breadcrumbs li span {
+    font-weight: 400;
+    text-decoration: none;
+    color: var(--text2);
+}
+
+/* sidebar container */
+.escr-sidebar-container {
+    display: flex;
+    z-index: var(--sidebar-container-z);
+}
+/* sidebar */
+.escr-sidebar {
+    background-color: var(--background1);
+    width: 64px;
+    min-width: 64px;
+    max-width: 64px;
+    padding-top: 32px;
+    filter: drop-shadow(0px 4px 4px var(--drop-shadow));
+    z-index: var(--sidebar-z);
+}
+/* sidebar list of buttons */
+.escr-sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+/* individual sidebar button */
+.escr-sidebar-button {
+    cursor: pointer;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border: none;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    height: 74px;
+    background-color: transparent;
+    color: var(--text1);
+    fill: var(--text1);
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out,
+        fill 0.15s ease-in-out;
+}
+.escr-sidebar-button:hover {
+    background-color: var(--background2);
+    color: var(--text1);
+    fill: var(--text1);
+}
+.escr-sidebar-button:active,
+.escr-sidebar-button--selected {
+    background-color: var(--secondary);
+    color: var(--button-text);
+    fill: var(--button-text);
+}
+.escr-sidebar-button--selected:hover {
+    background-color: var(--secondary-dark);
+    color: var(--button-text);
+    fill: var(--button-text);
+}
+.escr-sidebar-button--selected:active {
+    background-color: var(--secondary-darker);
+}
+.escr-sidebar-button:disabled {
+    color: var(--text2);
+    fill: var(--text2);
+    pointer-events: none;
+    cursor: default;
+}
+/* sidebar panel opened */
+.escr-selected-action {
+    position: absolute;
+    right: 64px;
+    width: 288px;
+    height: 100%;
+    background-color: var(--background1);
+    border-top-left-radius: 15px;
+    filter: drop-shadow(-5px 4px 10px rgba(0, 0, 0, 0.15));
+    z-index: var(--sidebar-container-z);
+    color: var(--text1);
+    fill: var(--text1);
+}
+.escr-action-header {
+    padding: 35px 19px;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    border-bottom: 1px solid var(--background2);
+}
+.escr-action-header h2 {
+    margin: 0;
+    padding: 0;
+}
+.escr-action-header .escr-action-icon {
+    margin-right: 1rem;
+}
+.escr-action-header .escr-close-action {
+    cursor: pointer;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    width: 28px;
+    height: 28px;
+    position: absolute;
+    right: 1rem;
+}
+.escr-action-header .escr-close-action svg {
+    width: 14px;
+    height: 14px;
+    fill: var(--text1);
+}
+/* variable content in a sidebar panel */
+.escr-selected-action .escr-action-panel {
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: calc(100% - 96px);
+}
+/* backdrop to prevent interactions with rest of page while sidebar panel open */
+.escr-sidebar-backdrop {
+    position: fixed;
+    z-index: var(--sidebar-backdrop-z);
+    left: 0;
+}
+
+/* page */
+.escr-page {
+    width: 100%;
+}
+
+/* no documents/projects to display message */
+.escr-page .escr-empty-msg {
+    text-align: center;
+    padding: 0 1rem 1rem;
+}
+
+/* load more */
+.escr-page .escr-load-more-btn {
+    margin: 1rem auto;
+}
+
+
+
+.escr-sort-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+.escr-sort-icon path {
+    fill: var(--text3);
+}
+.escr-sort-icon--asc path:first-of-type,
+.escr-sort-icon--desc path:last-of-type {
+    fill: var(--text1);
+}
+
+.escr-table {
+    background-color: var(--background1);
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+.escr-table tbody,
+.escr-table thead,
+.escr-table tr {
+    width: 100%;
+}
+/* header row */
+.escr-table thead tr {
+    font-size: 12px;
+    height: 32px;
+    border-bottom: 1px solid var(--background);
+}
+.escr-table--compact thead tr {
+    font-size: 10px;
+    height: 26px;
+}
+.escr-table th {
+    font-weight: 600;
+    text-align: left;
+}
+.escr-table th div {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+/* other rows */
+.escr-table tbody tr {
+    font-size: 14px;
+    height: 64px;
+    transition: background-color 0.15s ease-in-out;
+    border-bottom: 1px solid var(--background);
+}
+.escr-table--compact tbody tr {
+    height: 42px;
+}
+.escr-table tr td:first-of-type,
+.escr-table tr th:first-of-type {
+    padding: 0 0 0 16px;
+}
+.escr-table tr td:last-of-type {
+    padding: 0 16px 0 0;
+}
+.escr-table tr td:only-of-type {
+    padding: 0 0 0 16px;
+}
+.escr-table tbody tr:hover {
+    background-color: var(--background2);
+}
+.escr-table tr td.with-img img {
+    width: 50px;
+    height: 50px;
+    vertical-align: middle;
+    border-radius: 5px;
+    margin-right: 1.25rem;
+}
+.escr-table tr td.with-img img ~ * {
+    vertical-align: middle;
+}
+/* sorting */
+.escr-table th button.escr-sort-button {
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    display: flex;
+    flex-flow: row nowrap;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 12px;
+    color: var(--text1);
+    padding: 0;
+    transition: font-weight 0.15s ease-in-out, color 0.15s ease-in-out;
+    font-weight: 600;
+}
+.escr-table--compact th button.escr-sort-button {
+    font-size: 10px;
+}
+.escr-table th button.escr-sort-button svg {
+    margin-left: 2px;
+}
+.escr-table th button.escr-sort-button:disabled {
+    color: var(--text3);
+    pointer-events: none;
+    cursor: default;
+}
+/* linking */
+.escr-table tr {
+    position: relative;
+}
+/*
+ * safari specific hack until the following are fixed:
+ * https://bugs.webkit.org/show_bug.cgi?id=253147
+ * https://bugs.webkit.org/show_bug.cgi?id=258886
+ */
+@supports (hanging-punctuation: first) and (font: -apple-system-body) and (-webkit-appearance: none) {
+    .escr-table tr td {
+        position: relative;
+    }
+}
+.escr-table tr td a.row-link {
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+.escr-table tbody tr:has(a:active),
+.escr-table tbody tr:focus-within {
+    background-color: var(--secondary-hover);
+}
+/* actions */
+.escr-table td.escr-row-actions * {
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+.escr-table tr:hover td.escr-row-actions *,
+.escr-table tr td.escr-row-actions:focus-within * {
+    opacity: 1;
+}
+.escr-table td.escr-row-actions div {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    margin-right: 18px;
+    position: relative;
+    z-index: var(--table-actions-z);
+}
+/* ensure tags dropdown above table row link */
+.escr-table .v-popper--theme-tags-dropdown {
+    z-index: var(--table-actions-z);
+}
+/* custom select checkboxes */
+.escr-table .escr-select-checkbox {
+    position: relative;
+    z-index: var(--table-actions-z);
+    margin: 0;
+}
+.escr-table .escr-select-checkbox:disabled,
+.escr-table .escr-select-checkbox:has(input:disabled) {
+    pointer-events: none;
+}
+.escr-table .escr-select-checkbox .checked,
+.escr-table .escr-select-checkbox .unchecked {
+    cursor: pointer;
+    display: none;
+}
+.escr-table .escr-select-checkbox:has(input:checked) .checked {
+    color: var(--secondary);
+    display: block;
+}
+.escr-table .escr-select-checkbox:not(:has(input:checked)) .unchecked {
+    color: var(--text1);
+    display: block;
+}
+.escr-table .escr-select-checkbox:disabled .checked,
+.escr-table .escr-select-checkbox:disabled .unchecked,
+.escr-table .escr-select-checkbox:has(input:disabled) .checked,
+.escr-table .escr-select-checkbox:has(input:disabled) .unchecked,
+.escr-table--selectable tbody tr:has(input:disabled) {
+    color: var(--text3);
+    pointer-events: none;
+}
+.escr-table--selectable tbody tr:has(input:checked) {
+    background-color: var(--line-ordering-selected);
+    box-shadow: inset 4px 0px 0px 0px var(--secondary);
+}
+.escr-table--selectable .escr-select-column > div {
+    display: flex;
+    flex-flow: row;
+}
+
+/* drag and drop reorder functionality */
+/* drag handle */
+.escr-table--orderable tr td div .escr-drag-handle {
+    position: absolute;
+    left: 0;
+    text-align: left;
+    cursor: move;
+    z-index: var(--table-actions-z);
+    width: 100%;
+    height: 100%;
+}
+/* drop zone */
+.escr-table.escr-table--orderable tbody tr.escr-dropzone {
+    position: relative;
+    height: 1px;
+    background-color: var(--background);
+}
+.escr-table.escr-table--orderable tbody tr.escr-dropzone td {
+    position: absolute;
+    width: 100%;
+    border-top: 5px solid transparent;
+    height: 32px;
+    pointer-events: none;
+}
+.escr-table.escr-table--orderable tbody tr.escr-dropzone td.is-dragging {
+    pointer-events: all;
+    z-index: var(--sticky-table-header-z);
+}
+.escr-table.escr-table--orderable tbody tr.escr-dropzone td.is-dragging::before {
+    display: block;
+    position: absolute;
+    margin-top: -36px;
+    content: "";
+    height: 32px;
+    width: 100%;
+    top: 0;
+    left: 0;
+}
+.escr-table.escr-table--orderable tbody tr.escr-dropzone td.drag-over {
+    border-top-color: var(--secondary-focus);
+    z-index: var(--sticky-table-header-z);
+}
+.escr-table.escr-table--orderable thead tr,
+.escr-table.escr-table--orderable tbody tr {
+    border-width: 0;
+}
+.escr-table.escr-table--orderable thead tr {
+    height: 31px;
+}
+.escr-table.escr-table--orderable tbody tr {
+    height: 63px;
+}
+/*
+ * safari specific hack
+ */
+@supports (hanging-punctuation: first) and (font: -apple-system-body) and (-webkit-appearance: none) {
+    .escr-table.escr-table--orderable thead tr {
+        height: 32px;
+    }
+}
+/* disable links during drag */
+.escr-table.escr-table--orderable tr td a.row-link {
+    width: 0%;
+    height: 0%;
+}
+/* drag image (what shows up while dragging) */
+tr#is-drag-image {
+    position: absolute;
+    top: -1000px;
+    color: var(--text1);
+    background-color: var(--background1);
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+}
+tr#is-drag-image:has(input:checked) {
+    background-color: var(--selected-background);
+}
+tr#is-drag-image .drag-overlay {
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: var(--drag-overlay);
+}
+/* element counter */
+tr#is-drag-image .elements-count {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    margin-bottom: 3px;
+    font-weight: 600;
+    font-size: 12px;
+    background-color: var(--tag-text);
+    color: var(--button-text);
+    z-index: var(--editor-nav-z);
+}
+body:has(#is-drag-image) {
+    cursor: grabbing !important;
+}
+
+/* tags */
+.escr-tag {
+    display: inline-flex;
+    color: var(--tag-text);
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 16px;
+    padding: 4px 10px;
+    flex-flow: row nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    align-items: center;
+    max-width: 200px;
+    background-color: var(--tag-0);
+}
+/* tag color variants: light colors */
+.escr-tag--variant-0 {
+    background-color: var(--tag-0);
+}
+.escr-tag--variant-1 {
+    background-color: var(--tag-1);
+}
+.escr-tag--variant-2 {
+    background-color: var(--tag-2);
+}
+.escr-tag--variant-3 {
+    background-color: var(--tag-3);
+}
+.escr-tag--variant-4 {
+    background-color: var(--tag-4);
+}
+.escr-tag--variant-5 {
+    background-color: var(--tag-5);
+}
+.escr-tag--variant-6 {
+    background-color: var(--tag-6);
+}
+.escr-tag--variant-7 {
+    background-color: var(--tag-7);
+}
+.escr-tag--variant-8 {
+    background-color: var(--tag-8);
+}
+.escr-tag--variant-9 {
+    background-color: var(--tag-9);
+}
+.escr-tag--variant-10 {
+    background-color: var(--tag-10);
+}
+.escr-tag--variant-11 {
+    background-color: var(--tag-11);
+}
+.escr-tag--variant-12 {
+    background-color: var(--tag-12);
+}
+.escr-tag--variant-13 {
+    background-color: var(--tag-13);
+}
+.escr-tag--variant-14 {
+    background-color: var(--tag-14);
+}
+.escr-tag--variant-15 {
+    background-color: var(--tag-15);
+}
+
+/* darker colors */
+.escr-tag--variant-16 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-16);
+}
+.escr-tag--variant-17 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-17);
+}
+.escr-tag--variant-18 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-18);
+}
+.escr-tag--variant-19 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-19);
+}
+.escr-tag--variant-20 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-20);
+}
+.escr-tag--variant-21 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-21);
+}
+.escr-tag--variant-22 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-22);
+}
+.escr-tag--variant-23 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-23);
+}
+.escr-tag--variant-24 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-24);
+}
+.escr-tag--variant-25 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-25);
+}
+.escr-tag--variant-26 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-26);
+}
+.escr-tag--variant-27 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-27);
+}
+.escr-tag--variant-28 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-28);
+}
+.escr-tag--variant-29 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-29);
+}
+.escr-tag--variant-30 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-30);
+}
+
+/* tag groups */
+.escr-tag-group {
+    display: flex;
+    white-space: nowrap;
+}
+.escr-tag-group .escr-tag:not(:last-of-type) {
+    margin-right: 4px;
+}
+.escr-tag-group-wrapped {
+    flex-flow: row wrap;
+}
+.escr-tag-group-wrapped .escr-tag {
+    margin-bottom: 4px;
+}
+/* tag overflow (non-wrapping) */
+.escr-tag-overflow-toggle {
+    cursor: default;
+}
+.v-popper--theme-tags-dropdown .v-popper__inner {
+    background: var(--background1);
+    border-radius: 15px;
+    padding: 16px;
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15), 0px 2px 4px rgba(0, 0, 0, 0.15);
+    border: none;
+}
+.v-popper--theme-tags-dropdown .v-popper__arrow-inner {
+    border-color: var(--background1);
+}
+.v-popper--theme-tags-dropdown .v-popper__arrow-outer {
+    border-color: var(--background2);
+}
+.escr-tag-overflow {
+    display: flex;
+    flex-flow: column;
+    align-items: flex-start;
+}
+.escr-tag-overflow .escr-tag:not(:last-of-type) {
+    margin-bottom: 10px;
+}
+
+.escr-filter-button,
+.escr-filter-button .escr-button {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+.escr-filter-button .escr-button {
+    color: var(--text1);
+    background-color: var(--background2);
+    margin-right: 4px;
+    font-size: 12px;
+    min-height: 36px;
+}
+.escr-filter-button .escr-button svg {
+    fill: var(--text1);
+}
+.escr-filter-button--active .escr-button svg {
+    fill: var(--primary);
+}
+.escr-filter-button .escr-button:hover {
+    background-color: var(--background2-dark);
+}
+.escr-filter-button .escr-button:active {
+    background-color: var(--background2-darker);
+}
+.escr-filter-button .escr-button:focus {
+    box-shadow: 0 0 0 0.2rem var(--background2-focus);
+}
+.escr-filter-button .escr-button .label {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+.escr-filter-button .escr-button .count {
+    display: block;
+    padding: 1px 1px 0 0;
+    color: var(--button-text);
+    background-color: var(--primary);
+    margin-left: 4px;
+    font-size: 12px;
+    width: 19px;
+    height: 19px;
+    border-radius: 10px;
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+.escr-filter-button .escr-button:disabled {
+    color: var(--text3);
+    cursor: default;
+    pointer-events: none;
+}
+.escr-filter-button .escr-button:disabled .count {
+    color: var(--text3);
+    background-color: var(--background);
+}
+.escr-filter-button .escr-button:disabled svg {
+    fill: var(--text3);
+}
+.escr-filter-button .escr-clear-filter-button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    width: 18px;
+    padding: 4px;
+}
+.escr-filter-button .escr-clear-filter-button:disabled {
+    cursor: default;
+}
+.escr-filter-button .escr-clear-filter-button svg {
+    fill: var(--text1);
+    transition: fill 0.15s ease-in-out;
+}
+.escr-filter-button .escr-clear-filter-button:disabled svg {
+    fill: var(--text3);
+}
+
+.escr-check-icon {
+    display: block;
+    width: 11px;
+    height: 9px;
+}
+
+.escr-text-field input,
+.escr-text-field textarea {
+    background-color: var(--background2);
+    color: var(--text1);
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    margin: 8px 0 0 1px;
+}
+.escr-text-field input:disabled,
+.escr-text-field textarea:disabled {
+    color: var(--text3);
+    background-color: var(--background);
+    pointer-events: none;
+}
+.escr-text-field input:invalid,
+.escr-text-field input[invalid],
+.escr-text-field textarea:invalid,
+.escr-text-field textarea[invalid] {
+    border: 1px solid var(--alert);
+}
+.escr-text-field input:invalid:focus-visible,
+.escr-text-field input[invalid]:focus-visible {
+    outline-color: var(--alert);
+    border-color: var(--alert);
+}
+
+.escr-form-field {
+    display: block;
+}
+.escr-form-field span.escr-required,
+h3 span.escr-required {
+    color: var(--alert);
+    margin-left: 3px;
+}
+.escr-help-text {
+    font-weight: 400;
+    font-size: 12px;
+    font-family: 'Noto Sans';
+    font-style: normal;
+}
+.escr-field-errors {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+}
+.escr-error-text {
+    color: var(--alert);
+}
+.escr-form-field .escr-field-label {
+    display: block;
+    font-weight: 600;
+}
+.escr-form-field.escr-checkbox-field {
+    display: flex;
+    flex-flow: column;
+}
+.escr-form-field.escr-checkbox-field label {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    margin-top: 8px;
+}
+.escr-form-field.escr-checkbox-field input {
+    margin-right: 12px;
+}
+.escr-form-field.escr-checkbox-field .escr-help-text {
+    display: block;
+    margin-top: 8px;
+}
+
+.escr-page input[type="file"] {
+    font: inherit;
+    background-color: var(--background);
+    width: 100%;
+    border-radius: 4px;
+    height: 38px;
+}
+.escr-page input[type="file"]::file-selector-button {
+    padding: 8px 16px;
+    height: 100%;
+    font: inherit;
+    border-radius: 4px 0 0 4px;
+    border: none;
+    background-color: var(--primary);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.escr-page input[type="file"].invalid {
+    outline: 1px solid var(--alert);
+}
+
+.escr-segmented-button-group {
+    display: flex;
+    flex-flow: row nowrap;
+}
+.escr-segmented-button-group > div {
+    height: 32px;
+    max-height: 32px;
+    flex: 1 0 auto;
+}
+.escr-segmented-button-group > div > label,
+.escr-segmented-button-group > div > div > label {
+    display: flex;
+    flex-flow: row nowrap;
+    flex: 1 0;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    padding: 0px 10px;
+    min-height: 32px;
+    height: 32px;
+    color: var(--button-text);
+    font-size: 12px;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        font-weight 0.15s ease-in-out;
+    cursor: pointer;
+}
+/* separation and border radius */
+.escr-segmented-button-group > div:not(:last-of-type) > label,
+.escr-segmented-button-group > div:not(:last-of-type) > div > label {
+    margin-right: 1px;
+}
+.escr-segmented-button-group > div:first-of-type > label,
+.escr-segmented-button-group > div:first-of-type > div > label {
+    border-radius: 5px 0px 0px 5px;
+}
+.escr-segmented-button-group > div:last-of-type > label,
+.escr-segmented-button-group > div:last-of-type > div > label {
+    border-radius: 0px 5px 5px 0px;
+}
+.escr-segmented-button-group > div:not(:first-of-type):not(:last-of-type) > label,
+.escr-segmented-button-group > div:not(:first-of-type):not(:last-of-type) > div > label {
+    border-radius: 0px;
+}
+.escr-segmented-button-group > div:first-of-type:last-of-type > label,
+.escr-segmented-button-group > div:first-of-type:last-of-type > div > label {
+    border-radius: 5px;
+}
+/* inactive button(s) */
+.escr-segmented-button-group input:not(:checked) + label,
+.escr-segmented-button-group input:not(:checked) + div > label {
+    color: var(--text2);
+    background-color: var(--background2);
+    font-weight: 400;
+}
+.escr-segmented-button-group input:not(:checked) + label:hover,
+.escr-segmented-button-group input:not(:checked) + div > label:hover {
+    background-color: var(--background2-dark);
+}
+.escr-segmented-button-group input:not(:checked) + label:active,
+.escr-segmented-button-group input:not(:checked) + div > label:active {
+    background-color: var(--background2-darker);
+}
+/* active button */
+.escr-segmented-button-group input:checked + label,
+.escr-segmented-button-group input:checked + div > label {
+    font-weight: 600;
+}
+.escr-segmented-button-group--primary input:checked + label,
+.escr-segmented-button-group--primary input:checked + div > label {
+    background-color: var(--primary);
+}
+.escr-segmented-button-group--primary input:checked + label:hover,
+.escr-segmented-button-group--primary input:checked + div > label:hover {
+    background-color: var(--primary-dark);
+}
+.escr-segmented-button-group--primary input:checked + label:active,
+.escr-segmented-button-group--primary input:checked + div > label:active {
+    background-color: var(--primary-darker);
+}
+.escr-segmented-button-group--secondary input:checked + label,
+.escr-segmented-button-group--secondary input:checked + div > label {
+    background-color: var(--secondary);
+}
+.escr-segmented-button-group--secondary input:checked + label:hover,
+.escr-segmented-button-group--secondary input:checked + div > label:hover {
+    background-color: var(--secondary-dark);
+}
+.escr-segmented-button-group--secondary input:checked + label:active,
+.escr-segmented-button-group--secondary input:checked + div > label:active {
+    background-color: var(--secondary-darker);
+}
+/* focus */
+.escr-segmented-button-group input:focus + label,
+.escr-segmented-button-group input:focus + div > label {
+    z-index: var(--segmented-button-focus-z);
+}
+.escr-segmented-button-group--primary input:focus + label,
+.escr-segmented-button-group--primary input:focus + div > label {
+    box-shadow: 0 0 0 0.1rem var(--primary-focus);
+}
+.escr-segmented-button-group--secondary input:focus + label,
+.escr-segmented-button-group--secondary input:focus + div > label {
+    box-shadow: 0 0 0 0.1rem var(--secondary-focus);
+}
+
+/* disabled */
+.escr-segmented-button-group input:disabled + label,
+.escr-segmented-button-group input:disabled + div > label {
+    pointer-events: none;
+    cursor: default;
+    color: var(--text3);
+    background-color: var(--background2);
+    font-weight: 400;
+}
+
+/* Filter modal */
+.escr-tag-filter {
+    width: 360px;
+}
+.escr-tag-filter h3 {
+    color: var(--text1);
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: bold;
+}
+.escr-tag-filter h4 {
+    color: var(--text1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    margin-block-start: 1.33em;
+    margin-block-end: 1.33em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: bold;
+}
+.escr-tag-filter h4 div {
+    display: flex;
+    flex-flow: row nowrap;
+}
+.escr-tag-filter {
+    padding-right: 16px;
+}
+
+/* Tags list with checkboxes */
+.escr-tag-filter-group {
+    display: flex;
+    flex-flow: row wrap;
+    margin-top: 8px;
+}
+.escr-tag-filter-group .escr-tag {
+    margin-right: 7px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    height: 25px;
+    box-sizing: border-box;
+    transition: box-shadow 0.15s ease-in-out;
+}
+.escr-tag-filter-group input[type="checkbox"]:checked + .escr-tag {
+    border: 1px solid var(--text1);
+}
+.escr-tag-filter-group input[type="checkbox"]:focus + .escr-tag {
+    box-shadow: 0 0 0 0.2rem var(--secondary-focus);
+}
+
+/* Checkmark for checked box */
+.escr-tag-filter-group input[type="checkbox"]:not(:checked) + .escr-tag svg {
+    display: none;
+}
+.escr-tag-filter-group input[type="checkbox"]:checked + .escr-tag svg {
+    margin-left: 5px;
+    display: inline;
+}
+
+/* additional layout elements */
+.escr-tag-filter .escr-text-field {
+    margin-top: -16px;
+}
+.escr-tag-filter hr {
+    margin: 16px 0;
+}
+.escr-tag-filter label {
+    display: flex;
+    align-items: center;
+}
+.escr-tag-filter input#untagged {
+    margin-right: 0.5rem;
+}
+.escr-tag-filter input#untagged + span {
+    color: var(--text1);
+}
+
+.escr-tag-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.escr-tag-icon--active {
+    fill: var(--primary);
+}
+
+/* set of filters */
+.escr-filter-set {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    position: relative;
+}
+/* spacing between filters */
+.escr-filter-set .escr-filter-button {
+    margin-left: 16px;
+}
+
+.escr-plus-icon {
+    display: block;
+    width: 12px;
+    height: 12px;
+}
+
+.escr-tags-field .escr-form-label {
+    font-weight: 600;
+}
+.escr-tags-field .escr-text-field {
+    margin-top: 0;
+}
+.escr-tags-field .escr-create-tag {
+    margin-top: 0.5rem;
+}
+.escr-tags-field .escr-create-tag .escr-button {
+    margin: 0 auto;
+}
+
+/* Tags list with checkboxes */
+.escr-tag-field-group {
+    display: flex;
+    flex-flow: row wrap;
+    margin: 8px 0;
+    max-height: 100px;
+    overflow: auto;
+    border: 1px solid var(--background2);
+    border-radius: 5px;
+    padding: 20px 20px 10px;
+}
+.escr-tag-field-group:empty {
+    display: none;
+}
+.escr-tag-field-group .escr-tag {
+    margin-right: 7px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    height: 25px;
+    box-sizing: border-box;
+    transition: box-shadow 0.15s ease-in-out;
+}
+.escr-tag-field-group input[type="checkbox"]:checked + .escr-tag {
+    border: 1px solid var(--text1);
+}
+.escr-tag-field-group input[type="checkbox"]:focus + .escr-tag {
+    box-shadow: 0 0 0 0.2rem var(--secondary-focus);
+}
+
+/* Checkmark for checked box */
+.escr-tag-field-group input[type="checkbox"]:not(:checked) + .escr-tag svg {
+    display: none;
+}
+.escr-tag-field-group input[type="checkbox"]:checked + .escr-tag svg {
+    margin-left: 5px;
+    display: inline;
+}
+.escr-tag-colors {
+    padding: 0;
+    margin: 0;
+    gap: 4px;
+    display: grid;
+    list-style: none;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+}
+.escr-tag-colors button {
+    display: block;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease-in-out;
+}
+.escr-tag-colors button:hover {
+    box-shadow: inset 0 0 0 34px rgba(0, 0, 0, 0.1);
+}
+.escr-tag-colors button:active {
+    box-shadow: inset 0 0 0 34px rgba(0, 0, 0, 0.2);
+}
+
+.escr-edit-project .escr-modal {
+    width: 400px;
+    position: absolute;
+    top: 15%;
+    left: calc(50% - 216px);
+}
+
+.escr-trash-icon {
+    display: block;
+    width: 16px;
+    height: 18px;
+}
+
+.escr-card {
+    background: var(--background1);
+    border-radius: 15px;
+    padding-bottom: 1rem;
+}
+.escr-card-padding {
+    padding: 1rem;
+}
+.escr-card-table > *:not(table) {
+    padding: 0 1rem;
+}
+/* card header: should be comprised of one or two elements (left and, optionally, right) */
+.escr-card-header {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.escr-card:not(.escr-card-padding) .escr-card-header {
+    margin: 0.3rem 0;
+}
+.escr-card-padding .escr-card-header h1,
+.escr-card-padding .escr-card-header h2 {
+    margin: 0;
+}
+.escr-card-actions {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+
+/* new project modal */
+.escr-new-project .escr-modal,
+.escr-delete-project .escr-modal {
+    width: 400px;
+    position: absolute;
+    top: 25%;
+    left: calc(50% - 216px);
+}
+/* table height */
+.escr-projects-list .escr-card-table {
+    overflow: hidden;
+    display: flex;
+    flex-flow: column;
+    padding: 0;
+    max-height: calc(90vh - 32px);
+}
+.escr-projects-list .table-container {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+}
+/* constrain tags cells width */
+.escr-projects-list table td:nth-of-type(2) {
+    width: 300px;
+    max-width: 300px;
+}
+.escr-projects-list .escr-card-actions > button:last-of-type {
+    margin-left: 2rem;
+}
+.escr-projects-list .escr-loader-container {
+    margin: 1rem;
+}
+

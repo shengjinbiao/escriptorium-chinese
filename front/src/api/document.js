@@ -217,6 +217,20 @@ export const updateDocumentMetadata = async ({ documentId, metadatum }) =>
         ...metadatum,
     });
 
+export const runAiOnParts = async ({ documentId, parts, operations }) => {
+    const payload = {};
+    if (Array.isArray(parts)) {
+        payload.parts = parts;
+    }
+    if (operations) {
+        payload.operations = operations;
+    }
+    return await axios.post(
+        `/documents/${documentId}/parts/ai/enrich/`,
+        payload,
+    );
+};
+
 // delete document metadata
 export const deleteDocumentMetadata = async ({ documentId, metadatumId }) =>
     await axios.delete(`/documents/${documentId}/metadata/${metadatumId}/`);

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import importlib.metadata
 import os
 import sys
+from pathlib import Path
 
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
@@ -299,6 +300,22 @@ if CUSTOM_CONTRIBUTORS:
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+AI_PROVIDER_CONFIG_PATH = os.getenv(
+    'AI_PROVIDER_CONFIG_PATH',
+    str(Path(BASE_DIR) / 'config' / 'providers.yml'),
+)
+AI_CACHE_ROOT = Path(
+    os.getenv('AI_CACHE_ROOT', os.path.join(MEDIA_ROOT, 'ai_cache')),
+)
+AI_PUNCTUATION_TRANSCRIPTION_NAME = os.getenv(
+    'AI_PUNCTUATION_TRANSCRIPTION_NAME',
+    'AI punctuation',
+)
+AI_TRANSLATION_TRANSCRIPTION_NAME = os.getenv(
+    'AI_TRANSLATION_TRANSCRIPTION_NAME',
+    'AI translation',
+)
 
 LOGGING = {
     'version': 1,

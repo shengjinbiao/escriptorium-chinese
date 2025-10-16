@@ -221,6 +221,52 @@
                             <EscrButton
                                 color="secondary"
                                 class="context-menu-button"
+                                label="AI Tools"
+                                size="small"
+                                :disabled="loading && loading.images"
+                                :on-click="() => {}"
+                            >
+                                <template #button-icon>
+                                    <AiIcon />
+                                </template>
+                                <template #button-icon-right>
+                                    <ChevronDownIcon />
+                                </template>
+                            </EscrButton>
+                            <template #popper>
+                                <ul class="escr-vertical-menu">
+                                    <li>
+                                        <button
+                                            @mousedown="() => runAiOperations({ punctuate: true, translate: false })"
+                                        >
+                                            <span>Generate Punctuation</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            @mousedown="() => runAiOperations({ punctuate: false, translate: true })"
+                                        >
+                                            <span>Generate Translation</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            @mousedown="() => runAiOperations({ punctuate: true, translate: true })"
+                                        >
+                                            <span>Punctuation & Translation</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </template>
+                        </VMenu>
+                        <VMenu
+                            placement="bottom-start"
+                            :triggers="['click']"
+                            theme="vertical-menu"
+                        >
+                            <EscrButton
+                                color="secondary"
+                                class="context-menu-button"
                                 label="Train Model"
                                 size="small"
                                 :disabled="loading && loading.images"
@@ -570,6 +616,7 @@ import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapMutations, mapState } from "vuex";
 
 import AlignIcon from "../../components/Icons/AlignIcon/AlignIcon.vue";
+import AiIcon from "../../components/Icons/AiIcon/AiIcon.vue";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import ChevronDownIcon from "../../components/Icons/ChevronDownIcon/ChevronDownIcon.vue";
@@ -616,6 +663,7 @@ import "./Images.css";
 export default {
     name: "EscrImages",
     components: {
+        AiIcon,
         AlignIcon,
         AlignModal,
         ChevronDownIcon,
@@ -967,13 +1015,14 @@ export default {
         }
     },
     methods: {
-        ...mapActions("alerts", ["addError"]),
+        ...mapActions("alerts", { addError: "addError", addAlert: "add" }),
         ...mapActions("document", [
             "confirmImageCancelWarning",
             "fetchDocumentModels",
             "handleSubmitImport",
             "setId",
             "updatePartTaskStatus",
+            "triggerAiOnParts",
         ]),
         ...mapActions("images", [
             "confirmOverwriteWarning",
@@ -1014,6 +1063,42 @@ export default {
          */
         closeContextMenu() {
             this.contextMenuOpen = null;
+        },
+        describeAiOperationMessage(operations, count) {
+            const actions = [];
+            if (operations?.punctuate) actions.push("punctuation");
+            if (operations?.translate) actions.push("translation");
+            const taskLabel = actions.length ? actions.join(" & ") : "AI processing";
+            const itemLabel = count === 1 ? "image" : "images";
+            return `Queued ${taskLabel} for ${count} ${itemLabel}.`;
+        },
+        async runAiOperations(operations) {
+            if (!this.selectedParts.length) {
+                this.addAlert({
+                    color: "warning",
+                    message: "Select at least one image before running AI tools.",
+                });
+                return;
+            }
+            if (this.loading?.images) {
+                return;
+            }
+            this.setLoading({ key: "images", loading: true });
+            try {
+                const response = await this.triggerAiOnParts({
+                    parts: this.selectedParts,
+                    operations,
+                });
+                const processedCount = response?.parts?.length || this.selectedParts.length;
+                this.addAlert({
+                    color: "success",
+                    message: this.describeAiOperationMessage(operations, processedCount),
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.setLoading({ key: "images", loading: false });
+            }
         },
         /**
          * Handle range input, validate, and set selected parts if valid

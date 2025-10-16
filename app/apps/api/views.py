@@ -52,6 +52,7 @@ from api.serializers import (
     PartDetailSerializer,
     PartMoveSerializer,
     PartSerializer,
+    PartAIEnrichmentSerializer,
     ProjectSerializer,
     ProjectTagSerializer,
     ScriptSerializer,
@@ -93,7 +94,12 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
-from core.tasks import recalculate_masks
+from core.services.ai_text import (
+    AIDependencyError,
+    get_punctuation_service,
+    get_translation_service,
+)
+from core.tasks import recalculate_masks, run_ai_enrichment
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
 from reporting.models import TaskGroup, TaskReport
@@ -772,14 +778,20 @@ class TaskReportViewSet(ModelViewSet):
 
 
 class DocumentPermissionMixin():
-    def get_queryset(self):
-        try:
-            self.document = (Document.objects
-                             .for_user(self.request.user)
-                             .get(pk=self.kwargs.get('document_pk')))
-        except Document.DoesNotExist:
-            raise PermissionDenied
+    def get_document(self):
+        if not hasattr(self, "document"):
+            try:
+                self.document = (
+                    Document.objects.for_user(self.request.user).get(
+                        pk=self.kwargs.get("document_pk")
+                    )
+                )
+            except Document.DoesNotExist:
+                raise PermissionDenied
+        return self.document
 
+    def get_queryset(self):
+        self.get_document()
         return super().get_queryset()
 
 
@@ -928,6 +940,46 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         else:
             return Response({'error': "Post corners as x1, y1 (top left) and x2, y2 (bottom right)."},
                             status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], url_path='ai/enrich')
+    def ai_enrich(self, request, document_pk=None):
+        document = self.get_document()
+        serializer = PartAIEnrichmentSerializer(
+            data=request.data,
+            context={"document": document},
+        )
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+        operations = payload["operations"]
+        parts = payload["parts"]
+
+        try:
+            if operations.get("punctuate"):
+                get_punctuation_service()
+            if operations.get("translate"):
+                get_translation_service()
+        except (AIDependencyError, FileNotFoundError, RuntimeError) as exc:
+            logger.exception("AI services unavailable: %s", exc)
+            return Response(
+                {"status": "error", "error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        async_result = run_ai_enrichment.delay(
+            document_pk=self.document.pk,
+            part_ids=parts,
+            operations=operations,
+            user_pk=request.user.pk if request.user.is_authenticated else None,
+        )
+        return Response(
+            {
+                "status": "queued",
+                "task_id": async_result.id,
+                "parts": parts,
+                "operations": operations,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):

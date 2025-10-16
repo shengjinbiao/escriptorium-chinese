@@ -6,7 +6,7 @@ import tempfile
 from collections import defaultdict
 from itertools import groupby
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from celery import shared_task
@@ -32,6 +32,7 @@ from core.search import (
     search_content_psql_regex,
     search_content_psql_word,
 )
+from core.services.ai_text import AIDependencyError, AIOperations, enrich_document_part
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
 from reporting.tasks import create_task_reporting  # noqa F401
@@ -926,3 +927,77 @@ def replace_line_transcriptions_text(
         user.notify(_('Replacements applied with some errors'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-warning', level='warning')
     else:
         user.notify(_('Replacements applied!'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-success', level='success')
+
+
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60)
+def run_ai_enrichment(
+    self,
+    *,
+    document_pk: int,
+    part_ids: List[int],
+    operations: dict,
+    user_pk: Optional[int] = None,
+) -> dict:
+    Document = apps.get_model("core", "Document")
+    DocumentPart = apps.get_model("core", "DocumentPart")
+
+    try:
+        document = Document.objects.get(pk=document_pk)
+    except Document.DoesNotExist:
+        logger.error("AI enrichment requested for missing document %s", document_pk)
+        return {"status": "error", "reason": "document_missing"}
+
+    user = None
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+        except User.DoesNotExist:
+            user = None
+
+    normalized_ids = sorted({int(pk) for pk in part_ids})
+    parts = list(
+        DocumentPart.objects.filter(document=document, pk__in=normalized_ids).order_by(
+            "order"
+        )
+    )
+    if not parts:
+        return {"status": "empty", "reason": "no_matching_parts"}
+
+    ops = AIOperations.from_payload(operations)
+    results: List[dict] = []
+
+    try:
+        total_parts = len(parts)
+        for idx, part in enumerate(parts):
+            include_prev_context = total_parts == 1 or idx == 0
+            include_next_context = total_parts == 1 or idx == total_parts - 1
+            try:
+                results.append(
+                    enrich_document_part(
+                        part,
+                        ops,
+                        user=user,
+                        include_previous_context=include_prev_context,
+                        include_next_context=include_next_context,
+                    )
+                )
+            except AIDependencyError:
+                raise
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("AI enrichment failed for part %s", part.pk)
+                results.append(
+                    {
+                        "part_id": part.pk,
+                        "status": "error",
+                        "reason": str(exc),
+                    }
+                )
+    except AIDependencyError as exc:
+        logger.error("AI enrichment aborted: %s", exc)
+        raise
+
+    return {
+        "status": "ok",
+        "document_id": document_pk,
+        "parts": results,
+    }
