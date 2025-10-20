@@ -624,8 +624,51 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
                 [Document.valid_line_types.through(document_id=self.id, linetype_id=type_.id)
                  for type_ in LineType.objects.filter(public=True, default=True)]
             )
+            # 初始化命名实体注释配置，便于新文档直接使用
+            self._bootstrap_named_entity_annotations()
 
         return res
+
+    def _bootstrap_named_entity_annotations(self):
+        """
+        Seed a basic Named Entity taxonomy so new documents can annotate entities out of the box.
+        """
+        # 构建默认的命名实体组件规格（类型与标识符字段）
+        component_specs = (
+            ("Entity Type", ["Person", "Organization", "Location", "Event", "Date", "Other"]),
+            ("Entity Identifier", None),
+        )
+        components = []
+        for name, allowed_values in component_specs:
+            defaults = {"allowed_values": allowed_values} if allowed_values is not None else {"allowed_values": None}
+            component, _ = AnnotationComponent.objects.get_or_create(
+                document=self,
+                name=name,
+                defaults=defaults,
+            )
+            components.append(component)
+
+        annotation_type, _ = AnnotationType.objects.get_or_create(
+            name="Named Entity",
+            defaults={"public": True, "default": True},
+        )
+
+        taxonomy_defaults = {
+            "typology": annotation_type,
+            "has_comments": False,
+            "abbreviation": "NE",
+            "marker_type": AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
+            "marker_detail": "#fde68a",
+        }
+        taxonomy, created = AnnotationTaxonomy.objects.get_or_create(
+            document=self,
+            name="Named Entity",
+            defaults=taxonomy_defaults,
+        )
+        if created:
+            taxonomy.components.set(components)
+        else:
+            taxonomy.components.add(*components)
 
     @property
     def is_published(self):
