@@ -10,6 +10,8 @@ services:
       - ./app:/usr/src/app
       - ./front/dist:/usr/src/app/front
       - ./app/config/providers.yml:/usr/src/app/config/providers.yml:ro
+      - ../yjxz:/usr/src/yjxz
+
     restart: always
 
   channelserver:
@@ -31,6 +33,7 @@ services:
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - discovery.type=single-node
+      - xpack.security.enabled=false
     volumes:
       - esdata:/usr/share/elasticsearch/data
 
@@ -48,13 +51,17 @@ services:
       - ./app:/usr/src/app
       - ./front/dist:/usr/src/app/front
       - ./app/config/providers.yml:/usr/src/app/config/providers.yml:ro
+      - ../yjxz:/usr/src/yjxz
 
     restart: always
 
   celery-low-priority:
     image: escriptorium-custom:latest
     restart: always
-
+    volumes:
+      - ../yjxz:/usr/src/yjxz
   celery-gpu:
     image: escriptorium-custom:latest
     restart: always
+    volumes:
+      - ../yjxz:/usr/src/yjxz

@@ -198,6 +198,23 @@ class PartBulkMoveSerializer(serializers.ModelSerializer):
         DocumentPart.objects.bulk_update(reordered, ["order"])
 
 
+class SemanticSearchRequestSerializer(serializers.Serializer):
+    query = serializers.CharField()
+    limit = serializers.IntegerField(required=False, min_value=1, max_value=50)
+    documents = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    document_parts = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    num_candidates = serializers.IntegerField(required=False, min_value=1)
+    with_answer = serializers.BooleanField(required=False, default=True)
+
+
 class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transcription

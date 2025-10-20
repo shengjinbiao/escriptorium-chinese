@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand
 from django.db.models import Prefetch, Q
 from easy_thumbnails.files import get_thumbnailer
 from elasticsearch import Elasticsearch
-from elasticsearch.client import IndicesClient
 from elasticsearch.helpers import bulk as es_bulk
 
 from core.models import LineTranscription, Project
@@ -79,7 +78,7 @@ class Command(BaseCommand):
             )
             return
 
-        self.es_client = Elasticsearch(hosts=[settings.ELASTICSEARCH_URL])
+        self.es_client = Elasticsearch(settings.ELASTICSEARCH_URL)
         if not self.es_client.ping():
             logger.error(
                 f"Unable to connect to Elasticsearch host defined as {settings.ELASTICSEARCH_URL}."
@@ -87,7 +86,7 @@ class Command(BaseCommand):
             return
 
         # Creating the common index if it doesn't exist
-        indices = IndicesClient(self.es_client)
+        indices = self.es_client.indices
 
         if options.get("drop"):
             # ignore_unavailable prevents an error from being raised if the index doesn't exist yet
@@ -99,7 +98,7 @@ class Command(BaseCommand):
         if not indices.exists(index=settings.ELASTICSEARCH_COMMON_INDEX):
             indices.create(
                 index=settings.ELASTICSEARCH_COMMON_INDEX,
-                body={"mappings": INDEX_MAPPING},
+                mappings=INDEX_MAPPING,
             )
             created = True
             logger.info(
@@ -110,16 +109,20 @@ class Command(BaseCommand):
             # Explicitly set the index mapping
             if not created:
                 indices.put_mapping(
-                    INDEX_MAPPING, index=settings.ELASTICSEARCH_COMMON_INDEX
+                    index=settings.ELASTICSEARCH_COMMON_INDEX,
+                    body=INDEX_MAPPING,
                 )
 
-            # Assert that the current index mapping really match INDEX_MAPPING constant
+            # Assert that the current index mapping really matches INDEX_MAPPING constant
             real_index_mapping = (
                 indices.get_mapping(index=settings.ELASTICSEARCH_COMMON_INDEX)
                 .get(settings.ELASTICSEARCH_COMMON_INDEX, {})
                 .get("mappings", {})
             )
-            assert real_index_mapping == INDEX_MAPPING
+            if real_index_mapping.get("properties") != INDEX_MAPPING.get("properties"):
+                raise AssertionError(
+                    "The stored Elasticsearch mapping does not match INDEX_MAPPING."
+                )
         except Exception:
             raise Exception(f"The index named {settings.ELASTICSEARCH_COMMON_INDEX} has an internal mapping that conflicts from the one defined in the constant INDEX_MAPPING, please use the --drop option to clean the data and reindex everything.")
 

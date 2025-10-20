@@ -24,6 +24,7 @@ from api.views import (
     ProjectTagViewSet,
     ProjectViewSet,
     RegenerableAuthToken,
+    SemanticSearchView,
     ScriptViewSet,
     TaskGroupViewSet,
     TaskReportViewSet,
@@ -74,5 +75,6 @@ urlpatterns = [
     path('', include(parts_router.urls)),
     path('', include(projects_router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('token-auth/', RegenerableAuthToken.as_view())
+    path('token-auth/', RegenerableAuthToken.as_view()),
+    path('search/semantic/', SemanticSearchView.as_view(), name='semantic-search'),
 ]

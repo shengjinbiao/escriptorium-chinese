@@ -455,6 +455,37 @@ party 由一个 Swin 视觉 Transformer 编码器、基线位置嵌入（baselin
 
 Figure  传统OCR模型与人工智能识别模型的区别
 
+## 7. 语义检索与地方志知识问答
+
+### 7.1 关键词检索的背景与中文挑战
+
+eScriptorium 的全文检索依托 Elasticsearch。传统的 BM25 倒排索引面对中文这类“无空格”语言时，需要高质量分词才能保持召回率与准确度。我们在 Docker 镜像中启用了官方 `analysis-smartcn` 插件，并在索引管理命令中自定义 mapping，使中文词语得到正确切分，从而支撑多音节词和模糊匹配。然而，单纯的关键词搜索仍难召回语义等价的句子，也无法直接回答自然语言问题。
+
+### 7.2 向量化语义检索与 LLM 的结合
+
+为弥补上述不足，我们新增 OpenAI Embedding + Elasticsearch `dense_vector` 的语义检索管线：
+
+1. **段落抽取**：`generate_passages` 将行级转录拆分为段落 `DocumentPassage`，记录原文、规范化文本与元数据。
+2. **向量生成**：`generate_embeddings_for_passages` 调用 OpenAI Embedding API，将向量缓存到段落实体中。
+3. **索引同步**：`index_semantic` 将段落、向量、元数据写入 Elasticsearch 8，启用 HNSW (Hierarchical Navigable Small World) 检索。
+4. **在线检索**：`semantic_search` 在用户查询时生成问题向量，通过 ES `knn` 端点获取相似段落与得分。
+
+在此基础上，我们使用 `build_semantic_answer` 整合语义命中的段落，拼接成带编号的上下文，调用 OpenAI Chat Completion（配置于 `providers.yml`）生成带 `[1][2]` 引用的自然语言回答，并把引用信息返回给前端。
+
+### 7.3 地方志知识问答与前端展示
+
+- **接口**：`POST /api/search/semantic/` 同时返回 `hits`（段落列表）、`answer`（问答文本）与 `citations`（引用元数据），支持 `limit`、`documents`、`document_parts` 等过滤参数。
+- **页面**：在 `/search/` 页面顶端新增“AI Answer”卡片与“Semantic Matches”列表，关键词结果仍保留，方便比对；用户可在同一搜索框既使用传统关键词，也获取语义问答结果。
+
+### 7.4 命名实体与精度提升展望
+
+语义检索打通后，后续可将命名实体识别（NER）结果写入同一索引，按人名、地名、机构等维度进行检索或问答；还可对引用得分做重排序、融合关键词结果，进一步提升回答准确度与可解释性。
+
+### 7.5 自动化管线的整体前景
+
+至此，平台实现了“图像分割 → 文本识别 → 人工校对 → 标点翻译 → 段落结构化 → 语义检索/知识问答”的闭环。若再结合命名实体与知识库构建，就能在地方志等历史手稿场景下提供从数据化到知识服务的一站式解决方案，显著降低跨工具操作成本，拓展未来的专题研究和公众展示能力。
+
+
 Kiessling, B. (2019). Kraken—An universal text recognizer for the humanities. DH2019: Digital humanities 2019. https://dh2019.adho.org
 
 Kiessling, B., Kurin, G., Miller, M. T., & Smail, K. (2021). Advances and limitations in open source arabic-script OCR: a case study. Digital Studies / Le champ numérique, 11(1). https://doi.org/10.16995/dscn.8094

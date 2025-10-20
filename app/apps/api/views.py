@@ -21,10 +21,11 @@ from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import PrimaryKeyRelatedField
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.views import APIView
 
 from api.serializers import (
     AlignSerializer,
@@ -55,6 +56,7 @@ from api.serializers import (
     PartAIEnrichmentSerializer,
     ProjectSerializer,
     ProjectTagSerializer,
+    SemanticSearchRequestSerializer,
     ScriptSerializer,
     SegmentSerializer,
     SegTrainSerializer,
@@ -99,6 +101,12 @@ from core.services.ai_text import (
     get_punctuation_service,
     get_translation_service,
 )
+from core.services.embedding import EmbeddingServiceNotConfigured
+from core.services.semantic_answer import (
+    SemanticAnswerNotConfigured,
+    build_semantic_answer,
+)
+from core.services.semantic_search import semantic_search
 from core.tasks import recalculate_masks, run_ai_enrichment
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
@@ -1384,6 +1392,44 @@ class OcrModelViewSet(ModelViewSet):
             logger.exception(e)
             return Response({'status': 'failed'}, status=400)
         return Response({'status': 'canceled'})
+
+
+class SemanticSearchView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = SemanticSearchRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        try:
+            results = build_semantic_answer(
+                payload["query"],
+                limit=payload.get("limit", 5),
+                documents=payload.get("documents"),
+                document_parts=payload.get("document_parts"),
+                with_answer=payload.get("with_answer", True),
+            )
+        except (SemanticAnswerNotConfigured, EmbeddingServiceNotConfigured) as exc:
+            return Response({"hits": [], "error": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        if payload.get("num_candidates"):
+            # Forward to semantic_search for debugging details if requested explicitly
+            hybrid = semantic_search(
+                payload["query"],
+                limit=payload.get("limit", 5),
+                documents=payload.get("documents"),
+                document_parts=payload.get("document_parts"),
+                num_candidates=payload.get("num_candidates"),
+            )
+            results["hits"] = hybrid.get("hits", results.get("hits", []))
+            if hybrid.get("error") and not results.get("error"):
+                results["error"] = hybrid["error"]
+
+        status_code = status.HTTP_200_OK
+        if results.get("error"):
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return Response(results, status=status_code)
 
 
 class RegenerableAuthToken(ObtainAuthToken):

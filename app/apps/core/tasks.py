@@ -33,6 +33,7 @@ from core.search import (
     search_content_psql_word,
 )
 from core.services.ai_text import AIDependencyError, AIOperations, enrich_document_part
+from core.services.embedding import generate_embeddings_for_passages
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
 from reporting.tasks import create_task_reporting  # noqa F401
@@ -197,6 +198,19 @@ class FrontendFeedback(Callback):
             # 'chars': chars,
             # 'error': error
         })
+
+
+@shared_task
+def generate_passage_embeddings_task(passage_ids: List[int], force: bool = False):
+    """
+    Celery wrapper around the semantic embedding generation service.
+
+    The heavy lifting will be implemented during Sprint B.
+    """
+
+    if not passage_ids:
+        return {"processed": 0, "force": force}
+    return generate_embeddings_for_passages(passage_ids, force=force)
 
 
 def _to_ptl_device(device: str):

@@ -1904,6 +1904,59 @@ class Line(CascadeUpdate, OrderedModel):
         return super().save(*args, **kwargs)
 
 
+class DocumentPassage(models.Model):
+    """
+    Represents a text fragment extracted from a document and prepared for semantic indexing.
+    """
+
+    document = models.ForeignKey(
+        "core.Document",
+        on_delete=models.CASCADE,
+        related_name="passages",
+    )
+    document_part = models.ForeignKey(
+        "core.DocumentPart",
+        on_delete=models.SET_NULL,
+        related_name="passages",
+        null=True,
+        blank=True,
+        help_text=_("Optional page/part reference this passage originates from."),
+    )
+    order = models.PositiveIntegerField(
+        help_text=_("Sequential order of the passage within the document."),
+    )
+    raw_text = models.TextField(help_text=_("Original text content of the passage."))
+    normalized_text = models.TextField(
+        blank=True,
+        help_text=_("Pre-processed text used for embedding generation."),
+    )
+    metadata = JSONField(
+        default=dict,
+        blank=True,
+        help_text=_(
+            "Arbitrary metadata such as headings, page numbers or source links."
+        ),
+    )
+    embedding = ArrayField(
+        models.FloatField(),
+        null=True,
+        blank=True,
+        help_text=_("Cached embedding vector for this passage."),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["document", "order"]
+        unique_together = [("document", "order")]
+        indexes = [
+            models.Index(fields=["document", "order"]),
+        ]
+
+    def __str__(self):
+        return f"Passage#{self.order} of {self.document}"
+
+
 class ProtectedObjectException(Exception):
     pass
 

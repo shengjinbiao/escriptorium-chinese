@@ -12,7 +12,7 @@ REGEX_SEARCH_MODE = "regex"
 
 
 def search_content_es(current_page, page_size, user_id, terms, projects=None, documents=None, transcriptions=None):
-    es_client = Elasticsearch(hosts=[settings.ELASTICSEARCH_URL])
+    es_client = Elasticsearch(settings.ELASTICSEARCH_URL)
 
     cleaned_terms = re.escape(terms)
     exact_matches = re.findall(EXTRACT_EXACT_TERMS_REGEXP, cleaned_terms)
@@ -23,55 +23,65 @@ def search_content_es(current_page, page_size, user_id, terms, projects=None, do
     else:
         terms_fuzzy = [terms]
 
-    body = {
-        "from": (current_page - 1) * page_size,
-        "size": page_size,
-        "sort": ["_score"],
-        "query": {
-            "bool": {
-                "must": [
-                    {"term": {"have_access": user_id}},
-                    # Prevent from loading results from archived documents
-                    {"term": {"document_archived": False}},
-                ] + [
-                    {"multi_match": {
-                        "query": unquote_plus(term),
-                        "fuzziness": "AUTO",
-                        "fields": ["raw_content^3", "context"]
-                    }}
-                    for term in terms_fuzzy if term.strip() != ""
-                ] + [
-                    {"multi_match": {
-                        "query": unquote_plus(term),
-                        "type": "phrase",
-                        "fields": ["raw_content^3", "context"]
-                    }}
-                    for term in terms_exact if term.strip() != ""
-                ]
+    must_clauses = [
+        {"term": {"have_access": user_id}},
+        {"term": {"document_archived": False}},
+    ]
+
+    must_clauses.extend(
+        {
+            "multi_match": {
+                "query": unquote_plus(term),
+                "fuzziness": "AUTO",
+                "fields": ["raw_content^3", "context"],
             }
-        },
-        "highlight": {
-            "require_field_match": False,
-            "pre_tags": ['<strong class="text-success">'],
-            "post_tags": ["</strong>"],
-            "fields": {
-                "raw_content": {},
-                "context_before": {},
-                "context_after": {}
-            },
         }
+        for term in terms_fuzzy
+        if term.strip() != ""
+    )
+
+    must_clauses.extend(
+        {
+            "multi_match": {
+                "query": unquote_plus(term),
+                "type": "phrase",
+                "fields": ["raw_content^3", "context"],
+            }
+        }
+        for term in terms_exact
+        if term.strip() != ""
+    )
+
+    query = {"bool": {"must": must_clauses}}
+
+    highlight = {
+        "require_field_match": False,
+        "pre_tags": ['<strong class="text-success">'],
+        "post_tags": ["</strong>"],
+        "fields": {
+            "raw_content": {},
+            "context_before": {},
+            "context_after": {},
+        },
     }
 
     if projects:
-        body["query"]["bool"]["must"].append({"terms": {"project_id": projects}})
+        query["bool"]["must"].append({"terms": {"project_id": projects}})
 
     if documents:
-        body["query"]["bool"]["must"].append({"terms": {"document_id": documents}})
+        query["bool"]["must"].append({"terms": {"document_id": documents}})
 
     if transcriptions:
-        body["query"]["bool"]["must"].append({"terms": {"transcription_id": transcriptions}})
+        query["bool"]["must"].append({"terms": {"transcription_id": transcriptions}})
 
-    return es_client.search(index=settings.ELASTICSEARCH_COMMON_INDEX, body=body)
+    return es_client.search(
+        index=settings.ELASTICSEARCH_COMMON_INDEX,
+        query=query,
+        from_=(current_page - 1) * page_size,
+        size=page_size,
+        sort=["_score"],
+        highlight=highlight,
+    )
 
 
 def get_filtered_queryset(user, project_id, document_id, transcription_id, part_id):
