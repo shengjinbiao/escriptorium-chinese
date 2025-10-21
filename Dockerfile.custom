@@ -32,11 +32,13 @@ RUN pip install --root-user-action ignore -q --upgrade pip
 
 # Install Python requirements
 COPY escriptorium/app/requirements.txt /tmp/requirements.txt
-RUN pip --no-cache-dir install --root-user-action ignore -q -r /tmp/requirements.txt
+#RUN pip --no-cache-dir install --root-user-action ignore -q -r /tmp/requirements.txt
+RUN pip install --root-user-action ignore -q -r /tmp/requirements.txt
 
 # Install yjxz services
 COPY yjxz /usr/src/yjxz
-RUN pip --no-cache-dir install --root-user-action ignore -q -e /usr/src/yjxz
+#RUN pip --no-cache-dir install --root-user-action ignore -q -e /usr/src/yjxz
+RUN pip install --root-user-action ignore -q -e /usr/src/yjxz
 
 # Copy application source (will be overridden by bind mount in development)
 COPY escriptorium/app /usr/src/app

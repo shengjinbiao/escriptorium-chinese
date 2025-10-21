@@ -92,6 +92,7 @@ import MetadataField from "../MetadataField/MetadataField.vue";
 import TagsField from "../TagsField/TagsField.vue";
 import TextField from "../TextField/TextField.vue";
 import XIcon from "../Icons/XIcon/XIcon.vue";
+import { localizeScriptName } from "../../store/util/scriptLocalization";
 import "./EditDocumentModal.css";
 
 export default {
@@ -209,7 +210,7 @@ export default {
         scriptOptions() {
             return this.scripts.map((script) => ({
                 value: script.name,
-                label: script.name,
+                label: localizeScriptName(script.name),
                 selected: script.name === this.mainScript,
             }));
         },

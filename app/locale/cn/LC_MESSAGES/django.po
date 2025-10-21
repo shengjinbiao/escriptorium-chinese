@@ -1183,7 +1183,7 @@ msgstr "德语"
 
 #: escriptorium/local_settings.py:22 escriptorium/settings.py:194
 msgid "Chinese"
-msgstr ""
+msgstr "中文"
 
 #: escriptorium/templates/403.html:6
 msgid "You don't have permission to view or edit this document."

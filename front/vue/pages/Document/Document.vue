@@ -35,7 +35,7 @@
                             </div>
                         </div>
                         <span class="escr-document-metadata">
-                            Main script: {{ mainScript }}
+                            Main script: {{ localizedMainScript }}
                         </span>
                     </div>
 
@@ -358,6 +358,7 @@ import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import localizeScriptName from "../../store/util/scriptLocalization";
 import "../../components/Common/Card.css"
 import "./Document.css";
 
@@ -482,6 +483,9 @@ export default {
             transcriptionLoading: (state) => state.transcription.loading,
             transcriptions: (state) => state.document.transcriptions,
         }),
+        localizedMainScript() {
+            return localizeScriptName(this.mainScript);
+        },
         /**
          * Links and titles for the breadcrumbs above the page.
          */
