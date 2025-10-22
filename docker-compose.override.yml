@@ -8,7 +8,6 @@ services:
     image: escriptorium-custom:latest
     volumes:
       - ./app:/usr/src/app
-      - ./front/dist:/usr/src/app/front
       - ./app/config/providers.yml:/usr/src/app/config/providers.yml:ro
       - ../yjxz:/usr/src/yjxz
 
