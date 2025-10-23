@@ -33,7 +33,14 @@ from core.search import (
     search_content_psql_word,
 )
 from core.services.ai_text import AIDependencyError, AIOperations, enrich_document_part
-from core.services.embedding import generate_embeddings_for_passages
+from core.services.embedding import (
+    EmbeddingServiceNotConfigured,
+    generate_embeddings_for_passages,
+)
+from core.services.semantic_index import (
+    SemanticIndexingError,
+    build_semantic_index,
+)
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
 from reporting.tasks import create_task_reporting  # noqa F401
@@ -211,6 +218,48 @@ def generate_passage_embeddings_task(passage_ids: List[int], force: bool = False
     if not passage_ids:
         return {"processed": 0, "force": force}
     return generate_embeddings_for_passages(passage_ids, force=force)
+
+
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 5)
+def build_semantic_index_task(
+    self,
+    *,
+    document_ids: List[int],
+    reset: bool = True,
+    force_embeddings: bool = False,
+    drop_index: bool = False,
+    user_pk: Optional[int] = None,
+) -> dict:
+    """
+    Generate passages, embeddings, and Elasticsearch index entries for documents.
+    """
+
+    doc_ids = sorted({int(pk) for pk in document_ids or [] if pk is not None})
+    if not doc_ids:
+        return {"status": "empty", "reason": "no_documents"}
+
+    try:
+        result = build_semantic_index(
+            doc_ids,
+            reset_passages=reset,
+            force_embeddings=force_embeddings,
+            drop_index=drop_index,
+        )
+    except EmbeddingServiceNotConfigured as exc:
+        logger.error("Semantic indexing aborted: %s", exc)
+        return {"status": "error", "reason": str(exc)}
+    except SemanticIndexingError as exc:
+        logger.exception(
+            "Semantic indexing failed for documents %s: %s", doc_ids, exc
+        )
+        raise self.retry(exc=exc)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "Unexpected error while building semantic index for documents %s", doc_ids
+        )
+        raise self.retry(exc=exc)
+
+    return {"status": "ok", **result}
 
 
 def _to_ptl_device(device: str):

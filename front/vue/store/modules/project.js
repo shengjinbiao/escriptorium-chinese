@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+    buildProjectSemanticIndex,
     createDocument,
     createDocumentMetadata,
     createProjectDocumentTag,
@@ -519,6 +520,16 @@ const actions = {
             dispatch("alerts/addError", error, { root: true });
         }
         dispatch("closeShareModal");
+    },
+    /**
+     * Trigger semantic indexing for all documents in the project.
+     */
+    async triggerSemanticIndex({ state }, options = {}) {
+        const { data } = await buildProjectSemanticIndex({
+            projectId: state.id,
+            options,
+        });
+        return data;
     },
     /**
      * Change the documents list sort and perform another fetch for documents.

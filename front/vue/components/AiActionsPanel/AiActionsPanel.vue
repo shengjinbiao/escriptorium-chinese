@@ -1,31 +1,41 @@
 <template>
     <div class="escr-ai-panel">
         <p class="escr-ai-panel__help">
-            Use AI tools to add punctuation or modern Chinese translation to {{ scopeLabel }}.
+            Use AI tools to add punctuation, modern Chinese translation, or semantic vectors to {{ scopeLabel }}.
         </p>
         <ul class="escr-ai-panel__actions">
-            <li>
+            <template v-if="showTextOperations">
+                <li>
+                    <EscrButton
+                        color="text"
+                        :disabled="isDisabled"
+                        :on-click="() => trigger({ punctuate: true, translate: false })"
+                        label="Generate Punctuation"
+                    />
+                </li>
+                <li>
+                    <EscrButton
+                        color="text"
+                        :disabled="isDisabled"
+                        :on-click="() => trigger({ punctuate: false, translate: true })"
+                        label="Generate Translation"
+                    />
+                </li>
+                <li>
+                    <EscrButton
+                        color="text"
+                        :disabled="isDisabled"
+                        :on-click="() => trigger({ punctuate: true, translate: true })"
+                        label="Punctuation & Translation"
+                    />
+                </li>
+            </template>
+            <li v-if="hasVectorize">
                 <EscrButton
                     color="text"
-                    :disabled="isDisabled"
-                    :on-click="() => trigger({ punctuate: true, translate: false })"
-                    label="Generate Punctuation"
-                />
-            </li>
-            <li>
-                <EscrButton
-                    color="text"
-                    :disabled="isDisabled"
-                    :on-click="() => trigger({ punctuate: false, translate: true })"
-                    label="Generate Translation"
-                />
-            </li>
-            <li>
-                <EscrButton
-                    color="text"
-                    :disabled="isDisabled"
-                    :on-click="() => trigger({ punctuate: true, translate: true })"
-                    label="Punctuation & Translation"
+                    :disabled="isVectorDisabled"
+                    :on-click="triggerVectorize"
+                    label="Generate Semantic Vectors"
                 />
             </li>
         </ul>
@@ -54,6 +64,23 @@ export default {
         scopeLabel() {
             return this.data?.scopeLabel || "the current selection";
         },
+        hasVectorize() {
+            return typeof this.data?.onVectorize === "function";
+        },
+        isVectorizing() {
+            return Boolean(this.data?.vectorizing);
+        },
+        showTextOperations() {
+            return this.data?.allowTextOperations !== false;
+        },
+        isVectorDisabled() {
+            if (!this.hasVectorize) return true;
+            return (
+                Boolean(this.data?.disabled) ||
+                Boolean(this.data?.processing) ||
+                this.isVectorizing
+            );
+        },
     },
     methods: {
         trigger(operations) {
@@ -61,6 +88,13 @@ export default {
             const handler = this.data?.onRun;
             if (typeof handler === "function") {
                 handler(operations);
+            }
+        },
+        triggerVectorize() {
+            if (this.isVectorDisabled) return;
+            const handler = this.data?.onVectorize;
+            if (typeof handler === "function") {
+                handler();
             }
         },
     },

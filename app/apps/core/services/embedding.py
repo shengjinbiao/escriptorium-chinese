@@ -186,3 +186,11 @@ def embed_query_text(text: str) -> List[float]:
         logger.exception("Failed to embed query: %s", exc)
         raise
     return vector or []
+
+
+def ensure_embedding_service_ready() -> None:
+    """
+    Ensure the embedding backend can be instantiated.
+    """
+
+    _get_embedding_service()

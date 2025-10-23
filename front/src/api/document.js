@@ -231,6 +231,15 @@ export const runAiOnParts = async ({ documentId, parts, operations }) => {
     );
 };
 
+export const buildDocumentSemanticIndex = async ({
+    documentId,
+    options,
+} = {}) =>
+    await axios.post(
+        `/documents/${documentId}/semantic/vectorize/`,
+        options || {},
+    );
+
 // delete document metadata
 export const deleteDocumentMetadata = async ({ documentId, metadatumId }) =>
     await axios.delete(`/documents/${documentId}/metadata/${metadatumId}/`);

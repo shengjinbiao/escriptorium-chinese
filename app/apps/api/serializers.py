@@ -726,6 +726,12 @@ class PartAIEnrichmentSerializer(serializers.Serializer):
         return attrs
 
 
+class SemanticIndexRequestSerializer(serializers.Serializer):
+    reset = serializers.BooleanField(required=False, default=True)
+    force = serializers.BooleanField(required=False, default=False)
+    drop = serializers.BooleanField(required=False, default=False)
+
+
 class BlockSerializer(serializers.ModelSerializer):
     typology = serializers.PrimaryKeyRelatedField(
         queryset=BlockType.objects.all(),

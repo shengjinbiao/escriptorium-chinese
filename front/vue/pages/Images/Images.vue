@@ -256,6 +256,14 @@
                                             <span>Punctuation & Translation</span>
                                         </button>
                                     </li>
+                                    <li>
+                                        <button
+                                            :disabled="vectorProcessing"
+                                            @mousedown="() => buildSemanticIndexForDocument()"
+                                        >
+                                            <span>Generate Semantic Vectors</span>
+                                        </button>
+                                    </li>
                                 </ul>
                             </template>
                         </VMenu>
@@ -758,6 +766,7 @@ export default {
             redrawModalOpen: false,
             textFilter: "",
             textFilterValue: "",
+            vectorProcessing: false,
         }
     },
     computed: {
@@ -1023,6 +1032,7 @@ export default {
             "setId",
             "updatePartTaskStatus",
             "triggerAiOnParts",
+            "triggerSemanticIndex",
         ]),
         ...mapActions("images", [
             "confirmOverwriteWarning",
@@ -1072,6 +1082,9 @@ export default {
             const itemLabel = count === 1 ? "image" : "images";
             return `Queued ${taskLabel} for ${count} ${itemLabel}.`;
         },
+        describeSemanticIndexMessage() {
+            return "Queued semantic indexing for this document.";
+        },
         async runAiOperations(operations) {
             if (!this.selectedParts.length) {
                 this.addAlert({
@@ -1098,6 +1111,24 @@ export default {
                 this.addError(error);
             } finally {
                 this.setLoading({ key: "images", loading: false });
+            }
+        },
+        async buildSemanticIndexForDocument(options = {}) {
+            if (this.vectorProcessing) return;
+            this.vectorProcessing = true;
+            try {
+                const response = await this.triggerSemanticIndex(options);
+                if (response?.status !== "queued") {
+                    throw new Error(response?.error || "Failed to queue semantic indexing.");
+                }
+                this.addAlert({
+                    color: "success",
+                    message: this.describeSemanticIndexMessage(),
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.vectorProcessing = false;
             }
         },
         /**

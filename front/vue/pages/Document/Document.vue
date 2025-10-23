@@ -442,6 +442,7 @@ export default {
         return {
             msgSocket: undefined,
             aiProcessing: false,
+            vectorProcessing: false,
         };
     },
     computed: {
@@ -559,8 +560,10 @@ export default {
                     data: {
                         disabled: this.loading?.document,
                         processing: this.aiProcessing,
+                        vectorizing: this.vectorProcessing,
                         scopeLabel: "this document",
                         onRun: this.runAiOnDocument,
+                        onVectorize: this.buildSemanticIndexForDocument,
                     },
                     icon: AiIcon,
                     key: "ai-tools",
@@ -676,6 +679,7 @@ export default {
             "shareDocument",
             "sortCharacters",
             "triggerAiOnParts",
+            "triggerSemanticIndex",
             "viewTasks",
         ]),
         ...mapActions("alerts", { addError: "addError", addAlert: "add" }),
@@ -703,6 +707,9 @@ export default {
             const pageLabel = count === 1 ? "page" : "pages";
             return `Queued ${taskLabel} for ${count} ${pageLabel} in ${scopeLabel}.`;
         },
+        describeSemanticIndexMessage(scopeLabel = "this document") {
+            return `Queued semantic indexing for ${scopeLabel}.`;
+        },
         async runAiOnDocument(operations) {
             if (this.aiProcessing) return;
             this.aiProcessing = true;
@@ -723,6 +730,26 @@ export default {
             } finally {
                 this.setLoading({ key: "parts", loading: false });
                 this.aiProcessing = false;
+            }
+        },
+        async buildSemanticIndexForDocument(options = {}) {
+            if (this.vectorProcessing) return;
+            this.vectorProcessing = true;
+            try {
+                const response = await this.triggerSemanticIndex(options);
+                if (response?.status !== "queued") {
+                    throw new Error(response?.error || "Failed to queue semantic indexing.");
+                }
+                this.addAlert({
+                    color: "success",
+                    message: this.describeSemanticIndexMessage("this document"),
+                });
+                return response;
+            } catch (error) {
+                this.addError(error);
+                throw error;
+            } finally {
+                this.vectorProcessing = false;
             }
         },
         selectTranscription(e) {

@@ -62,3 +62,9 @@ export const shareProject = async ({ projectId, group, user }) =>
         group,
         user,
     });
+
+export const buildProjectSemanticIndex = async ({ projectId, options } = {}) =>
+    await axios.post(
+        `/projects/${projectId}/semantic/vectorize/`,
+        options || {},
+    );

@@ -54,6 +54,7 @@ from api.serializers import (
     PartMoveSerializer,
     PartSerializer,
     PartAIEnrichmentSerializer,
+    SemanticIndexRequestSerializer,
     ProjectSerializer,
     ProjectTagSerializer,
     SemanticSearchRequestSerializer,
@@ -101,13 +102,20 @@ from core.services.ai_text import (
     get_punctuation_service,
     get_translation_service,
 )
-from core.services.embedding import EmbeddingServiceNotConfigured
+from core.services.embedding import (
+    EmbeddingServiceNotConfigured,
+    ensure_embedding_service_ready,
+)
 from core.services.semantic_answer import (
     SemanticAnswerNotConfigured,
     build_semantic_answer,
 )
 from core.services.semantic_search import semantic_search
-from core.tasks import recalculate_masks, run_ai_enrichment
+from core.tasks import (
+    build_semantic_index_task,
+    recalculate_masks,
+    run_ai_enrichment,
+)
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
 from reporting.models import TaskGroup, TaskReport
@@ -282,6 +290,63 @@ class ProjectViewSet(ModelViewSet):
         # re-instantiate serializer to use updated data
         serializer = ProjectSerializer(project)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='semantic/vectorize')
+    def build_semantic_index(self, request, pk=None):
+        if settings.DISABLE_ELASTICSEARCH:
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("Elasticsearch is disabled on this instance."),
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        project = self.get_object()
+        serializer = SemanticIndexRequestSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+
+        document_ids = list(
+            Document.objects.for_user(request.user)
+            .filter(project=project)
+            .values_list("pk", flat=True)
+        )
+        if not document_ids:
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("This project does not contain accessible documents."),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ensure_embedding_service_ready()
+        except EmbeddingServiceNotConfigured as exc:
+            logger.exception("Embedding service unavailable: %s", exc)
+            return Response(
+                {"status": "error", "error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        async_result = build_semantic_index_task.delay(
+            document_ids=document_ids,
+            reset=params.get("reset", True),
+            force_embeddings=params.get("force", False),
+            drop_index=params.get("drop", False),
+            user_pk=request.user.pk if request.user.is_authenticated else None,
+        )
+        return Response(
+            {
+                "status": "queued",
+                "task_id": async_result.id,
+                "project": project.pk,
+                "documents": document_ids,
+                "params": params,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class ProjectTagViewSet(ModelViewSet):
@@ -458,6 +523,48 @@ class DocumentViewSet(ModelViewSet):
         # the model.training attribute to False)
         for model in document.ocr_models.filter(training=True):
             model.cancel_training(revoke_task=False, username=request.user.username)  # We already revoked the Celery task
+
+    @action(detail=True, methods=['post'], url_path='semantic/vectorize')
+    def build_semantic_index(self, request, pk=None):
+        if settings.DISABLE_ELASTICSEARCH:
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("Elasticsearch is disabled on this instance."),
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        document = self.get_object()
+        serializer = SemanticIndexRequestSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+
+        try:
+            ensure_embedding_service_ready()
+        except EmbeddingServiceNotConfigured as exc:
+            logger.exception("Embedding service unavailable: %s", exc)
+            return Response(
+                {"status": "error", "error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        async_result = build_semantic_index_task.delay(
+            document_ids=[document.pk],
+            reset=params.get("reset", True),
+            force_embeddings=params.get("force", False),
+            drop_index=params.get("drop", False),
+            user_pk=request.user.pk if request.user.is_authenticated else None,
+        )
+        return Response(
+            {
+                "status": "queued",
+                "task_id": async_result.id,
+                "documents": [document.pk],
+                "params": params,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
 
         for doc_import in document.documentimport_set.all():
             doc_import.cancel(revoke_task=False, username=request.user.username)  # We already revoked the Celery task

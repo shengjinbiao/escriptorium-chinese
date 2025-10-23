@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+    buildDocumentSemanticIndex,
     createDocumentMetadata,
     deleteDocument,
     deleteDocumentMetadata,
@@ -1049,6 +1050,16 @@ const actions = {
         const { data } = await runAiOnParts({
             documentId: state.id,
             ...payload,
+        });
+        return data;
+    },
+    /**
+     * Trigger semantic indexing for the current document.
+     */
+    async triggerSemanticIndex({ state }, options = {}) {
+        const { data } = await buildDocumentSemanticIndex({
+            documentId: state.id,
+            options,
         });
         return data;
     },

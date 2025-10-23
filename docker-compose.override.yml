@@ -1,21 +1,25 @@
 # version: "3.9"
 
+x-app: &app
+  build:
+    context: ..
+    dockerfile: escriptorium/Dockerfile.custom
+  image: escriptorium-custom:latest
+  env_file: variables.env
+  volumes:
+    - ./app:/usr/src/app
+    - ./app/config/providers.yml:/usr/src/app/config/providers.yml:ro
+    - ../yjxz:/usr/src/yjxz
+
 services:
   web:
-    build:
-      context: ..
-      dockerfile: escriptorium/Dockerfile.custom
-    image: escriptorium-custom:latest
-    volumes:
-      - ./app:/usr/src/app
-      - ./front/dist:/usr/src/app/front
-      - ./app/config/providers.yml:/usr/src/app/config/providers.yml:ro
-      - ../yjxz:/usr/src/yjxz
-
+    <<: *app
+    command: uwsgi --ini /usr/src/app/uwsgi.ini
     restart: always
 
   channelserver:
-    image: escriptorium-custom:latest
+    <<: *app
+    command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
     restart: always
 
   db:
@@ -46,22 +50,23 @@ services:
     restart: always
 
   celery-main:
-    image: escriptorium-custom:latest
+    <<: *app
+    command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10"
+    restart: always
     volumes:
-      - ./app:/usr/src/app
       - ./front/dist:/usr/src/app/front
-      - ./app/config/providers.yml:/usr/src/app/config/providers.yml:ro
-      - ../yjxz:/usr/src/yjxz
 
+  celery-live:
+    <<: *app
+    command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q live -c ${CELERY_LIVE_CONC:-10} --max-tasks-per-child=10"
     restart: always
 
   celery-low-priority:
-    image: escriptorium-custom:latest
+    <<: *app
+    command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CONC:-10} --max-tasks-per-child=10"
     restart: always
-    volumes:
-      - ../yjxz:/usr/src/yjxz
+
   celery-gpu:
-    image: escriptorium-custom:latest
+    <<: *app
+    command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q gpu -c 1 --max-tasks-per-child=1"
     restart: always
-    volumes:
-      - ../yjxz:/usr/src/yjxz

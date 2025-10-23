@@ -8,7 +8,7 @@ x-app:
   env_file: variables.env
   volumes:
     - ./app/:/usr/src/app/ # for development, comment out for production 开发环境使用，生产环境注释掉
-    - ./front/dist:/usr/src/app/front # 本地前端开发时才需要挂载，默认禁用以使用镜像自带静态文件
+   #- ./front/dist:/usr/src/app/front # 本地前端开发时才需要挂载，默认禁用以使用镜像自带静态文件
     - static:/usr/src/app/static
     - media:/usr/src/app/media
   command: /bin/true

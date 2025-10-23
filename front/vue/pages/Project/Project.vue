@@ -165,6 +165,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import AiActionsPanel from "../../components/AiActionsPanel/AiActionsPanel.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import EditDocumentModal from "../../components/EditDocumentModal/EditDocumentModal.vue";
 import EditProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
@@ -175,6 +176,7 @@ import EscrTable from "../../components/Table/Table.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import FilterSet from "../../components/FilterSet/FilterSet.vue";
 import ImagesIcon from "../../components/Icons/ImagesIcon/ImagesIcon.vue";
+import AiIcon from "../../components/Icons/AiIcon/AiIcon.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
@@ -190,6 +192,7 @@ import "./Project.css";
 export default {
     name: "EscrProjectDashboard",
     components: {
+        AiActionsPanel,
         ConfirmModal,
         EditDocumentModal,
         EditProjectModal,
@@ -199,6 +202,8 @@ export default {
         EscrTable,
         EscrTags,
         FilterSet,
+        // eslint-disable-next-line vue/no-unused-components
+        AiIcon,
         ImagesIcon,
         // eslint-disable-next-line vue/no-unused-components
         PencilIcon,
@@ -228,6 +233,11 @@ export default {
             type: Boolean,
             required: true,
         },
+    },
+    data() {
+        return {
+            vectorProcessing: false,
+        };
     },
     computed: {
         ...mapState({
@@ -309,6 +319,19 @@ export default {
             let actions = [
                 {
                     data: {
+                        allowTextOperations: false,
+                        disabled: this.loading,
+                        vectorizing: this.vectorProcessing,
+                        scopeLabel: "this project",
+                        onVectorize: this.buildSemanticIndexForProject,
+                    },
+                    icon: AiIcon,
+                    key: "ai-tools",
+                    label: "AI Tools",
+                    panel: AiActionsPanel,
+                },
+                {
+                    data: {
                         disabled: this.loading,
                         users: this.sharedWithUsers,
                         groups: this.sharedWithGroups,
@@ -380,10 +403,32 @@ export default {
             "setLoading",
             "share",
             "sortDocuments",
+            "triggerSemanticIndex",
         ]),
         ...mapActions("projects", ["fetchAllProjectTags"]),
         ...mapActions("user", ["fetchGroups"]),
-        ...mapActions("alerts", ["addError"]),
+        ...mapActions("alerts", { addError: "addError", addAlert: "add" }),
+        describeSemanticIndexMessage() {
+            return "Queued semantic indexing for this project.";
+        },
+        async buildSemanticIndexForProject(options = {}) {
+            if (this.vectorProcessing) return;
+            this.vectorProcessing = true;
+            try {
+                const response = await this.triggerSemanticIndex(options);
+                if (response?.status !== "queued") {
+                    throw new Error(response?.error || "Failed to queue semantic indexing.");
+                }
+                this.addAlert({
+                    color: "success",
+                    message: this.describeSemanticIndexMessage(),
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.vectorProcessing = false;
+            }
+        },
         async onFilterDocuments() {
             this.setLoading(true);
             try {
