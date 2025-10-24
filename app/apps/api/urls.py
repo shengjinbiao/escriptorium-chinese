@@ -22,6 +22,9 @@ from api.views import (
     PartMetadataViewSet,
     PartViewSet,
     ProjectTagViewSet,
+    LibraryCatalogViewSet,
+    GazetteerStructureRecordViewSet,
+    PlaceReferenceViewSet,
     ProjectViewSet,
     RegenerableAuthToken,
     SemanticSearchView,
@@ -47,6 +50,9 @@ router.register(r'types/block', BlockTypeViewSet)
 router.register(r'types/line', LineTypeViewSet)
 router.register(r'types/annotations', AnnotationTypeViewSet)
 router.register(r'types/part', DocumentPartTypeViewSet)
+router.register(r'knowledge/catalog', LibraryCatalogViewSet, basename='knowledge-catalog')
+router.register(r'knowledge/structure', GazetteerStructureRecordViewSet, basename='knowledge-structure')
+router.register(r'knowledge/places', PlaceReferenceViewSet, basename='knowledge-places')
 
 projects_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 projects_router.register(r'tags', DocumentTagViewSet, basename='document-tag')

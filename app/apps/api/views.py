@@ -18,7 +18,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import BasePermission, IsAuthenticated
@@ -69,6 +69,9 @@ from api.serializers import (
     TranscribeSerializer,
     TranscriptionSerializer,
     UserSerializer,
+    LibraryCatalogSerializer,
+    GazetteerStructureRecordSerializer,
+    PlaceReferenceSerializer,
 )
 from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
@@ -122,6 +125,12 @@ from reporting.models import TaskGroup, TaskReport
 from users.consumers import send_event
 from users.models import Group, User
 from versioning.models import NoChangeException
+
+from knowledge.models import (
+    GazetteerStructureRecord,
+    LibraryCatalog,
+    PlaceReference,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +197,12 @@ class LargeResultsSetPagination(PageNumberPagination):
 
 class ExtraLargeResultsSetPagination(PageNumberPagination):
     page_size = 500
+
+
+class KnowledgePagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = "page_size"
+    max_page_size = 200
 
 
 class UserViewSet(ModelViewSet):
@@ -356,6 +371,35 @@ class ProjectTagViewSet(ModelViewSet):
 
     def get_queryset(self):
         return ProjectTag.objects.filter(user=self.request.user)
+
+
+class LibraryCatalogViewSet(ReadOnlyModelViewSet):
+    queryset = LibraryCatalog.objects.all()
+    serializer_class = LibraryCatalogSerializer
+    filter_backends = (SearchFilter, OrderingFilter)
+    search_fields = ("title", "author", "collection_location", "call_number")
+    ordering_fields = ("title", "collection_location", "updated_at")
+    pagination_class = KnowledgePagination
+
+
+class GazetteerStructureRecordViewSet(ReadOnlyModelViewSet):
+    queryset = GazetteerStructureRecord.objects.all()
+    serializer_class = GazetteerStructureRecordSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ("extracted_title", "subject_terms", "record_id")
+    filterset_fields = ("title_level", "language", "dataset")
+    ordering_fields = ("record_id", "title_level", "updated_at")
+    pagination_class = KnowledgePagination
+
+
+class PlaceReferenceViewSet(ReadOnlyModelViewSet):
+    queryset = PlaceReference.objects.all()
+    serializer_class = PlaceReferenceSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ("standard_name", "alternate_names", "references")
+    filterset_fields = ("dynasty", "admin_level")
+    ordering_fields = ("standard_name", "dynasty", "updated_at")
+    pagination_class = KnowledgePagination
 
 
 class DocumentTagViewSet(ModelViewSet):

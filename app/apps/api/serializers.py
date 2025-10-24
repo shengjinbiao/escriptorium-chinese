@@ -51,6 +51,12 @@ from reporting.models import TaskGroup, TaskReport
 from users.consumers import send_event
 from users.models import Group, User
 
+from knowledge.models import (
+    GazetteerStructureRecord,
+    LibraryCatalog,
+    PlaceReference,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -152,6 +158,97 @@ class ProjectSerializer(serializers.ModelSerializer):
         repr = super().to_representation(instance)
         repr['tags'] = [ProjectTagSerializer(tag).data for tag in instance.tags.all()]
         return repr
+
+
+class LibraryCatalogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LibraryCatalog
+        fields = (
+            "id",
+            "title",
+            "category",
+            "author",
+            "edition",
+            "volume_count",
+            "collection_location",
+            "call_number",
+            "page_count",
+            "source_filename",
+            "extra",
+            "created_at",
+            "updated_at",
+        )
+
+
+class GazetteerStructureRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GazetteerStructureRecord
+        fields = (
+            "id",
+            "dataset",
+            "record_id",
+            "unique_identifier",
+            "title_level",
+            "new_title_level",
+            "extracted_title",
+            "subject_terms",
+            "main_responsible",
+            "abstract",
+            "funding",
+            "related_resources",
+            "other_language_title",
+            "other_language_subject_terms",
+            "other_language_abstract",
+            "other_language_funding",
+            "language",
+            "classification_ccl",
+            "academic_classification",
+            "industry_classification",
+            "era_classification",
+            "region_classification",
+            "column",
+            "source_filename",
+            "extra",
+            "created_at",
+            "updated_at",
+        )
+
+
+class PlaceReferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlaceReference
+        fields = (
+            "id",
+            "dynasty",
+            "standard_name",
+            "admin_level",
+            "level_description",
+            "era_years_chinese",
+            "era_years_western",
+            "alternate_names",
+            "event_codes",
+            "evolution_notes",
+            "affiliation",
+            "affiliation_level_description",
+            "jurisdiction",
+            "center_longitude",
+            "center_latitude",
+            "east_longitude",
+            "west_longitude",
+            "south_latitude",
+            "north_latitude",
+            "east_neighbor",
+            "west_neighbor",
+            "south_neighbor",
+            "north_neighbor",
+            "neighbors_era",
+            "references",
+            "notes",
+            "source_filename",
+            "extra",
+            "created_at",
+            "updated_at",
+        )
 
 
 class PartMoveSerializer(serializers.ModelSerializer):

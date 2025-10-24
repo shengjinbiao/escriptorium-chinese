@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'reporting',
     'django_prometheus',
     'solo',
+    'knowledge',
 ]
 
 MIDDLEWARE = [

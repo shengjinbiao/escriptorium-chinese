@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block head_title %}Knowledge Catalog{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+  <h1 class="mb-3">Knowledge Catalog</h1>
+  <p class="lead">Browse the imported gazetteer catalog, volume structure index, and Ming-Qing place references.</p>
+  <div class="list-group">
+    <a class="list-group-item list-group-item-action" href="{% url 'knowledge:catalog' %}">
+      Library Catalog (gazetteer bibliography)
+    </a>
+    <a class="list-group-item list-group-item-action" href="{% url 'knowledge:structure' %}">
+      Gazetteer Structure (titles · contributors · subjects)
+    </a>
+    <a class="list-group-item list-group-item-action" href="{% url 'knowledge:places' %}">
+      Place References (Ming & Qing administrative data)
+    </a>
+  </div>
+</div>
+{% endblock %}
