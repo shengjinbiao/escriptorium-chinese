@@ -32,7 +32,12 @@ from core.search import (
     search_content_psql_regex,
     search_content_psql_word,
 )
-from core.services.ai_text import AIDependencyError, AIOperations, enrich_document_part
+from core.services.ai_text import (
+    AIDependencyError,
+    AIOperations,
+    enrich_document_part,
+    load_entity_services,
+)
 from core.services.embedding import (
     EmbeddingServiceNotConfigured,
     generate_embeddings_for_passages,
@@ -1000,9 +1005,11 @@ def run_ai_enrichment(
     part_ids: List[int],
     operations: dict,
     user_pk: Optional[int] = None,
+    transcription_pk: Optional[int] = None,
 ) -> dict:
     Document = apps.get_model("core", "Document")
     DocumentPart = apps.get_model("core", "DocumentPart")
+    Transcription = apps.get_model("core", "Transcription")
 
     try:
         document = Document.objects.get(pk=document_pk)
@@ -1028,6 +1035,31 @@ def run_ai_enrichment(
 
     ops = AIOperations.from_payload(operations)
     results: List[dict] = []
+    source_transcription = None
+
+    if transcription_pk:
+        try:
+            source_transcription = Transcription.objects.get(pk=transcription_pk, document=document, archived=False)
+        except Transcription.DoesNotExist:
+            logger.error(
+                "AI enrichment requested with missing transcription %s for document %s",
+                transcription_pk,
+                document_pk,
+            )
+            return {"status": "error", "reason": "transcription_missing"}
+
+    entity_extractor = None
+    entity_annotator = None
+    if ops.entities:
+        try:
+            HanLPEntityExtractor, entity_annotator = load_entity_services()
+            entity_extractor = HanLPEntityExtractor()
+        except ImportError as exc:
+            logger.error("Entity services not available: %s", exc)
+            raise
+        except Exception as exc:
+            logger.error("Entity extraction unavailable: %s", exc)
+            raise
 
     try:
         total_parts = len(parts)
@@ -1042,6 +1074,9 @@ def run_ai_enrichment(
                         user=user,
                         include_previous_context=include_prev_context,
                         include_next_context=include_next_context,
+                        entity_extractor=entity_extractor,
+                        entity_annotator=entity_annotator,
+                        source_transcription=source_transcription,
                     )
                 )
             except AIDependencyError:

@@ -301,13 +301,15 @@ class Annotation(CascadeUpdate, models.Model):
 
             selector = {"type": "TextPositionSelector", "start": start, "end": end}
 
+        comments = self.comments or []
+
         return {
             "id": self.id,
             "@context": "http://www.w3.org/ns/anno.jsonld",
             "type": "Annotation",
             "body": [
                 {"type": "TextualBody", "value": comment, "purpose": "commenting"}
-                for comment in self.comments
+                for comment in comments
             ]
             + [
                 {

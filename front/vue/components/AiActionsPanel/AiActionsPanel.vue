@@ -1,7 +1,7 @@
 <template>
     <div class="escr-ai-panel">
         <p class="escr-ai-panel__help">
-            Use AI tools to add punctuation, modern Chinese translation, or semantic vectors to {{ scopeLabel }}.
+            Use AI tools to add punctuation, modern Chinese translation, extract entities, or build semantic vectors for {{ scopeLabel }}.
         </p>
         <ul class="escr-ai-panel__actions">
             <template v-if="showTextOperations">
@@ -30,6 +30,14 @@
                     />
                 </li>
             </template>
+            <li v-if="allowEntityExtraction">
+                <EscrButton
+                    color="text"
+                    :disabled="isDisabled"
+                    :on-click="() => trigger({ punctuate: false, translate: false, entities: true })"
+                    label="Extract Entities"
+                />
+            </li>
             <li v-if="hasVectorize">
                 <EscrButton
                     color="text"
@@ -72,6 +80,9 @@ export default {
         },
         showTextOperations() {
             return this.data?.allowTextOperations !== false;
+        },
+        allowEntityExtraction() {
+            return this.data?.allowEntityExtraction !== false;
         },
         isVectorDisabled() {
             if (!this.hasVectorize) return true;

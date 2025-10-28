@@ -1,0 +1,3 @@
+person_id,name,courtesy_name,aliases,gender,dynasty,birth_year,death_year,origin_place_id,origin_place_name,positions,works,related_events,biography_summary,source_refs,notes
+person_huang_zongxi_1610,黄宗羲,太冲,"南雷;黄梨洲",男,明末清初,1610,1695,,永嘉县,"南京国子监祭酒;东林学者","明儒学案","反清复明运动","永嘉学派领军人物，倡导天下为主，君为客。","《清史稿·儒林传》;Chinese Text Project","籍贯可与 PlaceReference 表匹配后更新 origin_place_id"
+person_pan_rongbi_1821,潘荣陛,,,"",清,1821,1883,,温州府,"温州府知府","永嘉县志校订",,"光绪永嘉重修县志主持人。","《民国温州府志》",""

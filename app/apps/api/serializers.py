@@ -52,8 +52,10 @@ from users.consumers import send_event
 from users.models import Group, User
 
 from knowledge.models import (
+    EraReference,
     GazetteerStructureRecord,
     LibraryCatalog,
+    PersonReference,
     PlaceReference,
 )
 
@@ -246,6 +248,59 @@ class PlaceReferenceSerializer(serializers.ModelSerializer):
             "notes",
             "source_filename",
             "extra",
+            "created_at",
+            "updated_at",
+        )
+
+
+class EraReferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EraReference
+        fields = (
+            "id",
+            "era_id",
+            "era_name",
+            "dynasty",
+            "emperor",
+            "start_year_ce",
+            "end_year_ce",
+            "start_year_cn",
+            "end_year_cn",
+            "applicable_regions",
+            "source_refs",
+            "notes",
+            "created_at",
+            "updated_at",
+        )
+
+
+class PersonReferenceSerializer(serializers.ModelSerializer):
+    origin_place = serializers.SlugRelatedField(
+        slug_field="standard_name",
+        queryset=PlaceReference.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+
+    class Meta:
+        model = PersonReference
+        fields = (
+            "id",
+            "person_id",
+            "name",
+            "courtesy_name",
+            "aliases",
+            "gender",
+            "dynasty",
+            "birth_year",
+            "death_year",
+            "origin_place",
+            "positions",
+            "works",
+            "related_events",
+            "biography_summary",
+            "source_refs",
+            "notes",
             "created_at",
             "updated_at",
         )
@@ -780,11 +835,17 @@ class PartAIEnrichmentSerializer(serializers.Serializer):
         child=serializers.BooleanField(),
         required=False,
     )
+    transcription = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=1,
+    )
 
     default_error_messages = {
         "unknown_parts": _("Unknown parts for this document: %(ids)s"),
         "no_parts": _("There are no matching pages to process."),
         "no_operations": _("Select at least one AI operation to run."),
+        "invalid_transcription": _("Invalid transcription for this document."),
     }
 
     def validate_parts(self, value):
@@ -803,7 +864,23 @@ class PartAIEnrichmentSerializer(serializers.Serializer):
         ops = AIOperations.from_payload(value)
         if not ops.has_work():
             raise serializers.ValidationError(self.error_messages["no_operations"])
-        return {"punctuate": ops.punctuate, "translate": ops.translate}
+        return {
+            "punctuate": ops.punctuate,
+            "translate": ops.translate,
+            "entities": ops.entities,
+        }
+
+    def validate_transcription(self, value):
+        if value is None:
+            return None
+        document: Document = self.context.get("document")
+        if document is None:
+            raise serializers.ValidationError("Document missing from serializer context.")
+        try:
+            transcription = document.transcriptions.get(pk=value, archived=False)
+        except Transcription.DoesNotExist:
+            raise serializers.ValidationError(self.error_messages["invalid_transcription"])
+        return transcription.pk
 
     def validate(self, attrs):
         document: Document = self.context.get("document")
@@ -812,7 +889,11 @@ class PartAIEnrichmentSerializer(serializers.Serializer):
 
         if "operations" not in attrs:
             ops = AIOperations()
-            attrs["operations"] = {"punctuate": ops.punctuate, "translate": ops.translate}
+            attrs["operations"] = {
+                "punctuate": ops.punctuate,
+                "translate": ops.translate,
+                "entities": ops.entities,
+            }
 
         parts = attrs.get("parts")
         if not parts:
@@ -820,6 +901,8 @@ class PartAIEnrichmentSerializer(serializers.Serializer):
             if not parts:
                 raise serializers.ValidationError(self.error_messages["no_parts"])
             attrs["parts"] = parts
+        if "transcription" in attrs and attrs["transcription"] is None:
+            attrs.pop("transcription")
         return attrs
 
 

@@ -3,7 +3,13 @@ from django.db.models import Q
 from django.views.generic import ListView, TemplateView
 from django.http import QueryDict
 
-from .models import GazetteerStructureRecord, LibraryCatalog, PlaceReference
+from .models import (
+    EraReference,
+    GazetteerStructureRecord,
+    LibraryCatalog,
+    PersonReference,
+    PlaceReference,
+)
 
 
 class KnowledgeHomeView(LoginRequiredMixin, TemplateView):
@@ -218,5 +224,79 @@ class PlaceReferenceListView(BaseSearchableListView):
             "admin_level",
             context["admin_level_options"],
             "All admin levels",
+        )
+        return context
+
+
+class EraReferenceListView(BaseSearchableListView):
+    model = EraReference
+    template_name = "knowledge/era_reference_list.html"
+    search_fields = ("era_name", "dynasty", "era_id", "emperor")
+    ordering = ("start_year_ce",)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        dynasty = self.request.GET.get("dynasty", "").strip()
+        if dynasty:
+            queryset = queryset.filter(dynasty=dynasty)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["dynasty_options"] = (
+            EraReference.objects.order_by("dynasty")
+            .values_list("dynasty", flat=True)
+            .distinct()
+        )
+        context["selected_dynasty"] = self.request.GET.get("dynasty", "").strip()
+        context["dynasty_filters"] = self.build_filter_links(
+            "dynasty",
+            context["dynasty_options"],
+            "All dynasties",
+        )
+        return context
+
+
+class PersonReferenceListView(BaseSearchableListView):
+    model = PersonReference
+    template_name = "knowledge/person_reference_list.html"
+    search_fields = ("name", "courtesy_name", "aliases", "person_id")
+    ordering = ("name",)
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("origin_place")
+        dynasty = self.request.GET.get("dynasty", "").strip()
+        gender = self.request.GET.get("gender", "").strip()
+        if dynasty:
+            queryset = queryset.filter(dynasty=dynasty)
+        if gender:
+            queryset = queryset.filter(gender=gender)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["dynasty_options"] = (
+            PersonReference.objects.exclude(dynasty="")
+            .order_by("dynasty")
+            .values_list("dynasty", flat=True)
+            .distinct()
+        )
+        context["gender_options"] = (
+            PersonReference.objects.exclude(gender="")
+            .order_by("gender")
+            .values_list("gender", flat=True)
+            .distinct()
+        )
+        context["selected_dynasty"] = self.request.GET.get("dynasty", "").strip()
+        context["selected_gender"] = self.request.GET.get("gender", "").strip()
+        context["dynasty_filters"] = self.build_filter_links(
+            "dynasty",
+            context["dynasty_options"],
+            "All dynasties",
+        )
+        context["gender_filters"] = self.build_filter_links(
+            "gender",
+            context["gender_options"],
+            "All genders",
         )
         return context

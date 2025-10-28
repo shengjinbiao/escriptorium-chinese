@@ -110,3 +110,65 @@ class PlaceReference(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.standard_name
+
+
+class EraReference(TimeStampedModel):
+    era_id = models.CharField(max_length=128, unique=True)
+    era_name = models.CharField(max_length=128)
+    dynasty = models.CharField(max_length=128)
+    emperor = models.CharField(max_length=128, blank=True)
+    start_year_ce = models.IntegerField()
+    end_year_ce = models.IntegerField()
+    start_year_cn = models.CharField(max_length=128, blank=True)
+    end_year_cn = models.CharField(max_length=128, blank=True)
+    applicable_regions = models.CharField(max_length=255, blank=True)
+    source_refs = models.JSONField(default=list, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["start_year_ce", "era_id"]
+        verbose_name = "Era Reference"
+        verbose_name_plural = "Era References"
+        indexes = [
+            models.Index(fields=["era_name"]),
+            models.Index(fields=["dynasty"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.era_name} ({self.dynasty})"
+
+
+class PersonReference(TimeStampedModel):
+    person_id = models.CharField(max_length=128, unique=True)
+    name = models.CharField(max_length=128)
+    courtesy_name = models.CharField(max_length=128, blank=True)
+    aliases = models.JSONField(default=list, blank=True)
+    gender = models.CharField(max_length=32, blank=True)
+    dynasty = models.CharField(max_length=128)
+    birth_year = models.IntegerField(null=True, blank=True)
+    death_year = models.IntegerField(null=True, blank=True)
+    origin_place = models.ForeignKey(
+        PlaceReference,
+        related_name="notable_people",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    positions = models.JSONField(default=list, blank=True)
+    works = models.JSONField(default=list, blank=True)
+    related_events = models.JSONField(default=list, blank=True)
+    biography_summary = models.TextField(blank=True)
+    source_refs = models.JSONField(default=list, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Person Reference"
+        verbose_name_plural = "Person References"
+        indexes = [
+            models.Index(fields=["name"]),
+            models.Index(fields=["dynasty"]),
+        ]
+
+    def __str__(self) -> str:
+        return self.name

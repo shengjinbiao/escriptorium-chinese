@@ -71,6 +71,8 @@ from api.serializers import (
     UserSerializer,
     LibraryCatalogSerializer,
     GazetteerStructureRecordSerializer,
+    EraReferenceSerializer,
+    PersonReferenceSerializer,
     PlaceReferenceSerializer,
 )
 from core.merger import MAX_MERGE_SIZE, merge_lines
@@ -104,6 +106,7 @@ from core.services.ai_text import (
     AIDependencyError,
     get_punctuation_service,
     get_translation_service,
+    load_entity_services,
 )
 from core.services.embedding import (
     EmbeddingServiceNotConfigured,
@@ -127,11 +130,12 @@ from users.models import Group, User
 from versioning.models import NoChangeException
 
 from knowledge.models import (
+    EraReference,
     GazetteerStructureRecord,
     LibraryCatalog,
+    PersonReference,
     PlaceReference,
 )
-
 logger = logging.getLogger(__name__)
 
 CLIENT_TASK_NAME_MAP = {
@@ -399,6 +403,26 @@ class PlaceReferenceViewSet(ReadOnlyModelViewSet):
     search_fields = ("standard_name", "alternate_names", "references")
     filterset_fields = ("dynasty", "admin_level")
     ordering_fields = ("standard_name", "dynasty", "updated_at")
+    pagination_class = KnowledgePagination
+
+
+class EraReferenceViewSet(ReadOnlyModelViewSet):
+    queryset = EraReference.objects.all()
+    serializer_class = EraReferenceSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ("era_name", "dynasty", "emperor", "era_id")
+    filterset_fields = ("dynasty",)
+    ordering_fields = ("start_year_ce", "era_name", "updated_at")
+    pagination_class = KnowledgePagination
+
+
+class PersonReferenceViewSet(ReadOnlyModelViewSet):
+    queryset = PersonReference.objects.select_related("origin_place").all()
+    serializer_class = PersonReferenceSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ("name", "courtesy_name", "aliases", "person_id")
+    filterset_fields = ("dynasty", "gender")
+    ordering_fields = ("name", "birth_year", "updated_at")
     pagination_class = KnowledgePagination
 
 
@@ -1117,6 +1141,12 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
                 get_punctuation_service()
             if operations.get("translate"):
                 get_translation_service()
+            if operations.get("entities"):
+                try:
+                    HanLPEntityExtractor, _ = load_entity_services()
+                    HanLPEntityExtractor()
+                except Exception as exc:
+                    raise RuntimeError(str(exc)) from exc
         except (AIDependencyError, FileNotFoundError, RuntimeError) as exc:
             logger.exception("AI services unavailable: %s", exc)
             return Response(
@@ -1129,6 +1159,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
             part_ids=parts,
             operations=operations,
             user_pk=request.user.pk if request.user.is_authenticated else None,
+            transcription_pk=payload.get("transcription"),
         )
         return Response(
             {
@@ -1136,6 +1167,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
                 "task_id": async_result.id,
                 "parts": parts,
                 "operations": operations,
+                "transcription": payload.get("transcription"),
             },
             status=status.HTTP_202_ACCEPTED,
         )

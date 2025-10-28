@@ -21,6 +21,8 @@ from kombu import Queue
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+HANLP_HOME = os.getenv('HANLP_HOME', os.path.join(BASE_DIR, 'hanlp_data'))
+os.environ.setdefault('HANLP_HOME', HANLP_HOME)
 
 ADMINS = [(os.getenv('DJANGO_SU_NAME', 'admin'),
            os.getenv('DJANGO_SU_EMAIL', 'admin@example.com'))]

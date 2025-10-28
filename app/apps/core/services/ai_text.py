@@ -73,9 +73,10 @@ class AIDependencyError(RuntimeError):
 class AIOperations:
     punctuate: bool = True
     translate: bool = True
+    entities: bool = False
 
     def has_work(self) -> bool:
-        return self.punctuate or self.translate
+        return self.punctuate or self.translate or self.entities
 
     @classmethod
     def from_payload(cls, payload: Optional[dict]) -> "AIOperations":
@@ -84,7 +85,20 @@ class AIOperations:
         return cls(
             punctuate=bool(payload.get("punctuate", True)),
             translate=bool(payload.get("translate", True)),
+            entities=bool(payload.get("entities", False)),
         )
+
+
+def load_entity_services():
+    """
+    Lazily import entity annotation helpers to avoid circular imports during Django setup.
+    """
+    from knowledge.services.entity_annotation import (  # noqa: WPS433 - runtime import
+        HanLPEntityExtractor,
+        annotate_part_entities,
+    )
+
+    return HanLPEntityExtractor, annotate_part_entities
 
 
 def _ensure_dependencies() -> None:
@@ -598,6 +612,9 @@ def enrich_document_part(
     user: Optional[User] = None,
     include_previous_context: bool = False,
     include_next_context: bool = False,
+    entity_extractor: Optional[object] = None,
+    entity_annotator: Optional[object] = None,
+    source_transcription: Optional["Transcription"] = None,
 ) -> dict:
     """
     Run punctuation and/or translation on a document part and update AI layers.
@@ -619,11 +636,12 @@ def enrich_document_part(
             "reason": "no_lines",
         }
 
-    source_transcription = _get_source_transcription(part.document)
     if source_transcription is None:
-        raise RuntimeError(
-            f"Document {part.document_id} has no available transcription to read from."
-        )
+        source_transcription = _get_source_transcription(part.document)
+        if source_transcription is None:
+            raise RuntimeError(
+                f"Document {part.document_id} has no available transcription to read from."
+            )
 
     line_texts = _collect_line_text(lines, source_transcription)
     if not any(text.strip() for text in line_texts):
@@ -693,5 +711,16 @@ def enrich_document_part(
             user=user,
             source_label=f"ai_translation:{translation.provider}",
         )
+
+    if operations.entities:
+        if entity_annotator is None:
+            _, _, _, entity_annotator = load_entity_services()
+        annotations_created = entity_annotator(
+            part=part,
+            transcription=source_transcription,
+            extractor=entity_extractor,
+            clear_existing=True,
+        )
+        result["entities_updated"] = annotations_created
 
     return result

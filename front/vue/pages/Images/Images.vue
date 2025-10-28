@@ -258,6 +258,13 @@
                                     </li>
                                     <li>
                                         <button
+                                            @mousedown="() => runAiOperations({ entities: true })"
+                                        >
+                                            <span>Extract Entities</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
                                             :disabled="vectorProcessing"
                                             @mousedown="() => buildSemanticIndexForDocument()"
                                         >
@@ -1078,6 +1085,7 @@ export default {
             const actions = [];
             if (operations?.punctuate) actions.push("punctuation");
             if (operations?.translate) actions.push("translation");
+            if (operations?.entities) actions.push("entity extraction");
             const taskLabel = actions.length ? actions.join(" & ") : "AI processing";
             const itemLabel = count === 1 ? "image" : "images";
             return `Queued ${taskLabel} for ${count} ${itemLabel}.`;

@@ -77,6 +77,7 @@
 ### 5.6 里程碑规划
 1. **M1 — 建模基线**：完成知识建模需求表、规范库初版（年号、地名、人物字段），确定接口契约。
    - **需求梳理**：访谈业务方与标注团队，提取年号/地名/人物的字段清单、取值范围、数据来源、更新频率与使用场景，沉淀成统一需求表。
+     - 已整理《知识建模需求表（M1 基线）》作为字段规范与示例数据模板（`docs/knowledge_model_requirements.md`）。
    - **模型设计**：输出概念/逻辑模型，定义实体、属性、枚举值、关联关系及质量规则，并确定字段命名与标准化策略。
    - **规范库落地**：整理县志原文与现有资料源，搭建清洗→去重→标准化→版本管理流程，产出可复用的基线数据集（支持县志专项字段）。
    - **接口契约**：界定服务边界，给出请求/响应结构、错误码、性能指标及鉴权方式，并起草 Swagger/OpenAPI 文档供开发联调。
@@ -102,7 +103,10 @@
          docker compose exec web python manage.py import_catalog_data \
            --catalog /usr/src/app/docs/"Copy of 温州古旧方志目录.xlsx" \
            --structure /usr/src/app/docs/"Copy of (乾隆)溫州府志三十卷首一卷_1.xlsx" \
-           --places /usr/src/app/docs/"Copy of 明清地名志数据表.xlsx"
+           --places /usr/src/app/docs/"Copy of 明清地名志数据表.xlsx" \
+           --eras /usr/src/app/docs/data/era_references_sample.csv \
+           --persons /usr/src/app/docs/data/person_references_sample.csv \
+           --format csv
          ```
      - 后端 API：在 `knowledge` 模块暴露列表/搜索接口（分页、关键字、来源过滤），必要时对接 Elasticsearch 做全文检索。
      - 前端展示：复用 eScriptorium 现有列表组件，增加“馆藏目录”入口；短期可由 Django Admin 先行，确保用户可浏览与导出。

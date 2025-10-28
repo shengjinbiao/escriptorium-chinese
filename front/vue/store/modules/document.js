@@ -1039,13 +1039,17 @@ const actions = {
     /**
      * Trigger AI enrichment for a set of parts.
      */
-    async triggerAiOnParts({ state }, { parts, operations } = {}) {
+    async triggerAiOnParts({ state, rootState }, { parts, operations } = {}) {
         const payload = {};
         if (Array.isArray(parts)) {
             payload.parts = parts;
         }
         if (operations) {
             payload.operations = operations;
+        }
+        const selectedTranscription = rootState?.transcription?.selectedTranscription;
+        if (selectedTranscription) {
+            payload.transcription = selectedTranscription;
         }
         const { data } = await runAiOnParts({
             documentId: state.id,

@@ -9,8 +9,10 @@ except ImportError as exc:
     raise CommandError("The command requires openpyxl. Please install it in the environment.") from exc
 
 from knowledge.models import (
+    EraReference,
     GazetteerStructureRecord,
     LibraryCatalog,
+    PersonReference,
     PlaceReference,
 )
 
@@ -22,6 +24,8 @@ class Command(BaseCommand):
         parser.add_argument("--catalog", type=str, help="Path to 温州古旧方志目录.xlsx (or CSV export).")
         parser.add_argument("--structure", type=str, help="Path to 乾隆温州府志卷首结构 Excel.")
         parser.add_argument("--places", type=str, help="Path to 明清地名志数据表 Excel.")
+        parser.add_argument("--eras", type=str, help="Path to 年号对照数据 (CSV/Excel).")
+        parser.add_argument("--persons", type=str, help="Path to 人物基础数据 (CSV/Excel).")
         parser.add_argument(
             "--format",
             dest="file_format",
@@ -44,6 +48,12 @@ class Command(BaseCommand):
 
         if options.get("places"):
             total += self.import_places(Path(options["places"]), file_format)
+
+        if options.get("eras"):
+            total += self.import_eras(Path(options["eras"]), file_format)
+
+        if options.get("persons"):
+            total += self.import_persons(Path(options["persons"]), file_format)
 
         if not total:
             raise CommandError("No data imported. Provide at least one file via --catalog/--structure/--places.")
@@ -187,6 +197,89 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE(f"Places: processed {count} rows from {path}"))
         return count
 
+    def import_eras(self, path: Path, file_format: str) -> int:
+        records = list(self.iter_rows(path, file_format))
+        if not records:
+            self.stdout.write("No rows found in eras file.")
+            return 0
+
+        count = 0
+        for row in records:
+            era_id = stringify(row.get("era_id") or row.get("Era ID"))
+            era_name = stringify(row.get("era_name") or row.get("Era Name"))
+            if not era_id or not era_name:
+                continue
+
+            payload = {
+                "era_id": era_id,
+                "era_name": era_name,
+                "dynasty": stringify(row.get("dynasty") or row.get("Dynasty")),
+                "emperor": stringify(row.get("emperor") or row.get("Emperor")),
+                "start_year_ce": parse_int(row.get("start_year_ce") or row.get("Start Year CE")),
+                "end_year_ce": parse_int(row.get("end_year_ce") or row.get("End Year CE")),
+                "start_year_cn": stringify(row.get("start_year_cn") or row.get("Start Year CN")),
+                "end_year_cn": stringify(row.get("end_year_cn") or row.get("End Year CN")),
+                "applicable_regions": stringify(row.get("applicable_regions") or row.get("Applicable Regions")),
+                "source_refs": serialize_list_to_list(row.get("source_refs") or row.get("Source Refs")),
+                "notes": stringify(row.get("notes") or row.get("Notes")),
+            }
+            if payload["start_year_ce"] is None or payload["end_year_ce"] is None:
+                self.stdout.write(self.style.WARNING(f"Skipping era {era_id}: missing start/end year."))
+                continue
+
+            EraReference.objects.update_or_create(era_id=era_id, defaults=payload)
+            count += 1
+
+        self.stdout.write(self.style.NOTICE(f"Eras: processed {count} rows from {path}"))
+        return count
+
+    def import_persons(self, path: Path, file_format: str) -> int:
+        records = list(self.iter_rows(path, file_format))
+        if not records:
+            self.stdout.write("No rows found in persons file.")
+            return 0
+
+        count = 0
+        for row in records:
+            person_id = stringify(row.get("person_id") or row.get("Person ID"))
+            name = stringify(row.get("name") or row.get("Name"))
+            if not person_id or not name:
+                continue
+
+            origin_place = None
+            place_lookup = stringify(row.get("origin_place_id") or row.get("Origin Place ID"))
+            place_name = stringify(row.get("origin_place_name") or row.get("Origin Place"))
+            if place_lookup:
+                place_pk = parse_int(place_lookup)
+                if place_pk is not None:
+                    origin_place = PlaceReference.objects.filter(pk=place_pk).first()
+            if origin_place is None and place_name:
+                origin_place = PlaceReference.objects.filter(standard_name=place_name).first()
+
+            payload = {
+                "person_id": person_id,
+                "name": name,
+                "courtesy_name": stringify(row.get("courtesy_name") or row.get("Courtesy Name")),
+                "aliases": serialize_list_to_list(row.get("aliases") or row.get("Aliases")),
+                "gender": stringify(row.get("gender") or row.get("Gender")),
+                "dynasty": stringify(row.get("dynasty") or row.get("Dynasty")),
+                "birth_year": parse_int(row.get("birth_year") or row.get("Birth Year")),
+                "death_year": parse_int(row.get("death_year") or row.get("Death Year")),
+                "origin_place": origin_place,
+                "positions": serialize_list_to_list(row.get("positions") or row.get("Positions")),
+                "works": serialize_list_to_list(row.get("works") or row.get("Works")),
+                "related_events": serialize_list_to_list(row.get("related_events") or row.get("Related Events")),
+                "biography_summary": stringify(row.get("biography_summary") or row.get("Biography Summary")),
+                "source_refs": serialize_list_to_list(row.get("source_refs") or row.get("Source Refs")),
+                "notes": stringify(row.get("notes") or row.get("Notes")),
+            }
+
+            PersonReference.objects.update_or_create(person_id=person_id, defaults=payload)
+            count += 1
+
+        self.stdout.write(self.style.NOTICE(f"Persons: processed {count} rows from {path}"))
+        return count
+
     def iter_rows(self, path: Path, file_format: str):
         if not path.exists():
             raise CommandError(f"File not found: {path}")
@@ -224,8 +317,20 @@ def serialize_list(value):
         return ", ".join(stringify(v) for v in value if stringify(v))
     text = stringify(value)
     # Some cells may use newline separators
-    parts = [part.strip() for part in text.replace("\n", ",").split(",") if part and part.strip()]
+    normalized = text.replace("\n", ",").replace(";", ",")
+    parts = [part.strip() for part in normalized.split(",") if part and part.strip()]
     return ", ".join(parts)
+
+
+def serialize_list_to_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [stringify(v) for v in value if stringify(v)]
+    text = stringify(value)
+    normalized = text.replace("\n", ",").replace(";", ",")
+    parts = [part.strip() for part in normalized.split(",") if part and part.strip()]
+    return parts
 
 
 def parse_float(value):
@@ -233,5 +338,14 @@ def parse_float(value):
         if value in ("", None):
             return None
         return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_int(value):
+    try:
+        if value in ("", None):
+            return None
+        return int(float(value))
     except (TypeError, ValueError):
         return None

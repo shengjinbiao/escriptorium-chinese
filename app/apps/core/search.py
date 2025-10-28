@@ -1,10 +1,13 @@
+import logging
 import re
 from urllib.parse import unquote_plus
 
 from django.conf import settings
 from django.contrib.postgres.search import SearchHeadline, SearchQuery
 from django.db.models import CharField, F, Func, Value
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, exceptions as es_exceptions
+
+logger = logging.getLogger(__name__)
 
 EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
 WORD_BY_WORD_SEARCH_MODE = "word-by-word"
@@ -74,14 +77,18 @@ def search_content_es(current_page, page_size, user_id, terms, projects=None, do
     if transcriptions:
         query["bool"]["must"].append({"terms": {"transcription_id": transcriptions}})
 
-    return es_client.search(
-        index=settings.ELASTICSEARCH_COMMON_INDEX,
-        query=query,
-        from_=(current_page - 1) * page_size,
-        size=page_size,
-        sort=["_score"],
-        highlight=highlight,
-    )
+    try:
+        return es_client.search(
+            index=settings.ELASTICSEARCH_COMMON_INDEX,
+            query=query,
+            from_=(current_page - 1) * page_size,
+            size=page_size,
+            sort=["_score"],
+            highlight=highlight,
+        )
+    except es_exceptions.NotFoundError as exc:
+        logger.warning("Elasticsearch index %s not found: %s", settings.ELASTICSEARCH_COMMON_INDEX, exc)
+        return {"hits": {"total": {"value": 0, "relation": "eq"}, "hits": []}}
 
 
 def get_filtered_queryset(user, project_id, document_id, transcription_id, part_id):

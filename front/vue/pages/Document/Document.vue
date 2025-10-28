@@ -564,6 +564,7 @@ export default {
                         scopeLabel: "this document",
                         onRun: this.runAiOnDocument,
                         onVectorize: this.buildSemanticIndexForDocument,
+                        allowEntityExtraction: true,
                     },
                     icon: AiIcon,
                     key: "ai-tools",
@@ -703,6 +704,7 @@ export default {
             const actions = [];
             if (operations?.punctuate) actions.push("punctuation");
             if (operations?.translate) actions.push("translation");
+            if (operations?.entities) actions.push("entity extraction");
             const taskLabel = actions.length ? actions.join(" & ") : "AI processing";
             const pageLabel = count === 1 ? "page" : "pages";
             return `Queued ${taskLabel} for ${count} ${pageLabel} in ${scopeLabel}.`;
