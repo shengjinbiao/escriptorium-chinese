@@ -91,15 +91,28 @@ class HanLPEntityExtractor:
                 start_idx: Optional[int] = None
                 end_idx: Optional[int] = None
                 label: Optional[str] = None
+                surface_override: Optional[str] = None
 
                 if isinstance(entity, dict):
                     start_idx = entity.get("start") or entity.get("index")
                     end_idx = entity.get("end") or entity.get("index_end") or entity.get("index2")
                     label = entity.get("label") or entity.get("type")
+                    surface_override = entity.get("text") or entity.get("word")
                 elif isinstance(entity, (list, tuple)):
                     if len(entity) < 3:
                         continue
-                    start_idx, end_idx, label = entity[:3]
+                    # HanLP 2.x returns [text, label, start, end]; older versions returned [start, end, label].
+                    if len(entity) >= 4 and isinstance(entity[2], (int, float)) and isinstance(entity[3], (int, float)):
+                        if isinstance(entity[0], str) and not isinstance(entity[2], str):
+                            surface_override = entity[0]
+                            label = entity[1]
+                            start_idx, end_idx = entity[2], entity[3]
+                        else:
+                            start_idx, end_idx, label = entity[:3]
+                    else:
+                        start_idx, end_idx, label = entity[:3]
+                    if label is not None:
+                        label = str(label)
 
                 try:
                     start_idx = int(start_idx) if start_idx is not None else None
@@ -113,7 +126,7 @@ class HanLPEntityExtractor:
                     continue
                 start_char = token_offsets[start_idx][0]
                 end_char = token_offsets[end_idx - 1][1]
-                surface = "".join(tokens[start_idx:end_idx])
+                surface = surface_override or "".join(tokens[start_idx:end_idx])
                 spans.append(
                     EntitySpan(
                         text=surface,
