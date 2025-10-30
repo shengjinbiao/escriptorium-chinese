@@ -64,8 +64,8 @@ services:
   celery-gpu: &celery-gpu
     <<: *app
     environment:
-      - KRAKEN_TRAINING_DEVICE=cpu
-    command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q gpu -c 1 --max-tasks-per-child=1"
+      - KRAKEN_TRAINING_DEVICE=gpu
+    command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q gpu -c 2 --max-tasks-per-child=2"
     shm_size: '3gb'
 
   flower:

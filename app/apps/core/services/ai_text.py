@@ -80,12 +80,23 @@ class AIOperations:
 
     @classmethod
     def from_payload(cls, payload: Optional[dict]) -> "AIOperations":
+        def _coerce(value, default):
+            if value is None:
+                return default
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in {"true", "1", "yes", "on"}:
+                    return True
+                if normalized in {"false", "0", "no", "off"}:
+                    return False
+            return bool(value)
+
         if not payload:
             return cls()
         return cls(
-            punctuate=bool(payload.get("punctuate", True)),
-            translate=bool(payload.get("translate", True)),
-            entities=bool(payload.get("entities", False)),
+            punctuate=_coerce(payload.get("punctuate"), True),
+            translate=_coerce(payload.get("translate"), True),
+            entities=_coerce(payload.get("entities"), False),
         )
 
 

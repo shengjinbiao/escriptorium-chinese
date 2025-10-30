@@ -61,27 +61,14 @@ class Command(BaseCommand):
                 if reset:
                     DocumentPassage.objects.filter(document=document).delete()
 
-                transcription = self._choose_transcription(document)
-                if transcription is None:
+                transcriptions = self._candidate_transcriptions(document)
+                if not transcriptions:
                     self.stdout.write(
                         self.style.WARNING(
                             f"Document {document.pk} has no transcriptions; skipping."
                         )
                     )
                     continue
-
-                lines = (
-                    LineTranscription.objects.filter(
-                        transcription=transcription,
-                        line__document_part__document=document,
-                    )
-                    .select_related("line", "line__document_part")
-                    .order_by("line__document_part__order", "line__order")
-                )
-
-                by_part = itertools.groupby(
-                    lines, key=lambda lt: lt.line.document_part
-                )
 
                 order_counter = (
                     DocumentPassage.objects.filter(document=document)
@@ -91,35 +78,61 @@ class Command(BaseCommand):
                     or 0
                 )
 
-                created_here = 0
-                for part, group in by_part:
-                    raw_text = "\n".join(
-                        lt.content.strip() for lt in group if lt.content
-                    ).strip()
-                    if len(raw_text) < min_chars:
+                created_in_document = 0
+                for transcription in transcriptions:
+                    lines = (
+                        LineTranscription.objects.filter(
+                            transcription=transcription,
+                            line__document_part__document=document,
+                        )
+                        .select_related("line", "line__document_part")
+                        .order_by("line__document_part__order", "line__order")
+                    )
+
+                    if not lines.exists():
                         continue
 
-                    order_counter += 1
-                    DocumentPassage.objects.create(
-                        document=document,
-                        document_part=part,
-                        order=order_counter,
-                        raw_text=raw_text,
-                        normalized_text=_normalize(raw_text),
-                        metadata={
-                            "document_part_id": part.pk if part else None,
-                            "document_part_title": getattr(part, "title", None),
-                            "document_part_order": getattr(part, "order", None),
-                            "transcription_id": transcription.pk,
-                            "transcription_name": transcription.name,
-                        },
+                    created_in_transcription = 0
+                    by_part = itertools.groupby(
+                        lines, key=lambda lt: lt.line.document_part
                     )
-                    created_here += 1
 
-                total_passages += created_here
+                    for part, group in by_part:
+                        raw_text = "\n".join(
+                            lt.content.strip() for lt in group if lt.content
+                        ).strip()
+                        if len(raw_text) < min_chars:
+                            continue
+
+                        order_counter += 1
+                        DocumentPassage.objects.create(
+                            document=document,
+                            document_part=part,
+                            order=order_counter,
+                            raw_text=raw_text,
+                            normalized_text=_normalize(raw_text),
+                            metadata={
+                                "document_part_id": part.pk if part else None,
+                                "document_part_title": getattr(part, "title", None),
+                                "document_part_order": getattr(part, "order", None),
+                                "transcription_id": transcription.pk,
+                                "transcription_name": transcription.name,
+                            },
+                        )
+                        created_in_transcription += 1
+
+                    if created_in_transcription == 0:
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"Document {document.pk} / transcription {transcription.name} produced 0 passages."
+                            )
+                        )
+                    created_in_document += created_in_transcription
+
+                total_passages += created_in_document
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"Document {document.pk} → created {created_here} passages."
+                        f"Document {document.pk} → created {created_in_document} passages."
                     )
                 )
 
@@ -127,15 +140,29 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"Finished. Created {total_passages} passages total.")
         )
 
-    def _choose_transcription(self, document: Document):
+    def _candidate_transcriptions(self, document: Document):
         """
-        Pick an appropriate transcription layer for passage extraction.
-        Prefers the default/manual layer, falls back to the first available.
+        Return a prioritized list of transcription layers for passage extraction.
+        Prefers the manual layer, then all remaining non-archived transcriptions.
         """
 
-        manual = document.transcriptions.filter(
-            name=Transcription.DEFAULT_NAME
-        ).first()
+        transcription_qs = (
+            document.transcriptions.filter(archived=False)
+            .order_by("pk")
+            .select_related(None)
+        )
+
+        transcriptions = list(transcription_qs)
+        manual = next(
+            (t for t in transcriptions if t.name == Transcription.DEFAULT_NAME),
+            None,
+        )
+        remaining = [
+            t for t in transcriptions if manual is None or t.pk != manual.pk
+        ]
+
+        candidates = []
         if manual:
-            return manual
-        return document.transcriptions.order_by("pk").first()
+            candidates.append(manual)
+        candidates.extend(remaining)
+        return candidates

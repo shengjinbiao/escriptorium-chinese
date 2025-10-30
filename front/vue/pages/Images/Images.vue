@@ -258,7 +258,7 @@
                                     </li>
                                     <li>
                                         <button
-                                            @mousedown="() => runAiOperations({ entities: true })"
+                                            @mousedown="() => runAiOperations({ punctuate: false, translate: false, entities: true })"
                                         >
                                             <span>Extract Entities</span>
                                         </button>

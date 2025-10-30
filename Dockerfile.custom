@@ -32,14 +32,14 @@ RUN pip install --root-user-action ignore -q --upgrade pip
 
 # Install Python requirements
 COPY escriptorium-chinese/app/requirements.txt /tmp/requirements.txt
-RUN pip --no-cache-dir install --root-user-action ignore -q -r /tmp/requirements.txt
+RUN pip install --root-user-action ignore -q -r /tmp/requirements.txt
 
 # Install embedding dependencies
-RUN pip --no-cache-dir install --root-user-action ignore -q faiss-cpu
+RUN pip  install --root-user-action ignore -q faiss-cpu
 
 # Install yjxz services
 COPY yjxz /usr/src/yjxz
-RUN pip --no-cache-dir install --root-user-action ignore -q -e /usr/src/yjxz
+RUN pip  install --root-user-action ignore -q -e /usr/src/yjxz
 
 # Copy application source (will be overridden by bind mount in development)
 COPY escriptorium-chinese/app /usr/src/app

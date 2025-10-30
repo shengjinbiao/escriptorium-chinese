@@ -1,3 +1,4 @@
+import Vue from "vue";
 import { assign } from "lodash";
 import * as api from "../api";
 
@@ -18,6 +19,11 @@ export const mutations = {
     load(state, pk) {
         let index = state.all.findIndex((l) => l.pk == pk);
         state.all[index].loaded = true;
+    },
+    replace(state, annotation) {
+        const index = state.all.findIndex((item) => item.pk == annotation.pk);
+        if (index < 0) return;
+        Vue.set(state.all, index, { ...annotation, loaded: true });
     },
     /* update (state, { pk, annotation }) {
      *     let index = state.all.findIndex(a=>a.pk==pk)
@@ -74,6 +80,7 @@ export const actions = {
             annotation,
         );
 
+        commit("replace", resp.data);
         return resp.data;
     },
 

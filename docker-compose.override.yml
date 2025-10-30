@@ -77,5 +77,11 @@ services:
 
   celery-gpu:
     <<: *app
+    shm_size: '3gb'
+    runtime: nvidia
+    environment:
+      - KRAKEN_TRAINING_DEVICE=cuda:0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
     command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q gpu -c 1 --max-tasks-per-child=1"
     restart: always

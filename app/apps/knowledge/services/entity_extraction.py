@@ -30,6 +30,29 @@ class EntitySpan:
     end_char: int
     attributes: Dict[str, str] = field(default_factory=dict)
 
+_LABEL_NORMALIZATION = {
+    "PER": "PERSON",
+    "NR": "PERSON",
+    "PERSON": "PERSON",
+    "NS": "LOCATION",
+    "LOC": "LOCATION",
+    "LOCATION": "LOCATION",
+    "PLACE": "LOCATION",
+    "GPE": "LOCATION",
+    "ORG": "ORGANIZATION",
+    "ORGANIZATION": "ORGANIZATION",
+}
+
+_LABEL_PRIORITY = {
+    "PERSON": 0,
+    "LOCATION": 0,
+    "ORGANIZATION": 1,
+    "TIME": 2,
+    "DATE": 2,
+    "ERA_DATE": 2,
+    "DYNASTY": 2,
+}
+
 
 class HanLPNotInstalled(RuntimeError):
     """Raised when HanLP is not available in the environment."""
@@ -127,16 +150,25 @@ class HanLPEntityExtractor:
                 start_char = token_offsets[start_idx][0]
                 end_char = token_offsets[end_idx - 1][1]
                 surface = surface_override or "".join(tokens[start_idx:end_idx])
+                normalized_label = self._normalize_label(label)
                 spans.append(
                     EntitySpan(
                         text=surface,
-                        label=label,
+                        label=normalized_label,
                         start_char=start_char,
                         end_char=end_char,
                     )
                 )
 
         return self._merge_duplicates(spans)
+
+    def _normalize_label(self, raw_label: Optional[str]) -> str:
+        if raw_label is None:
+            return "OTHER"
+        upper = str(raw_label).strip().upper()
+        if not upper:
+            return "OTHER"
+        return _LABEL_NORMALIZATION.get(upper, upper)
 
     def _build_char_offsets(self, text: str, tokens: List[str]) -> List[Tuple[int, int]]:
         offsets: List[Tuple[int, int]] = []
@@ -151,15 +183,24 @@ class HanLPEntityExtractor:
         return offsets
 
     def _merge_duplicates(self, spans: List[EntitySpan]) -> List[EntitySpan]:
-        seen = {}
+        merged: Dict[Tuple[str, int, int], EntitySpan] = {}
         for span in spans:
-            key = (span.text, span.label, span.start_char, span.end_char)
-            if key in seen:
-                # Merge attributes if we already saw the same span
-                seen[key].attributes.update(span.attributes)
+            key = (span.text, span.start_char, span.end_char)
+            existing = merged.get(key)
+            if existing is None:
+                merged[key] = span
+                continue
+
+            existing_priority = _LABEL_PRIORITY.get(existing.label, 99)
+            new_priority = _LABEL_PRIORITY.get(span.label, 99)
+
+            if new_priority < existing_priority:
+                span.attributes.update(existing.attributes)
+                merged[key] = span
             else:
-                seen[key] = span
-        return list(seen.values())
+                existing.attributes.update(span.attributes)
+
+        return list(merged.values())
 
     def debug_extract(self, text: str) -> str:
         data = [span.__dict__ for span in self.extract(text)]

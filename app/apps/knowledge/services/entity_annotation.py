@@ -21,7 +21,9 @@ from knowledge.services.entity_extraction import EntitySpan, HanLPEntityExtracto
 ENTITY_LABEL_DISPLAY = {
     "PERSON": "Person",
     "PER": "Person",
+    "NR": "Person",
     "LOC": "Location",
+    "NS": "Location",
     "LOCATION": "Location",
     "PLACE": "Place",
     "GPE": "Location",
