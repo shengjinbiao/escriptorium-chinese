@@ -69,6 +69,19 @@ from versioning.models import Versioned
 
 logger = logging.getLogger(__name__)
 
+NAMED_ENTITY_DEFAULT_TYPES = [
+    "Person",
+    "Location",
+    "Organization",
+    "Time",
+    "Date",
+    "Era Date",
+    "Dynasty",
+    "Place",
+    "Event",
+    "Other",
+]
+
 
 class ProcessFailureException(Exception):
     pass
@@ -635,42 +648,70 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
         """
         Seed a basic Named Entity taxonomy so new documents can annotate entities out of the box.
         """
-        # 构建默认的命名实体组件规格（类型与标识符字段）
         component_specs = (
-            ("Entity Type", ["Person", "Organization", "Location", "Event", "Date", "Other"]),
+            ("Entity Type", NAMED_ENTITY_DEFAULT_TYPES),
+            ("Normalized Value", None),
+            ("Attributes", None),
+            ("Confidence", None),
             ("Entity Identifier", None),
         )
-        components = []
+        component_map = {}
         for name, allowed_values in component_specs:
-            defaults = {"allowed_values": allowed_values} if allowed_values is not None else {"allowed_values": None}
-            component, _ = AnnotationComponent.objects.get_or_create(
+            defaults = {"allowed_values": allowed_values}
+            component, created = AnnotationComponent.objects.get_or_create(
                 document=self,
                 name=name,
                 defaults=defaults,
             )
-            components.append(component)
+            if not created and component.allowed_values != allowed_values:
+                component.allowed_values = allowed_values
+                component.save(update_fields=["allowed_values"])
+            component_map[name] = component
 
         annotation_type, _ = AnnotationType.objects.get_or_create(
             name="Named Entity",
             defaults={"public": True, "default": True},
         )
 
-        taxonomy_defaults = {
+        manual_defaults = {
             "typology": annotation_type,
             "has_comments": False,
             "abbreviation": "NE",
             "marker_type": AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
             "marker_detail": "#fde68a",
         }
-        taxonomy, created = AnnotationTaxonomy.objects.get_or_create(
+        manual_taxonomy, created = AnnotationTaxonomy.objects.get_or_create(
             document=self,
             name="Named Entity",
-            defaults=taxonomy_defaults,
+            defaults=manual_defaults,
         )
         if created:
-            taxonomy.components.set(components)
+            manual_taxonomy.components.set(component_map.values())
         else:
-            taxonomy.components.add(*components)
+            manual_taxonomy.components.add(*component_map.values())
+
+        ai_defaults = {
+            "typology": annotation_type,
+            "has_comments": False,
+            "abbreviation": "AI",
+            "marker_type": AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
+            "marker_detail": "#facc15",
+        }
+        ai_taxonomy, created = AnnotationTaxonomy.objects.get_or_create(
+            document=self,
+            name="Named Entity (AI)",
+            defaults=ai_defaults,
+        )
+        ai_components = [
+            component_map["Entity Type"],
+            component_map["Normalized Value"],
+            component_map["Attributes"],
+            component_map["Confidence"],
+        ]
+        if created:
+            ai_taxonomy.components.set(ai_components)
+        else:
+            ai_taxonomy.components.add(*ai_components)
 
     @property
     def is_published(self):

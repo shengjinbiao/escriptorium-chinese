@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from django.db import transaction
 
@@ -11,6 +11,7 @@ from core.models import (
     AnnotationType,
     DocumentPart,
     LineTranscription,
+    NAMED_ENTITY_DEFAULT_TYPES,
     TextAnnotation,
     TextAnnotationComponentValue,
     Transcription,
@@ -32,14 +33,34 @@ ENTITY_LABEL_DISPLAY = {
     "DATE": "Date",
     "ERA_DATE": "Era Date",
     "DYNASTY": "Dynasty",
+    "EVENT": "Event",
 }
 
 COMPONENT_SPECS = {
-    "Entity Type": ["Person", "Location", "Organization", "Time", "Date", "Era Date", "Dynasty", "Place", "Other"],
+    "Entity Type": NAMED_ENTITY_DEFAULT_TYPES,
     "Normalized Value": None,
     "Attributes": None,
     "Confidence": None,
 }
+
+ENTITY_TYPE_PRIORITY = {
+    value: index for index, value in enumerate(NAMED_ENTITY_DEFAULT_TYPES)
+}
+
+
+def _resolve_entity_type(span: EntitySpan) -> str:
+    label = (span.label or "").upper()
+    type_value = ENTITY_LABEL_DISPLAY.get(label, span.label.title() if span.label else "Other")
+    if type_value not in NAMED_ENTITY_DEFAULT_TYPES:
+        type_value = "Other"
+    return type_value
+
+
+def _coerce_confidence(value) -> Optional[float]:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def ensure_ai_taxonomy(document) -> (AnnotationTaxonomy, Dict[str, AnnotationComponent]):
@@ -118,28 +139,63 @@ def annotate_part_entities(
 
         created = 0
         for line_trans in line_qs:
-            text = line_trans.text
-            if not text:
+            text = line_trans.text or ""
+            if not text.strip():
                 continue
             spans = extractor.extract(text)
 
+            merged: Dict[Tuple[int, int], Dict[str, object]] = {}
             for span in spans:
                 start_offset = max(0, span.start_char)
                 end_offset = min(len(text), span.end_char)
                 if end_offset <= start_offset:
                     continue
 
+                type_value = _resolve_entity_type(span)
+                attributes_raw = span.attributes or {}
+                attributes_value = dict(attributes_raw)
+                if span.label and type_value.lower() != (span.label or "").lower():
+                    attributes_value.setdefault("original_label", span.label)
+                confidence_float = _coerce_confidence(attributes_value.get("confidence"))
+                confidence_score = confidence_float if confidence_float is not None else float("-inf")
+                key = (start_offset, end_offset)
+                candidate = {
+                    "type": type_value,
+                    "text": span.text,
+                    "attributes": attributes_value,
+                    "confidence_value": confidence_float,
+                    "confidence_score": confidence_score,
+                    "start": start_offset,
+                    "end": end_offset,
+                }
+                existing = merged.get(key)
+                if existing:
+                    if confidence_score > existing["confidence_score"]:
+                        merged[key] = candidate
+                    elif confidence_score == existing["confidence_score"]:
+                        if ENTITY_TYPE_PRIORITY.get(
+                            type_value,
+                            len(NAMED_ENTITY_DEFAULT_TYPES),
+                        ) < ENTITY_TYPE_PRIORITY.get(
+                            existing["type"],
+                            len(NAMED_ENTITY_DEFAULT_TYPES),
+                        ):
+                            merged[key] = candidate
+                    continue
+                merged[key] = candidate
+
+            for record in sorted(merged.values(), key=lambda item: item["start"]):
                 annotation = TextAnnotation.objects.create(
                     taxonomy=taxonomy,
                     part=part,
                     start_line=line_trans.line,
-                    start_offset=start_offset,
+                    start_offset=record["start"],
                     end_line=line_trans.line,
-                    end_offset=end_offset,
+                    end_offset=record["end"],
                     transcription=transcription,
                     comments=[],
                 )
-                _assign_components(annotation, components, span)
+                _assign_components(annotation, components, record)
                 created += 1
 
     return created
@@ -148,11 +204,12 @@ def annotate_part_entities(
 def _assign_components(
     annotation: TextAnnotation,
     components: Dict[str, AnnotationComponent],
-    span: EntitySpan,
+    record: Dict[str, object],
 ) -> None:
-    type_value = ENTITY_LABEL_DISPLAY.get(span.label.upper(), span.label.title())
-    attributes_value = span.attributes or {}
-    confidence = attributes_value.get("confidence")
+    type_value = record.get("type") or "Other"
+    text_value = (record.get("text") or "")[:256]
+    attributes_value = record.get("attributes") or {}
+    confidence_value = record.get("confidence_value")
 
     TextAnnotationComponentValue.objects.create(
         component=components["Entity Type"],
@@ -163,7 +220,7 @@ def _assign_components(
     TextAnnotationComponentValue.objects.create(
         component=components["Normalized Value"],
         annotation=annotation,
-        value=span.text[:256],
+        value=text_value,
     )
 
     if attributes_value:
@@ -173,9 +230,9 @@ def _assign_components(
             value=json.dumps(attributes_value, ensure_ascii=False)[:256],
         )
 
-    if confidence is not None:
+    if confidence_value is not None:
         TextAnnotationComponentValue.objects.create(
             component=components["Confidence"],
             annotation=annotation,
-            value=f"{float(confidence):.3f}",
+            value=f"{float(confidence_value):.3f}",
         )

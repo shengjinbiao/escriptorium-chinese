@@ -1284,6 +1284,12 @@ class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = AnnotationTaxonomySerializer
 
     def get_queryset(self):
+        # Ensure basic Named Entity taxonomies exist for this document so that
+        # newly created documents immediately expose the annotation buttons.
+        document = getattr(self, "document", None)
+        if document and hasattr(document, "_bootstrap_named_entity_annotations"):
+            document._bootstrap_named_entity_annotations()
+
         qs = (super().get_queryset()
               .filter(document=self.document)
               .prefetch_related('typology', 'components'))

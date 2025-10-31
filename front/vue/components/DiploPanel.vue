@@ -211,6 +211,25 @@
                     </template>
                 </VDropdown>
             </div>
+            <div
+                v-if="showEntityTypeToolbar"
+                class="escr-entity-type-toolbar"
+            >
+                <span class="escr-entity-type-toolbar__label">Entity type:</span>
+                <button
+                    v-for="option in entityTypeQuickOptions"
+                    :key="option"
+                    type="button"
+                    class="escr-entity-type-toolbar__button"
+                    :class="{
+                        'escr-entity-type-toolbar__button--active': isQuickTypeActive(option),
+                    }"
+                    :disabled="entityTypeToolbarDisabled"
+                    @click="applyEntityType(option)"
+                >
+                    {{ option }}
+                </button>
+            </div>
         </div>
         <div
             v-if="legacyModeEnabled"
@@ -431,6 +450,8 @@ export default {
             entitySelection: [],
             entityActionPending: false,
             showEntitySidebar: true,
+            aiWorkflowListener: null,
+            lastAiWorkflowTaskId: null,
         };
     },
     computed: {
@@ -454,6 +475,35 @@ export default {
                 (taxo) => taxo.typology && taxo.typology.name,
             );
         },
+        showEntityTypeToolbar() {
+            return Boolean(
+                this.aiEntityTaxonomy &&
+                    this.currentTaxonomy &&
+                    this.currentTaxonomy.pk === this.aiEntityTaxonomy.pk,
+            );
+        },
+        entityTypeQuickOptions() {
+            return this.entityTypeOptions;
+        },
+        entityTypeToolbarDisabled() {
+            if (this.entityActionPending) return true;
+            if (this.disabled) return true;
+            return !(this.selectedEntityId || this.entitySelection.length);
+        },
+        activeEntityType() {
+            const ids = this.entitySelection.length
+                ? this.entitySelection
+                : this.selectedEntityId
+                    ? [this.selectedEntityId]
+                    : [];
+            if (!ids.length) return null;
+            const types = ids
+                .map((id) => this.getEntityAnnotationById(id)?.type)
+                .filter(Boolean);
+            if (!types.length) return null;
+            const unique = [...new Set(types)];
+            return unique.length === 1 ? unique[0] : null;
+        },
         aiEntityTaxonomy() {
             if (!this.annotationTaxonomies?.text) return null;
             return this.annotationTaxonomies.text.find(
@@ -476,7 +526,12 @@ export default {
                 this.allLines.map((line) => [line.pk, line]),
             );
             return this.allTextAnnotations
-                .filter((anno) => anno.taxonomy === this.aiEntityTaxonomy.pk)
+                .filter((anno) => {
+                    const taxonomy = typeof anno.taxonomy === "object"
+                        ? anno.taxonomy?.pk
+                        : anno.taxonomy;
+                    return taxonomy === this.aiEntityTaxonomy?.pk;
+                })
                 .map((anno) => {
                     const componentValues = this.buildComponentValueMap(anno);
                     const type = componentValues.get(ENTITY_COMPONENTS.type) || "";
@@ -497,7 +552,10 @@ export default {
                     } catch (error) {
                         status = null;
                     }
-                    const line = lineIndex.get(anno.start_line);
+                    const startLinePk = typeof anno.start_line === "object"
+                        ? anno.start_line?.pk
+                        : anno.start_line;
+                    const line = lineIndex.get(startLinePk);
                     return {
                         id: anno.pk,
                         raw: anno,
@@ -599,6 +657,17 @@ export default {
                 this.selectedEntityId = null;
             }
         },
+        selectedEntityId(newId, oldId) {
+            if (newId == null) {
+                if (oldId != null && this.entitySelection.length <= 1) {
+                    this.entitySelection = [];
+                }
+                return;
+            }
+            if (!this.entitySelection.includes(newId)) {
+                this.entitySelection = [newId];
+            }
+        },
         async isRegionsModeEnabled(isEnabled) {
             // reset selected lines on regions mode toggle
             this.selectedLines = [];
@@ -687,7 +756,13 @@ export default {
 
         this.initAnnotations();
 
+        this.registerAiWorkflowListener();
+
         this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
+    },
+
+    destroyed() {
+        this.unregisterAiWorkflowListener();
     },
 
     methods: {
@@ -701,6 +776,126 @@ export default {
         ...mapMutations("document", ["setBlockShortcuts"]),
         ...mapMutations("lines", ["setIsDragging"]),
 
+        resolveEntityId(value) {
+            const numeric = Number.parseInt(value, 10);
+            return Number.isNaN(numeric) ? value : numeric;
+        },
+        registerAiWorkflowListener() {
+            this.unregisterAiWorkflowListener();
+            const $alerts = window.jQuery ? window.jQuery("#alerts-container") : null;
+            if (!$alerts || typeof $alerts.on !== "function") return;
+            this.aiWorkflowListener = (event, payload) => {
+                this.handleAiWorkflowEvent(payload);
+            };
+            $alerts.on("part:workflow", this.aiWorkflowListener);
+        },
+        unregisterAiWorkflowListener() {
+            if (!this.aiWorkflowListener) return;
+            const $alerts = window.jQuery ? window.jQuery("#alerts-container") : null;
+            if ($alerts && typeof $alerts.off === "function") {
+                $alerts.off("part:workflow", this.aiWorkflowListener);
+            }
+            this.aiWorkflowListener = null;
+        },
+        getEntityAnnotationById(id) {
+            return this.entityAnnotations.find((entity) => entity.id === id) || null;
+        },
+        isQuickTypeActive(type) {
+            return this.activeEntityType === type;
+        },
+        async applyEntityType(nextType) {
+            if (this.entityTypeToolbarDisabled) return;
+            const targetIds = this.entitySelection.length
+                ? [...this.entitySelection]
+                : this.selectedEntityId
+                    ? [this.selectedEntityId]
+                    : [];
+            if (!targetIds.length) return;
+            this.entityActionPending = true;
+            try {
+                for (const id of targetIds) {
+                    await this.updateEntityType(id, nextType);
+                }
+                const lastId = targetIds[targetIds.length - 1];
+                this.addAlert({
+                    color: "success",
+                    message: `Entity type set to ${nextType}.`,
+                });
+                this.selectEntityFromList(lastId);
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.entityActionPending = false;
+            }
+        },
+        async updateEntityType(entityId, nextType) {
+            const listEntry = this.getEntityAnnotationById(entityId);
+            if (!listEntry) return;
+            const annotation = this.findRecogitoAnnotation(entityId);
+            if (!annotation) return;
+            const working = typeof structuredClone === "function"
+                ? structuredClone(annotation)
+                : JSON.parse(JSON.stringify(annotation));
+            this.updateAnnotationComponentBody(
+                working,
+                ENTITY_COMPONENTS.type,
+                nextType || "",
+            );
+            this.updateAnnotationComponentBody(
+                working,
+                ENTITY_COMPONENTS.normalized,
+                listEntry.normalizedValue || "",
+            );
+            this.updateAnnotationComponentBody(
+                working,
+                ENTITY_COMPONENTS.attributes,
+                listEntry.attributes || "",
+            );
+            const confidenceValue = Number.isFinite(listEntry.confidence)
+                ? listEntry.confidence.toFixed(3)
+                : "";
+            this.updateAnnotationComponentBody(
+                working,
+                ENTITY_COMPONENTS.confidence,
+                confidenceValue,
+            );
+            const selector = this.getTextSelector(working.target);
+            if (!selector) return;
+            const body = this.getAPITextAnnotationBody(working, selector);
+            body.id = entityId;
+            body.transcription = this.selectedTranscription;
+            const updated = await this.updateTextAnnotation(body);
+            await this.refreshRecogitoAnnotation(updated);
+        },
+        async handleAiWorkflowEvent(payload) {
+            if (!payload || payload.process !== "run_ai_enrichment") return;
+            const currentPart = Number.parseInt(this.currentPartPk, 10);
+            const partId = Number.parseInt(payload.id, 10);
+            if (Number.isFinite(partId) && Number.isFinite(currentPart) && partId !== currentPart) return;
+            if (payload.status !== "done") return;
+            const taskId = payload.task_id;
+            if (taskId && taskId === this.lastAiWorkflowTaskId) return;
+            const result = payload.data || {};
+            const partResults = Array.isArray(result.parts) ? result.parts : [];
+            const matchingResult = partResults.find((entry) => {
+                const entryId = Number.parseInt(entry?.part_id, 10);
+                return Number.isFinite(entryId) && Number.isFinite(currentPart) && entryId === currentPart;
+            });
+            if (matchingResult?.status && matchingResult.status !== "ok") return;
+            const entitiesUpdated = matchingResult && Object.prototype.hasOwnProperty.call(matchingResult, "entities_updated");
+            if (!entitiesUpdated) return;
+            if (!this.partsLoaded) return;
+            if (taskId) {
+                this.lastAiWorkflowTaskId = taskId;
+            } else {
+                this.lastAiWorkflowTaskId = `${Date.now()}`;
+            }
+            try {
+                await this.loadAnnotations();
+            } catch (error) {
+                this.addError(error);
+            }
+        },
         toggleEntitySidebar() {
             this.showEntitySidebar = !this.showEntitySidebar;
             if (!this.showEntitySidebar) {
@@ -817,14 +1012,17 @@ export default {
         },
         clearEntitySelection() {
             this.entitySelection = [];
+            this.selectedEntityId = null;
         },
         selectEntityFromList(id) {
-            this.selectedEntityId = id;
+            const resolvedId = this.resolveEntityId(id);
+            this.entitySelection = [resolvedId];
+            this.selectedEntityId = resolvedId;
             const annotation = this.findRecogitoAnnotation(id);
             if (annotation && this.anno && typeof this.anno.selectAnnotation === "function") {
                 this.anno.selectAnnotation(annotation);
             }
-            this.scrollAnnotationIntoView(id);
+            this.scrollAnnotationIntoView(resolvedId);
         },
         async refreshRecogitoAnnotation(annotation) {
             const taxonomy = this.annotationTaxonomies?.text?.find(
@@ -1185,10 +1383,12 @@ export default {
                 body.transcription = this.selectedTranscription;
                 const newAnno = await this.createTextAnnotation(body);
                 // updates actual object (annotation is just a copy)
-                annotation.id = newAnno.pk;
+                const resolvedId = this.resolveEntityId(newAnno.pk);
+                annotation.id = resolvedId;
                 this.anno.addAnnotation(annotation);
                 if (this.isEntityAnnotation(annotation)) {
-                    this.selectedEntityId = annotation.id;
+                    this.selectedEntityId = resolvedId;
+                    this.entitySelection = [resolvedId];
                 }
             }.bind(this));
 
@@ -1208,22 +1408,26 @@ export default {
                 }
                 const underlying = annotation.underlying || annotation;
                 if (this.isEntityAnnotation(underlying)) {
-                    this.selectedEntityId = annotation.id;
-                    this.scrollAnnotationIntoView(annotation.id);
+                    const resolvedId = this.resolveEntityId(annotation.id);
+                    this.selectedEntityId = resolvedId;
+                    this.entitySelection = [resolvedId];
+                    this.scrollAnnotationIntoView(resolvedId);
                     if (!this.showEntitySidebar) {
                         this.showEntitySidebar = true;
                     }
                 } else {
                     this.selectedEntityId = null;
+                    this.entitySelection = [];
                 }
             }.bind(this));
 
             this.anno.on("deleteAnnotation", function(annotation) {
-                this.deleteTextAnnotation(annotation.id);
-                if (this.selectedEntityId === annotation.id) {
+                const resolvedId = this.resolveEntityId(annotation.id);
+                this.deleteTextAnnotation(resolvedId);
+                if (this.selectedEntityId === resolvedId) {
                     this.selectedEntityId = null;
                 }
-                this.entitySelection = this.entitySelection.filter((id) => id !== annotation.id);
+                this.entitySelection = this.entitySelection.filter((id) => id !== resolvedId);
             }.bind(this));
         },
 
@@ -1911,6 +2115,46 @@ export default {
     color: #6b7280;
     font-size: 14px;
     background-color: #f9fafb;
+}
+
+.escr-entity-type-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.escr-entity-type-toolbar__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.escr-entity-type-toolbar__button {
+    border: 1px solid #d1d5db;
+    border-radius: 9999px;
+    background-color: #f9fafb;
+    color: #374151;
+    font-size: 12px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.escr-entity-type-toolbar__button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.escr-entity-type-toolbar__button:not(:disabled):hover {
+    background-color: #e5e7eb;
+}
+
+.escr-entity-type-toolbar__button--active {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
 }
 
 @media (max-width: 1200px) {
