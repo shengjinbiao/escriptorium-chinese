@@ -20,7 +20,7 @@ services:
     command: uwsgi --ini /usr/src/app/uwsgi.ini
     expose:
       - 8000
-    volumes:
+  #  volumes:
   #    - ./front/dist:/usr/src/app/front/dist:ro
 
   channelserver:
