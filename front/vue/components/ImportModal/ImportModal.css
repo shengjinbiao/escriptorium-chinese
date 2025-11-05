@@ -1,10 +1,10 @@
 /* modal basics */
 .escr-import-modal .escr-modal {
-    top: 5%;
-    width: 620px;
-    height: 648px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(620px, calc(100vw - 48px));
     max-height: calc(100vh - 74px);
-    left: calc(50% - 315px);
 }
 .escr-import-modal .escr-modal-content ul + div {
     height: min(408px, calc(100vh - 316px));

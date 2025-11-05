@@ -3036,7 +3036,8 @@ textarea[data-v-0e2d3217] {
 main:has(#escr-editor) {
   background-color: var(--background2);
   font-family: "Noto Sans", "Resized Arabic", sans-serif;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #escr-editor {

@@ -141,13 +141,16 @@
     display: flex;
     flex-flow: row nowrap;
     align-items: stretch;
-    height: 100vh;
-    overflow-y: hidden;
-    max-height: 100vh;
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 .escr-body main {
-    max-height: 100vh;
-    overflow: auto;
+    flex: 1 1 auto;
+    min-height: 100vh;
+    max-height: none;
+    overflow: visible;
     width: 100%;
 }
 .escr-body  {
@@ -174,7 +177,8 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
     html,
     .escr-body,
     .escr-body-main {
-        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
     .escr-page:not(#editor),
     main:has(.escr-vue-enabled):not(:has(.escr-page)) {

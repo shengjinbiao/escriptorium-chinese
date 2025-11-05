@@ -74,8 +74,13 @@ export const EntitySync = {
                 if (!element) return false;
 
                 const rect = element.getBoundingClientRect();
-                const elementTop = rect.top + window.scrollY;
-                return elementTop >= visibleRange.top && elementTop <= visibleRange.bottom;
+                const containerRect = container.getBoundingClientRect();
+
+                // Compute the element position in the scroll container's coordinate space
+                const elementTop = rect.top - containerRect.top + scrollTop;
+                const elementBottom = elementTop + rect.height;
+
+                return elementBottom >= visibleRange.top && elementTop <= visibleRange.bottom;
             });
         },
 
