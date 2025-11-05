@@ -30,6 +30,27 @@ class EntitySpan:
     end_char: int
     attributes: Dict[str, str] = field(default_factory=dict)
 
+    # 兼容旧版实体合并器的属性命名
+    @property
+    def start(self) -> int:
+        return self.start_char
+
+    @property
+    def end(self) -> int:
+        return self.end_char
+
+    @property
+    def type(self) -> str:
+        return self.label
+
+    @property
+    def confidence(self) -> float:
+        value = self.attributes.get("confidence")
+        try:
+            return float(value) if value is not None else 0.0
+        except (TypeError, ValueError):
+            return 0.0
+
 _LABEL_NORMALIZATION = {
     "PER": "PERSON",
     "NR": "PERSON",
@@ -63,43 +84,49 @@ class HanLPModelNotReady(RuntimeError):
 
 
 class HanLPEntityExtractor:
-    """
-    Thin wrapper around HanLP multi-task pipeline providing NER output with
-    additional heuristics tailored to gazetteer texts.
-    """
+    """基于 HanLP 多任务模型的实体抽取器。"""
 
     def __init__(self) -> None:
         if hanlp is None:
             raise HanLPNotInstalled(
                 "hanlp is not installed. Add 'hanlp' to requirements and ensure the environment has it available."
             )
+
         self._pipeline = None
 
-    # Lazy load to avoid upfront model cost during Django start
-    def _ensure_pipeline(self):
+    def _ensure_models(self):
+        """确保 HanLP 多任务模型已加载。"""
+        if MODEL_ID is None:
+            raise HanLPModelNotReady(
+                "HanLP multi-task model identifier is missing. Set HANLP_HOME or update HanLP version."
+            )
         if self._pipeline is not None:
             return
         try:
-            if MODEL_ID:
-                self._pipeline = hanlp.load(MODEL_ID)
-            else:  # pragma: no cover - fallback when constant missing
-                self._pipeline = hanlp.pipeline()
-                self._pipeline.append(hanlp.load(hanlp.pretrained.tok.COARSE_ELECTRA_SMALL_ZH), output_key="tok/fine")
-                self._pipeline.append(
-                    hanlp.load(hanlp.pretrained.ner.MSRA_ELECTRA_SMALL_ZH),
-                    output_key="ner/msra",
-                    input_key="tok/fine",
-                )
-        except Exception as exc:  # pragma: no cover
-            logger.exception("Failed to load HanLP models")
+            self._pipeline = hanlp.load(MODEL_ID)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Failed to load HanLP pipeline")
             raise HanLPModelNotReady(
                 "HanLP models are not ready. Run hanlp.pretrained.fetch() with network access to download required weights."
             ) from exc
 
     def extract(self, text: str) -> List[EntitySpan]:
+        """
+        Extract entities from text using three HanLP models and merge results
+        
+        Args:
+            text: Input text
+            
+        Returns:
+            List of merged entity spans
+        """
         if not text:
             return []
-        self._ensure_pipeline()
+            
+        # 确保模型已加载
+        self._ensure_models()
+
+        assert self._pipeline is not None  # for type checkers
         result = self._pipeline(text)
         tokens = result.get("tok/fine") or result.get("tok") or []
         if tokens and isinstance(tokens[0], list):
@@ -124,7 +151,6 @@ class HanLPEntityExtractor:
                 elif isinstance(entity, (list, tuple)):
                     if len(entity) < 3:
                         continue
-                    # HanLP 2.x returns [text, label, start, end]; older versions returned [start, end, label].
                     if len(entity) >= 4 and isinstance(entity[2], (int, float)) and isinstance(entity[3], (int, float)):
                         if isinstance(entity[0], str) and not isinstance(entity[2], str):
                             surface_override = entity[0]
@@ -149,7 +175,7 @@ class HanLPEntityExtractor:
                     continue
                 start_char = token_offsets[start_idx][0]
                 end_char = token_offsets[end_idx - 1][1]
-                surface = surface_override or "".join(tokens[start_idx:end_idx])
+                surface = surface_override or ''.join(tokens[start_idx:end_idx])
                 normalized_label = self._normalize_label(label)
                 spans.append(
                     EntitySpan(

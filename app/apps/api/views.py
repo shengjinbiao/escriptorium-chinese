@@ -1,5 +1,6 @@
 import json
 import logging
+from collections import defaultdict
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -58,6 +59,7 @@ from api.serializers import (
     ProjectSerializer,
     ProjectTagSerializer,
     SemanticSearchRequestSerializer,
+    MindMapRequestSerializer,
     ScriptSerializer,
     SegmentSerializer,
     SegTrainSerializer,
@@ -88,6 +90,7 @@ from core.models import (
     DocumentPart,
     DocumentPartMetadata,
     DocumentPartType,
+    DocumentPassage,
     DocumentTag,
     ImageAnnotation,
     Line,
@@ -117,6 +120,7 @@ from core.services.semantic_answer import (
     build_semantic_answer,
 )
 from core.services.semantic_search import semantic_search
+from core.services.mind_map import MindMapParameters, generate_mind_map
 from core.tasks import (
     build_semantic_index_task,
     recalculate_masks,
@@ -309,6 +313,118 @@ class ProjectViewSet(ModelViewSet):
         # re-instantiate serializer to use updated data
         serializer = ProjectSerializer(project)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='mind-map')
+    def mind_map(self, request, pk=None):
+        project = self.get_object()
+        serializer = MindMapRequestSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+        if params.get("document_part_ids"):
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("Image selections must be generated from the document view."),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        document_qs = Document.objects.for_user(request.user).filter(project=project)
+        requested_ids = params.get("document_ids") or []
+        if requested_ids:
+            allowed_ids = set(
+                document_qs.filter(pk__in=requested_ids).values_list("pk", flat=True)
+            )
+            missing = [doc_id for doc_id in requested_ids if doc_id not in allowed_ids]
+            if missing:
+                return Response(
+                    {
+                        "status": "error",
+                        "error": _(
+                            "Some documents are not accessible or do not belong to this project."
+                        ),
+                        "missing_documents": missing,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            document_qs = document_qs.filter(pk__in=allowed_ids)
+
+        documents = list(document_qs.order_by("pk"))
+        if not documents:
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("No accessible documents were found for this project."),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        passages_qs = (
+            DocumentPassage.objects.filter(document__in=documents)
+            .exclude(embedding__isnull=True)
+            .select_related("document", "document_part")
+            .order_by("document_id", "order")
+        )
+        if not passages_qs.exists():
+            root_label = documents[0].name if len(documents) == 1 else project.name
+            graph = generate_mind_map(
+                [],
+                root_id="root",
+                root_label=root_label,
+                parameters=MindMapParameters(
+                    cluster_count=params.get("cluster_count", 5),
+                    max_neighbors=params.get("max_neighbors", 2),
+                    snippet_length=160,
+                ),
+            )
+            return Response(
+                {
+                    "project": {"id": project.pk, "name": project.name},
+                    "documents": [
+                        {"id": doc.pk, "name": doc.name, "passages": 0}
+                        for doc in documents
+                    ],
+                    "parameters": {
+                        "max_passages": params.get("max_passages"),
+                        "cluster_count": params.get("cluster_count"),
+                        "max_neighbors": params.get("max_neighbors"),
+                    },
+                    "graph": graph,
+                }
+            )
+
+        max_passages = params.get("max_passages", 200)
+        passages = list(passages_qs[:max_passages])
+
+        root_label = documents[0].name if len(documents) == 1 else project.name
+        parameters = MindMapParameters(
+            cluster_count=params.get("cluster_count", 5),
+            max_neighbors=params.get("max_neighbors", 2),
+            snippet_length=160,
+        )
+        graph = generate_mind_map(passages, root_id="root", root_label=root_label, parameters=parameters)
+
+        passage_counts = defaultdict(int)
+        for passage in passages:
+            passage_counts[passage.document_id] += 1
+
+        documents_payload = [
+            {"id": doc.pk, "name": doc.name, "passages": passage_counts.get(doc.pk, 0)}
+            for doc in documents
+        ]
+
+        return Response(
+            {
+                "project": {"id": project.pk, "name": project.name},
+                "documents": documents_payload,
+                "parameters": {
+                    "max_passages": max_passages,
+                    "cluster_count": parameters.cluster_count,
+                    "max_neighbors": parameters.max_neighbors,
+                },
+                "graph": graph,
+            }
+        )
 
     @action(detail=True, methods=['post'], url_path='semantic/vectorize')
     def build_semantic_index(self, request, pk=None):
@@ -591,6 +707,123 @@ class DocumentViewSet(ModelViewSet):
         # the model.training attribute to False)
         for model in document.ocr_models.filter(training=True):
             model.cancel_training(revoke_task=False, username=request.user.username)  # We already revoked the Celery task
+
+    @action(detail=True, methods=['post'], url_path='mind-map')
+    def mind_map(self, request, pk=None):
+        document = self.get_object()
+        serializer = MindMapRequestSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+
+        part_ids = params.get("document_part_ids") or []
+        if part_ids:
+            allowed_part_ids = set(
+                document.parts.filter(pk__in=part_ids).values_list("pk", flat=True)
+            )
+            missing_parts = [part_id for part_id in part_ids if part_id not in allowed_part_ids]
+            if missing_parts:
+                return Response(
+                    {
+                        "status": "error",
+                        "error": _(
+                            "Some selected images are not part of this document or cannot be accessed."
+                        ),
+                        "missing_parts": missing_parts,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            allowed_part_ids = set()
+
+        passages_qs = (
+            DocumentPassage.objects.filter(document=document)
+            .exclude(embedding__isnull=True)
+            .select_related("document_part")
+            .order_by("order")
+        )
+        if allowed_part_ids:
+            passages_qs = passages_qs.filter(document_part_id__in=allowed_part_ids)
+
+        parameters = MindMapParameters(
+            cluster_count=params.get("cluster_count", 5),
+            max_neighbors=params.get("max_neighbors", 2),
+            snippet_length=160,
+        )
+
+        if not passages_qs.exists():
+            graph = generate_mind_map(
+                [],
+                root_id="root",
+                root_label=document.name,
+                parameters=parameters,
+            )
+            return Response(
+                {
+                    "project": {"id": document.project_id, "name": document.project.name},
+                    "document": {"id": document.pk, "name": document.name},
+                    "documents": [
+                        {"id": document.pk, "name": document.name, "passages": 0}
+                    ],
+                    "parts": [],
+                    "parameters": {
+                        "max_passages": params.get("max_passages", 200),
+                        "cluster_count": parameters.cluster_count,
+                        "max_neighbors": parameters.max_neighbors,
+                    },
+                    "graph": graph,
+                }
+            )
+
+        max_passages = params.get("max_passages", 200)
+        passages = list(passages_qs[:max_passages])
+
+        graph = generate_mind_map(
+            passages,
+            root_id="root",
+            root_label=document.name,
+            parameters=parameters,
+        )
+
+        part_counts = defaultdict(int)
+        for passage in passages:
+            if passage.document_part_id:
+                part_counts[passage.document_part_id] += 1
+
+        parts_payload = []
+        if part_counts:
+            parts = list(
+                document.parts.filter(pk__in=part_counts.keys()).order_by("order")
+            )
+            for part in parts:
+                parts_payload.append(
+                    {
+                        "id": part.pk,
+                        "title": part.title,
+                        "order": part.order,
+                        "passages": part_counts.get(part.pk, 0),
+                    }
+                )
+
+        return Response(
+            {
+                "project": {"id": document.project_id, "name": document.project.name},
+                "document": {"id": document.pk, "name": document.name},
+                "documents": [
+                    {
+                        "id": document.pk,
+                        "name": document.name,
+                        "passages": len(passages),
+                    }
+                ],
+                "parts": parts_payload,
+                "parameters": {
+                    "max_passages": max_passages,
+                    "cluster_count": parameters.cluster_count,
+                    "max_neighbors": parameters.max_neighbors,
+                },
+                "graph": graph,
+            }
+        )
 
     @action(detail=True, methods=['post'], url_path='semantic/vectorize')
     def build_semantic_index(self, request, pk=None):

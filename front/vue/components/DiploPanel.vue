@@ -380,6 +380,7 @@ import { Dropdown as VDropdown } from "floating-vue";
 import { Recogito } from "@recogito/recogito-js";
 import { debounce, groupBy } from "lodash";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
+import { EntitySync } from "../../src/editor/mixins/EntitySync.js";
 import AiIcon from "./Icons/AiIcon/AiIcon.vue";
 import ChevronDownIcon from "./Icons/ChevronDownIcon/ChevronDownIcon.vue";
 import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
@@ -435,7 +436,7 @@ export default {
         VDropdown,
         AiIcon,
     },
-    mixins: [BasePanel, AnnoPanel],
+    mixins: [BasePanel, AnnoPanel, EntitySync],
     data() {
         return {
             updatedLines : [],

@@ -1036,10 +1036,16 @@ def run_ai_enrichment(
     ops = AIOperations.from_payload(operations)
     results: List[dict] = []
     source_transcription = None
+    force_source_transcription = False
 
     if transcription_pk:
         try:
-            source_transcription = Transcription.objects.get(pk=transcription_pk, document=document, archived=False)
+            source_transcription = Transcription.objects.get(
+                pk=transcription_pk,
+                document=document,
+                archived=False,
+            )
+            force_source_transcription = True
         except Transcription.DoesNotExist:
             logger.error(
                 "AI enrichment requested with missing transcription %s for document %s",
@@ -1077,6 +1083,7 @@ def run_ai_enrichment(
                         entity_extractor=entity_extractor,
                         entity_annotator=entity_annotator,
                         source_transcription=source_transcription,
+                        force_source_transcription=force_source_transcription,
                     )
                 )
             except AIDependencyError:

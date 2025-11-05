@@ -1,7 +1,7 @@
 <template>
     <div class="escr-ai-panel">
         <p class="escr-ai-panel__help">
-            Use AI tools to add punctuation, modern Chinese translation, extract entities, or build semantic vectors for {{ scopeLabel }}.
+            {{ helpMessage }}
         </p>
         <ul class="escr-ai-panel__actions">
             <template v-if="showTextOperations">
@@ -46,6 +46,14 @@
                     label="Generate Semantic Vectors"
                 />
             </li>
+            <li v-if="hasMindMap">
+                <EscrButton
+                    color="text"
+                    :disabled="isMindMapDisabled"
+                    :on-click="triggerMindMap"
+                    label="Generate Knowledge Tree"
+                />
+            </li>
         </ul>
     </div>
 </template>
@@ -78,6 +86,12 @@ export default {
         isVectorizing() {
             return Boolean(this.data?.vectorizing);
         },
+        hasMindMap() {
+            return typeof this.data?.onMindMap === "function";
+        },
+        isMindMapLoading() {
+            return Boolean(this.data?.mindMapLoading);
+        },
         showTextOperations() {
             return this.data?.allowTextOperations !== false;
         },
@@ -92,6 +106,31 @@ export default {
                 this.isVectorizing
             );
         },
+        isMindMapDisabled() {
+            if (!this.hasMindMap) return true;
+            return Boolean(this.data?.disabled) || Boolean(this.data?.processing) || this.isMindMapLoading;
+        },
+        helpMessage() {
+            const segments = [];
+            if (this.showTextOperations) {
+                segments.push("add punctuation or modern Chinese translation");
+            }
+            if (this.allowEntityExtraction) {
+                segments.push("extract entities");
+            }
+            if (this.hasVectorize) {
+                segments.push("build semantic vectors");
+            }
+            if (this.hasMindMap) {
+                segments.push("generate a knowledge tree");
+            }
+            if (!segments.length) {
+                return `Use AI tools for ${this.scopeLabel}.`;
+            }
+            const last = segments.pop();
+            const intro = segments.length ? `${segments.join(", ")}, or ${last}` : last;
+            return `Use AI tools to ${intro} for ${this.scopeLabel}.`;
+        },
     },
     methods: {
         trigger(operations) {
@@ -104,6 +143,13 @@ export default {
         triggerVectorize() {
             if (this.isVectorDisabled) return;
             const handler = this.data?.onVectorize;
+            if (typeof handler === "function") {
+                handler();
+            }
+        },
+        triggerMindMap() {
+            if (this.isMindMapDisabled) return;
+            const handler = this.data?.onMindMap;
             if (typeof handler === "function") {
                 handler();
             }

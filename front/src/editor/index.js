@@ -2,6 +2,8 @@ import Vue from "vue";
 import Vuex from "vuex";
 import vueFilterPrettyBytes from "vue-filter-pretty-bytes";
 import document from "./store/document";
+import editor from "./store/editor";
+import entities from "./store/entities";
 import parts from "./store/parts";
 import lines from "./store/lines";
 import regions from "./store/regions";
@@ -21,6 +23,8 @@ export default new Vuex.Store({
     modules: {
         alerts,
         document,
+        editor,
+        entities,
         parts,
         lines,
         regions,

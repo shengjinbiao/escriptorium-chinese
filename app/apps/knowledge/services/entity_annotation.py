@@ -19,40 +19,45 @@ from core.models import (
 
 from knowledge.services.entity_extraction import EntitySpan, HanLPEntityExtractor
 
+NAMED_ENTITY_TYPE_NAMES = [label for label, _ in NAMED_ENTITY_DEFAULT_TYPES]
+
 ENTITY_LABEL_DISPLAY = {
-    "PERSON": "Person",
-    "PER": "Person",
-    "NR": "Person",
-    "LOC": "Location",
-    "NS": "Location",
-    "LOCATION": "Location",
-    "PLACE": "Place",
-    "GPE": "Location",
-    "ORG": "Organization",
-    "TIME": "Time",
-    "DATE": "Date",
-    "ERA_DATE": "Era Date",
-    "DYNASTY": "Dynasty",
-    "EVENT": "Event",
+    "PERSON": "人名",
+    "PER": "人名",
+    "NR": "人名",
+    "LOC": "地名",
+    "NS": "地名",
+    "LOCATION": "地名",
+    "PLACE": "地名",
+    "GPE": "地名",
+    "ORG": "机构",
+    "ORGANIZATION": "机构",
+    "TIME": "时间",
+    "DATE": "时间",
+    "ERA_DATE": "朝代",
+    "DYNASTY": "朝代",
+    "EVENT": "事件",
+    "MISC": "其他",
+    "OTHER": "其他",
 }
 
 COMPONENT_SPECS = {
-    "Entity Type": NAMED_ENTITY_DEFAULT_TYPES,
+    "Entity Type": NAMED_ENTITY_TYPE_NAMES,
     "Normalized Value": None,
     "Attributes": None,
     "Confidence": None,
 }
 
 ENTITY_TYPE_PRIORITY = {
-    value: index for index, value in enumerate(NAMED_ENTITY_DEFAULT_TYPES)
+    label: index for index, label in enumerate(NAMED_ENTITY_TYPE_NAMES)
 }
 
 
 def _resolve_entity_type(span: EntitySpan) -> str:
     label = (span.label or "").upper()
-    type_value = ENTITY_LABEL_DISPLAY.get(label, span.label.title() if span.label else "Other")
-    if type_value not in NAMED_ENTITY_DEFAULT_TYPES:
-        type_value = "Other"
+    type_value = ENTITY_LABEL_DISPLAY.get(label, span.label or "其他")
+    if type_value not in NAMED_ENTITY_TYPE_NAMES:
+        type_value = "其他"
     return type_value
 
 

@@ -234,6 +234,11 @@
                     :on-cancel="closeShareModal"
                     :on-submit="shareDocument"
                 />
+                <KnowledgeTreeModal
+                    :visible="knowledgeTreeModalOpen"
+                    :data="knowledgeTreeResult || {}"
+                    :on-close="closeKnowledgeTreeModal"
+                />
                 <!-- import images modal -->
                 <ImportModal
                     v-if="taskModalOpen && taskModalOpen.import"
@@ -358,6 +363,8 @@ import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import KnowledgeTreeModal from "../../components/KnowledgeTreeModal/KnowledgeTreeModal.vue";
+import { generateDocumentMindMap } from "../../../src/api";
 import localizeScriptName from "../../store/util/scriptLocalization";
 import "../../components/Common/Card.css"
 import "./Document.css";
@@ -407,6 +414,7 @@ export default {
         TrashIcon,
         TranscribeModal,
         VerticalMenu,
+        KnowledgeTreeModal,
     },
     props: {
         /**
@@ -443,6 +451,9 @@ export default {
             msgSocket: undefined,
             aiProcessing: false,
             vectorProcessing: false,
+            knowledgeTreeLoading: false,
+            knowledgeTreeModalOpen: false,
+            knowledgeTreeResult: null,
         };
     },
     computed: {
@@ -565,6 +576,8 @@ export default {
                         onRun: this.runAiOnDocument,
                         onVectorize: this.buildSemanticIndexForDocument,
                         allowEntityExtraction: true,
+                        onMindMap: this.generateDocumentKnowledgeTree,
+                        mindMapLoading: this.knowledgeTreeLoading,
                     },
                     icon: AiIcon,
                     key: "ai-tools",
@@ -753,6 +766,29 @@ export default {
             } finally {
                 this.vectorProcessing = false;
             }
+        },
+        async generateDocumentKnowledgeTree() {
+            if (this.knowledgeTreeLoading) return;
+            this.knowledgeTreeLoading = true;
+            try {
+                const { data } = await generateDocumentMindMap({
+                    documentId: this.id,
+                    options: {},
+                });
+                this.knowledgeTreeResult = data;
+                this.knowledgeTreeModalOpen = true;
+                this.addAlert({
+                    color: "success",
+                    message: "Knowledge tree generated successfully.",
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.knowledgeTreeLoading = false;
+            }
+        },
+        closeKnowledgeTreeModal() {
+            this.knowledgeTreeModalOpen = false;
         },
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));

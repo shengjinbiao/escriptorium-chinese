@@ -1,8 +1,19 @@
+from dataclasses import asdict
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
-from django.views.generic import ListView, TemplateView
 from django.http import QueryDict
+from django.views.generic import ListView, TemplateView
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
+from core.models import DocumentPart, Line, LineTranscription, Transcription
+from knowledge.services.entity_extraction import (
+    HanLPModelNotReady,
+    HanLPEntityExtractor,
+    HanLPNotInstalled,
+)
 from .models import (
     EraReference,
     GazetteerStructureRecord,
@@ -300,3 +311,75 @@ class PersonReferenceListView(BaseSearchableListView):
             "All genders",
         )
         return context
+
+
+@api_view(["POST"])
+def extract_entities(request, document_pk: int, part_pk: int) -> Response:
+    """Extract entities from the selected transcription of a document part."""
+
+    try:
+        part = DocumentPart.objects.get(document_id=document_pk, pk=part_pk)
+    except DocumentPart.DoesNotExist:
+        return Response(
+            {"error": "Document part not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    transcription_id = request.data.get("transcription")
+    if not transcription_id:
+        return Response(
+            {"error": "Transcription ID is required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        transcription = Transcription.objects.get(
+            pk=transcription_id,
+            document=part.document,
+        )
+    except Transcription.DoesNotExist:
+        return Response(
+            {"error": "Transcription not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    lines = Line.objects.filter(document_part=part).order_by("order")
+    line_transcriptions = (
+        LineTranscription.objects.filter(
+            line__in=lines,
+            transcription=transcription,
+        )
+        .order_by("line__document_part__order", "line__order")
+        .values_list("content", flat=True)
+    )
+
+    text = " ".join(filter(None, (content or "" for content in line_transcriptions))).strip()
+    if not text:
+        return Response(
+            {"message": "No text content found in the selected transcription."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        extractor = HanLPEntityExtractor()
+        entities = extractor.extract(text)
+    except HanLPNotInstalled:
+        return Response(
+            {"error": "HanLP is not installed on the server."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except HanLPModelNotReady:
+        return Response(
+            {"error": "HanLP models are not ready. Fetch the required weights first."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return Response(
+            {"error": f"Entity extraction failed: {exc}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    return Response(
+        {"entities": [asdict(entity) for entity in entities]},
+        status=status.HTTP_200_OK,
+    )

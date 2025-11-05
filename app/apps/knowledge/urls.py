@@ -7,6 +7,7 @@ from .views import (
     LibraryCatalogListView,
     PersonReferenceListView,
     PlaceReferenceListView,
+    extract_entities,
 )
 
 app_name = "knowledge"
@@ -18,4 +19,9 @@ urlpatterns = [
     path("places/", PlaceReferenceListView.as_view(), name="places"),
     path("eras/", EraReferenceListView.as_view(), name="eras"),
     path("persons/", PersonReferenceListView.as_view(), name="persons"),
+    path(
+        'documents/<int:document_pk>/parts/<int:part_pk>/extract-entities/',
+        extract_entities,
+        name='extract_entities'
+    ),
 ]

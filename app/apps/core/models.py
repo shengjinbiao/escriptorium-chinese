@@ -25,7 +25,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
 from django.db.models import Avg, JSONField, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Length
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 from django.forms import ValidationError
 from django.utils.functional import cached_property
@@ -70,16 +70,15 @@ from versioning.models import Versioned
 logger = logging.getLogger(__name__)
 
 NAMED_ENTITY_DEFAULT_TYPES = [
-    "Person",
-    "Location",
-    "Organization",
-    "Time",
-    "Date",
-    "Era Date",
-    "Dynasty",
-    "Place",
-    "Event",
-    "Other",
+    ("人名", "#FF6B6B"),
+    ("地名", "#4ECDC4"),
+    ("时间", "#45B7D1"),
+    ("官职", "#96CEB4"),
+    ("朝代", "#D4A5A5"),
+    ("机构", "#FFE66D"),
+    ("书籍", "#A8D8B9"),
+    ("事件", "#FF9999"),
+    ("其他", "#CCCCCC")
 ]
 
 
@@ -2347,3 +2346,27 @@ class InstanceSettings(SingletonModel):
 
     def __str__(self):
         return "Instance settings"
+
+
+@receiver(post_save, sender=Document)
+def create_default_taxonomies(sender, instance, created, **kwargs):
+    """
+    在创建新文档时自动创建默认的实体标注类型
+    """
+    if created:
+        annotation_type, _ = AnnotationType.objects.get_or_create(
+            name="命名实体",
+            defaults={"public": True}
+        )
+        
+        for name, color in NAMED_ENTITY_DEFAULT_TYPES:
+            AnnotationTaxonomy.objects.get_or_create(
+                document=instance,
+                name=name,
+                defaults={
+                    'typology': annotation_type,
+                    'marker_type': AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
+                    'marker_detail': color,
+                    'has_comments': True
+                }
+            )

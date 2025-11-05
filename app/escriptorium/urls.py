@@ -27,6 +27,8 @@ urlpatterns = [
     path('', include('reporting.urls')),
     path('knowledge/', include('knowledge.urls')),
     path('api/', include('api.urls', namespace='api')),
+    path('gazetteer/', include('apps.gazetteer.urls')),  # 地方志知识库前端页面
+    path('api/gazetteer/', include('apps.gazetteer.urls', namespace='gazetteer-api')),  # 地方志知识库API
     path('captcha/', include('captcha.urls')),
     path('', include('django_prometheus.urls')),
     path('i18n/', include('django.conf.urls.i18n')),

@@ -167,7 +167,6 @@ def get_translation_service() -> TranslationService:
 def _get_source_transcription(document) -> Optional[Transcription]:
     Transcription = _transcription_model()
     LineTranscription = _line_transcription_model()
-
     ai_names = {
         name
         for name in (
@@ -177,30 +176,47 @@ def _get_source_transcription(document) -> Optional[Transcription]:
         if name
     }
 
-    latest_line = (
-        LineTranscription.objects.filter(
-            transcription__document=document,
-            transcription__archived=False,
+    def _has_content(candidate: Transcription) -> bool:
+        return (
+            LineTranscription.objects.filter(
+                transcription=candidate,
+                line__document_part__document=document,
+            )
+            .exclude(content__isnull=True)
+            .exclude(content__regex=r"^\s*$")
+            .exists()
         )
-        .exclude(transcription__name__in=ai_names)
-        .select_related("transcription")
-        .order_by("-version_updated_at")
-        .first()
-    )
-    if latest_line:
-        return latest_line.transcription
 
-    fallback_qs = (
+    candidates = (
         Transcription.objects.filter(document=document, archived=False)
         .exclude(name__in=ai_names)
         .order_by("-updated_at", "pk")
     )
-    transcription = fallback_qs.first()
-    if transcription:
-        return transcription
+
+    for candidate in candidates:
+        if _has_content(candidate):
+            return candidate
+
+    empty_candidate = candidates.first()
+    if empty_candidate:
+        return empty_candidate
+
+    archived_candidates = (
+        Transcription.objects.filter(document=document, archived=True)
+        .exclude(name__in=ai_names)
+        .order_by("-updated_at", "pk")
+    )
+
+    for candidate in archived_candidates:
+        if _has_content(candidate):
+            return candidate
+
+    archived_fallback = archived_candidates.first()
+    if archived_fallback:
+        return archived_fallback
 
     return (
-        Transcription.objects.filter(document=document, archived=False)
+        Transcription.objects.filter(document=document)
         .order_by("-updated_at", "pk")
         .first()
     )
@@ -220,6 +236,21 @@ def _get_destination_transcription(document, name: str) -> Transcription:
         transcription.archived = False
         transcription.save(update_fields=["archived"])
     return transcription
+
+
+def _get_existing_transcription(document, name: Optional[str]) -> Optional["Transcription"]:
+    if not name:
+        return None
+    Transcription = _transcription_model()
+    return (
+        Transcription.objects.filter(
+            document=document,
+            name=name,
+            archived=False,
+        )
+        .order_by("-updated_at", "pk")
+        .first()
+    )
 
 
 def _collect_line_text(
@@ -626,6 +657,7 @@ def enrich_document_part(
     entity_extractor: Optional[object] = None,
     entity_annotator: Optional[object] = None,
     source_transcription: Optional["Transcription"] = None,
+    force_source_transcription: bool = False,
 ) -> dict:
     """
     Run punctuation and/or translation on a document part and update AI layers.
@@ -654,13 +686,62 @@ def enrich_document_part(
                 f"Document {part.document_id} has no available transcription to read from."
             )
 
-    line_texts = _collect_line_text(lines, source_transcription)
-    if not any(text.strip() for text in line_texts):
+    def _collect_texts(trans: Optional["Transcription"]) -> List[str]:
+        return _collect_line_text(lines, trans) if trans is not None else []
+
+    def _has_non_empty_text(texts: Sequence[str]) -> bool:
+        return any(text and text.strip() for text in texts)
+
+    line_texts = _collect_texts(source_transcription)
+    if not _has_non_empty_text(line_texts):
+        if force_source_transcription:
+            return {
+                "part_id": part.pk,
+                "status": "skipped",
+                "reason": "empty_source",
+            }
+        Transcription = _transcription_model()
+        ai_names = {
+            name
+            for name in (
+                settings.AI_PUNCTUATION_TRANSCRIPTION_NAME,
+                settings.AI_TRANSLATION_TRANSCRIPTION_NAME,
+            )
+            if name
+        }
+        candidate_qs = (
+            Transcription.objects.filter(document=part.document)
+            .exclude(name__in=ai_names)
+            .order_by("archived", "-updated_at", "pk")
+        )
+        for candidate in candidate_qs:
+            if source_transcription and candidate.pk == source_transcription.pk:
+                continue
+            candidate_texts = _collect_texts(candidate)
+            if _has_non_empty_text(candidate_texts):
+                source_transcription = candidate
+                line_texts = candidate_texts
+                break
+
+    if not _has_non_empty_text(line_texts):
         return {
             "part_id": part.pk,
             "status": "skipped",
             "reason": "empty_source",
         }
+
+    entity_transcription = source_transcription
+
+    if operations.entities and not operations.punctuate and not force_source_transcription:
+        punct_name = settings.AI_PUNCTUATION_TRANSCRIPTION_NAME
+        preferred = _get_existing_transcription(part.document, punct_name)
+        if preferred and (
+            entity_transcription is None
+            or preferred.pk != entity_transcription.pk
+        ):
+            preferred_texts = _collect_texts(preferred)
+            if _has_non_empty_text(preferred_texts):
+                entity_transcription = preferred
 
     joined_text = "\n".join(line_texts)
     result: dict = {"part_id": part.pk, "status": "ok"}
@@ -688,6 +769,7 @@ def enrich_document_part(
             part.document,
             settings.AI_PUNCTUATION_TRANSCRIPTION_NAME,
         )
+        entity_transcription = ai_transcription
         result["punctuation_updated"] = _write_line_contents(
             lines=lines,
             transcription=ai_transcription,
@@ -695,6 +777,13 @@ def enrich_document_part(
             user=user,
             source_label="ai_punctuation",
         )
+    elif operations.entities:
+        precomputed_punctuation = _get_existing_transcription(
+            part.document,
+            settings.AI_PUNCTUATION_TRANSCRIPTION_NAME,
+        )
+        if precomputed_punctuation is not None:
+            entity_transcription = precomputed_punctuation
 
     if operations.translate:
         service = get_translation_service()
@@ -728,7 +817,7 @@ def enrich_document_part(
             _, _, _, entity_annotator = load_entity_services()
         annotations_created = entity_annotator(
             part=part,
-            transcription=source_transcription,
+            transcription=entity_transcription or source_transcription,
             extractor=entity_extractor,
             clear_existing=True,
         )

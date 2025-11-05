@@ -912,6 +912,45 @@ class SemanticIndexRequestSerializer(serializers.Serializer):
     drop = serializers.BooleanField(required=False, default=False)
 
 
+class MindMapRequestSerializer(serializers.Serializer):
+    document_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    document_part_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    max_passages = serializers.IntegerField(required=False, default=200, min_value=1, max_value=1000)
+    cluster_count = serializers.IntegerField(required=False, default=5, min_value=1, max_value=20)
+    max_neighbors = serializers.IntegerField(required=False, default=2, min_value=0, max_value=10)
+
+    def validate_document_ids(self, value):
+        if not value:
+            return []
+        # Remove duplicates while preserving the original order.
+        seen = set()
+        ordered = []
+        for doc_id in value:
+            if doc_id not in seen:
+                ordered.append(doc_id)
+                seen.add(doc_id)
+        return ordered
+
+    def validate_document_part_ids(self, value):
+        if not value:
+            return []
+        seen = set()
+        ordered = []
+        for part_id in value:
+            if part_id not in seen:
+                ordered.append(part_id)
+                seen.add(part_id)
+        return ordered
+
+
 class BlockSerializer(serializers.ModelSerializer):
     typology = serializers.PrimaryKeyRelatedField(
         queryset=BlockType.objects.all(),

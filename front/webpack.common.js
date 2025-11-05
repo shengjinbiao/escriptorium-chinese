@@ -15,6 +15,7 @@ module.exports = {
         projectDashboard: "./vue/exports/projectDashboard.js",
         projectsList: "./vue/exports/projectsList.js",
         imagesPage: "./vue/exports/imagesPage.js",
+        gazetteer: "./src/gazetteer/main.js",
     },
 
     output: {
@@ -34,8 +35,12 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.css$/,
-                use: [MiniCssExtractPlugin.loader, "css-loader"],
+                test: /\.(css|scss)$/,
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    "css-loader",
+                    "sass-loader"
+                ],
             },
             {
                 test: /\.(png|jpe?g|gif|woff|woff2|eot|ttf|otf|svg)$/i,

@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     'django_prometheus',
     'solo',
     'knowledge',
+    'apps.gazetteer',  # 地方志知识库
 ]
 
 MIDDLEWARE = [

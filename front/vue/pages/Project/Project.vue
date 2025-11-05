@@ -159,6 +159,11 @@
                     :on-cancel="closeShareModal"
                     :on-submit="share"
                 />
+                <KnowledgeTreeModal
+                    :visible="knowledgeTreeModalOpen"
+                    :data="knowledgeTreeResult || {}"
+                    :on-close="closeKnowledgeTreeModal"
+                />
             </div>
         </template>
     </EscrPage>
@@ -186,8 +191,10 @@ import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import KnowledgeTreeModal from "../../components/KnowledgeTreeModal/KnowledgeTreeModal.vue";
 import "../../components/Common/Card.css"
 import "./Project.css";
+import { generateProjectMindMap } from "../../../src/api";
 
 export default {
     name: "EscrProjectDashboard",
@@ -217,6 +224,7 @@ export default {
         SharePanel,
         TrashIcon,
         VerticalMenu,
+        KnowledgeTreeModal,
     },
     props: {
         /**
@@ -237,6 +245,9 @@ export default {
     data() {
         return {
             vectorProcessing: false,
+            knowledgeTreeLoading: false,
+            knowledgeTreeModalOpen: false,
+            knowledgeTreeResult: null,
         };
     },
     computed: {
@@ -320,10 +331,13 @@ export default {
                 {
                     data: {
                         allowTextOperations: false,
+                        allowEntityExtraction: false,
                         disabled: this.loading,
                         vectorizing: this.vectorProcessing,
                         scopeLabel: "this project",
                         onVectorize: this.buildSemanticIndexForProject,
+                        onMindMap: this.generateProjectKnowledgeTree,
+                        mindMapLoading: this.knowledgeTreeLoading,
                     },
                     icon: AiIcon,
                     key: "ai-tools",
@@ -428,6 +442,29 @@ export default {
             } finally {
                 this.vectorProcessing = false;
             }
+        },
+        async generateProjectKnowledgeTree() {
+            if (this.knowledgeTreeLoading) return;
+            this.knowledgeTreeLoading = true;
+            try {
+                const { data } = await generateProjectMindMap({
+                    projectId: this.projectId,
+                    options: {},
+                });
+                this.knowledgeTreeResult = data;
+                this.knowledgeTreeModalOpen = true;
+                this.addAlert({
+                    color: "success",
+                    message: "Knowledge tree generated successfully.",
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.knowledgeTreeLoading = false;
+            }
+        },
+        closeKnowledgeTreeModal() {
+            this.knowledgeTreeModalOpen = false;
         },
         async onFilterDocuments() {
             this.setLoading(true);

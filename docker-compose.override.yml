@@ -18,6 +18,7 @@ services:
     build: *app-build
     command: uwsgi --ini /usr/src/app/uwsgi.ini
     restart: always
+    
 
   channelserver:
     <<: *app

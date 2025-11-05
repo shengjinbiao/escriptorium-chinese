@@ -1,6 +1,8 @@
 from django.urls import include, path
 from rest_framework_nested import routers
 
+from knowledge.views import extract_entities
+
 from api.views import (
     AnnotationComponentViewSet,
     AnnotationTaxonomyViewSet,
@@ -87,4 +89,5 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('token-auth/', RegenerableAuthToken.as_view()),
     path('search/semantic/', SemanticSearchView.as_view(), name='semantic-search'),
+    path('documents/<int:document_pk>/parts/<int:part_pk>/extract-entities/', extract_entities, name='extract-entities'),
 ]

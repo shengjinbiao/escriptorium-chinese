@@ -68,3 +68,9 @@ export const buildProjectSemanticIndex = async ({ projectId, options } = {}) =>
         `/projects/${projectId}/semantic/vectorize/`,
         options || {},
     );
+
+export const generateProjectMindMap = async ({ projectId, options } = {}) =>
+    await axios.post(
+        `/projects/${projectId}/mind-map/`,
+        options || {},
+    );
