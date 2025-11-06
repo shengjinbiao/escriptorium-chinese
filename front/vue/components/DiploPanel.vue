@@ -215,22 +215,52 @@
                 v-if="showEntityTypeToolbar"
                 class="escr-entity-type-toolbar"
             >
-                <span class="escr-entity-type-toolbar__label">Entity type:</span>
-                <button
-                    v-for="option in entityTypeQuickOptions"
-                    :key="option"
-                    type="button"
-                    class="escr-entity-type-toolbar__button"
-                    :class="{
-                        'escr-entity-type-toolbar__button--active': isQuickTypeActive(option),
-                    }"
-                    :style="getEntityTypeButtonStyle(option)"
-                    :title="`标注为 ${option}`"
-                    :disabled="entityTypeToolbarDisabled"
-                    @click="applyEntityType(option)"
+                <div
+                    v-if="semanticTypeQuickOptions.length"
+                    class="escr-entity-type-toolbar__group"
                 >
-                    {{ option }}
-                </button>
+                    <span class="escr-entity-type-toolbar__label">实体类型:</span>
+                    <div class="escr-entity-type-toolbar__buttons">
+                        <button
+                            v-for="option in semanticTypeQuickOptions"
+                            :key="option"
+                            type="button"
+                            class="escr-entity-type-toolbar__button"
+                            :class="{
+                                'escr-entity-type-toolbar__button--active': isQuickTypeActive(option),
+                            }"
+                            :style="getEntityTypeButtonStyle(option)"
+                            :title="`标注为 ${option}`"
+                            :disabled="entityTypeToolbarDisabled"
+                            @click="applyEntityType(option)"
+                        >
+                            {{ option }}
+                        </button>
+                    </div>
+                </div>
+                <div
+                    v-if="headingTypeQuickOptions.length"
+                    class="escr-entity-type-toolbar__group"
+                >
+                    <span class="escr-entity-type-toolbar__label">篇章层级:</span>
+                    <div class="escr-entity-type-toolbar__buttons">
+                        <button
+                            v-for="option in headingTypeQuickOptions"
+                            :key="option"
+                            type="button"
+                            class="escr-entity-type-toolbar__button"
+                            :class="{
+                                'escr-entity-type-toolbar__button--active': isQuickTypeActive(option),
+                            }"
+                            :style="getEntityTypeButtonStyle(option)"
+                            :title="`标注为 ${option}`"
+                            :disabled="entityTypeToolbarDisabled"
+                            @click="applyEntityType(option)"
+                        >
+                            {{ option }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         <div
@@ -398,7 +428,7 @@ import TranscriptionDropdown from "./EditorTranscriptionDropdown/EditorTranscrip
 import "../components/Common/Annotation.css";
 
 const NAMED_ENTITY_TAXONOMY_NAME = "Named Entity (AI)";
-const DEFAULT_ENTITY_TYPES = [
+const DEFAULT_SEMANTIC_ENTITY_TYPES = [
     { label: "人名", color: "#FF6B6B" },
     { label: "地名", color: "#4ECDC4" },
     { label: "时间", color: "#45B7D1" },
@@ -409,7 +439,18 @@ const DEFAULT_ENTITY_TYPES = [
     { label: "事件", color: "#FF9999" },
     { label: "其他", color: "#CCCCCC" },
 ];
-const DEFAULT_ENTITY_LABELS = DEFAULT_ENTITY_TYPES.map((item) => item.label);
+const DEFAULT_HEADING_ENTITY_TYPES = [
+    { label: "卷标题", color: "#F472B6" },
+    { label: "章标题", color: "#C084FC" },
+    { label: "节标题", color: "#FB923C" },
+    { label: "段落标题", color: "#38BDF8" },
+];
+const DEFAULT_ENTITY_TYPES = [
+    ...DEFAULT_SEMANTIC_ENTITY_TYPES,
+    ...DEFAULT_HEADING_ENTITY_TYPES,
+];
+const DEFAULT_ENTITY_LABELS = DEFAULT_SEMANTIC_ENTITY_TYPES.map((item) => item.label);
+const DEFAULT_HEADING_LABELS = DEFAULT_HEADING_ENTITY_TYPES.map((item) => item.label);
 const ENTITY_COMPONENTS = {
     type: "Entity Type",
     normalized: "Normalized Value",
@@ -511,6 +552,15 @@ export default {
         entityTypeQuickOptions() {
             return this.entityTypeOptions;
         },
+        semanticTypeQuickOptions() {
+            const values = this.entityTypeQuickOptions;
+            const semantic = values.filter((value) => !DEFAULT_HEADING_LABELS.includes(value));
+            return semantic.length ? semantic : DEFAULT_ENTITY_LABELS;
+        },
+        headingTypeQuickOptions() {
+            const values = this.entityTypeQuickOptions;
+            return values.filter((value) => DEFAULT_HEADING_LABELS.includes(value));
+        },
         entityTypeToolbarDisabled() {
             if (this.entityActionPending) return true;
             if (this.disabled) return true;
@@ -542,7 +592,7 @@ export default {
             );
             const values = component?.allowed_values || [];
             if (!values.length) {
-                return DEFAULT_ENTITY_LABELS;
+                return [...DEFAULT_ENTITY_LABELS, ...DEFAULT_HEADING_LABELS];
             }
             return values;
         },
@@ -2190,10 +2240,23 @@ export default {
 
 .escr-entity-type-toolbar {
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.escr-entity-type-toolbar__group {
+    display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
+}
+
+.escr-entity-type-toolbar__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .escr-entity-type-toolbar__label {

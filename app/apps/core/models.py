@@ -78,7 +78,11 @@ NAMED_ENTITY_DEFAULT_TYPES = [
     ("机构", "#FFE66D"),
     ("书籍", "#A8D8B9"),
     ("事件", "#FF9999"),
-    ("其他", "#CCCCCC")
+    ("其他", "#CCCCCC"),
+    ("卷标题", "#F472B6"),
+    ("章标题", "#C084FC"),
+    ("节标题", "#FB923C"),
+    ("段落标题", "#38BDF8"),
 ]
 NAMED_ENTITY_TYPE_NAMES = [label for label, _ in NAMED_ENTITY_DEFAULT_TYPES]
 
