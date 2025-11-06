@@ -42,7 +42,10 @@ RUN pip  install --root-user-action ignore -q faiss-cpu
 # Replace the URL below with the actual HTTPS repo URL for yjxz.
 # Install yjxz services
 # The yjxz package is provided as a git submodule and copied into the image.
-COPY yjxz /usr/src/yjxz
+# When docker-compose uses `context: ..` the build context root is the parent
+# directory, so the submodule lives at `escriptorium-chinese/yjxz` relative
+# to the context. Use that path so COPY can find the files during build.
+COPY escriptorium-chinese/yjxz /usr/src/yjxz
 RUN pip install --root-user-action ignore -q -e /usr/src/yjxz
 
 # Copy application source (will be overridden by bind mount in development)
