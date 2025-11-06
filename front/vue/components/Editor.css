@@ -2,8 +2,7 @@
 main:has(#escr-editor) {
     background-color: var(--background2);
     font-family: "Noto Sans", "Resized Arabic", sans-serif;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
 }
 #escr-editor {
     display: flex;

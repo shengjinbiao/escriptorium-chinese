@@ -1,7 +1,5 @@
 .escr-element-details .escr-modal {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 60px;
     color: var(--text1);
 }
 .escr-element-details .escr-modal-content {

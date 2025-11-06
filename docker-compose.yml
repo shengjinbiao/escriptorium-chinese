@@ -11,7 +11,6 @@ x-app:
   #  - ./front/dist:/usr/src/app/front # 本地前端开发时才需要挂载，默认禁用以使用镜像自带静态文件
     - static:/usr/src/app/static
     - media:/usr/src/app/media
-    - ./front/dist:/usr/src/app/front/dist:ro
   command: /bin/true
 
 services:
