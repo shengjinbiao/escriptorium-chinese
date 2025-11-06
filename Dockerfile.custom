@@ -45,6 +45,9 @@ RUN pip  install --root-user-action ignore -q faiss-cpu
 # When docker-compose uses `context: ..` the build context root is the parent
 # directory, so the submodule lives at `escriptorium-chinese/yjxz` relative
 # to the context. Use that path so COPY can find the files during build.
+# 在宿主机上先运行一次 git submodule update --init --recursive，让子模块内容进入工作区，
+# 然后再执行 docker compose build 或 docker build。
+# 这样 COPY 指令才能把完整的子模块文件打包进镜像。
 COPY escriptorium-chinese/yjxz /usr/src/yjxz
 RUN pip install --root-user-action ignore -q -e /usr/src/yjxz
 
