@@ -610,7 +610,24 @@ print(generate_embeddings_for_passages(ids, force=True))
 
 ## 8. 实体标注工作流规划
 
-为了把 HanLP 自动抽取与人工校对整合成 doccano / Label Studio 式体验，并服务后续的地方志知识库建设，实体标注子系统将分阶段演进。
+eScriptorium 原生就提供 Text Annotations：用户可以为每一页添加多个“标注分类（Annotation Taxonomy）”，每个分类绑定若干组件（component），例如“人物类型”“备注”“颜色”等，并在 Diplomatic / Source 面板里通过 Recogito 高亮文字、记录组件值、导出 W3C JSON。这套机制是我们实体工作流的地基，现有管线基于它完成如下扩展：
+
+1. **默认实体分类**  
+   - 后端在新建 Document 时自动生成两套 taxonomy：`Named Entity`（人工）与 `Named Entity (AI)`（自动）。  
+   - 组件固定为 Entity Type / Normalized Value / Attributes / Confidence / Entity Identifier，且 `Entity Type` 提前填好中华地方志常用的九类标签（人名、地名、时间、官职、朝代、机构、书籍、事件、其他）。  
+   - 新增管理命令 `python manage.py bootstrap_named_entities` 可对旧文档补齐该 taxonomy（可选 `--document-id` 单独处理）。
+
+2. **AI 抽取 + 前端工具栏联动**  
+   - 在 AI 菜单勾选 “实体抽取” 后，HanLP 会写回 `Named Entity (AI)` taxonomy。  
+   - Diplomatic 面板加载文档时自动激活 “Named Entity (AI)” pill，并在注释工具栏右侧渲染彩色快捷按钮（来自默认类型表）。  
+   - 侧栏 `EntityInspector` / `EntityList` 支持编辑实体属性、批量接受/删除，并即时更新 Recogito 高亮。
+
+3. **人工参与方式**  
+   - 用户可以直接在正文选中一段文字并创建 Text Annotation，系统会沿用当前 taxonomy（默认即 `Named Entity (AI)`）。  
+   - 工具栏按钮可一键把选中实体改为“人名/地名/时间”等类型，且按钮颜色与正文高亮一致，方便对齐地理、人事、职官等主题。  
+   - 修改完成后点击 Accept/Reject，将状态写入 `Attributes` 组件中的 `status` 字段，后续可用于导出或知识库过滤。
+
+下文按阶段总结整体规划。
 
 ### 8.1 阶段目标概览
 
@@ -618,22 +635,33 @@ print(generate_embeddings_for_passages(ids, force=True))
 - 在 Diplomatic 面板内完成实体的查看、筛选、编辑与批量操作；
 - 将审核结果回写至语义检索与知识库，支撑人名、地名等主题研究。
 
-### 8.2 第一阶段成果（2025-10-29）
+### 8.2 第一阶段成果（2025-11-06）
 
-- **实体检查器**：点击高亮即可在侧栏查看并编辑实体类型、规范化名称、属性与置信度，支持一键删除。
-- **实体侧栏列表**：按行号聚合所有 AI 标注，支持搜索、类型过滤、批量接受或删除（自动写入 `status=accepted`）。
-- **类型着色**：根据实体类型自动分配颜色，正文与列表同步高亮，快速区分 Person / Location / Organization 等类别。
-- **调用修正**：后端 `AIOperations` 识别 `false` 字符串，前端元素级菜单显式关闭标点/翻译，确保“实体抽取”不会额外触发其它 AI 操作。
+- **默认实体工具链**：Document 创建即拥有可编辑的命名实体 taxonomy，AI/人工共用一套组件，前端自动显示彩色快捷键并保持与正文高亮一致。
+- **实体检查器 & 列表**：点击高亮即可在侧栏查看并编辑实体类型、规范化名称、属性与置信度；列表支持搜索、排序、批量接受或删除。
+- **自动激活策略**：当检测到 `Named Entity (AI)` taxonomy 时，前端默认激活该分类并同时展示按钮，避免用户手动切换。
+- **调用修正**：后端 `AIOperations` 正确处理布尔选项，前端开关也区分标点/翻译/实体，防止串联调度。
 
-### 8.3 后续计划
+### 8.3 用户操作指南
 
-- **审核与导出**：记录用户对实体的处理状态，并支持导出经人工审核的数据，供语义检索或知识图谱使用。
-- **模型回流**：将人工修订结果作为训练集，驱动 HanLP/自研 NER 的微调任务，实现“自动标注 → 人工校对 → 新模型上线”的闭环。
+1. **准备阶段**
+   - 新建文档后，进入 Diplomatic 面板，确保 `注释工具栏` 显示 “Named Entity (AI)” pill；若未出现，刷新页面或确认权限。
+   - 需要对旧项目启用该功能，可在容器内执行 `docker compose exec web python manage.py bootstrap_named_entities --document-id <ID>` 后刷新页面。
+2. **自动抽取**
+   - 在工具栏的 AI 菜单勾选 “生成标点” 与 “实体抽取”，选择需要处理的页码，等待 Celery 完成任务。
+   - 任务完成后，侧栏会出现实体列表；正文中的实体也会带颜色高亮。
+3. **人工修订**
+   - 直接点击高亮或列表中的条目进行编辑；也可新建实体。
+   - 使用顶部彩色按钮快速设置“人名/地名/时间”等类型；工具栏根据当前选择自动禁用或启用按钮。
+   - 对多选项执行 Accept / Delete，状态会写入实体 Attributes，后续可筛选。
+4. **导出与复用**
+   - 通过 Annotation 导出（JSON-LD）或 API `/annotations/text/` 拉取数据，即可将“类型 + 置信度 + 状态”带入自建知识库或向量索引。
+
+### 8.4 后续计划
+
+- **审核与导出**：在 UI 中直观展示 `status`、责任人及时间戳，支持按状态导出 CSV / JSON。
+- **模型回流**：将人工修订后的实体回写至训练集，微调 HanLP 或自研 NER，使第二轮抽取更贴合地方志语料。
 - **知识库集成**：把结构化实体写入 Elasticsearch、向量索引或图数据库，增强语义搜索、问答与地方志研究的主题分析能力。
-
-### 8.4 更新记录
-
-- **2025-10-29**：完成实体检查器、实体侧栏、类型着色与前后端调用修正，标志第一阶段交付完毕。
 
 ### 8.5 自动实体抽取执行链路
 

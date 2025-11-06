@@ -80,6 +80,7 @@ NAMED_ENTITY_DEFAULT_TYPES = [
     ("事件", "#FF9999"),
     ("其他", "#CCCCCC")
 ]
+NAMED_ENTITY_TYPE_NAMES = [label for label, _ in NAMED_ENTITY_DEFAULT_TYPES]
 
 
 class ProcessFailureException(Exception):
@@ -648,7 +649,7 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
         Seed a basic Named Entity taxonomy so new documents can annotate entities out of the box.
         """
         component_specs = (
-            ("Entity Type", NAMED_ENTITY_DEFAULT_TYPES),
+            ("Entity Type", NAMED_ENTITY_TYPE_NAMES),
             ("Normalized Value", None),
             ("Attributes", None),
             ("Confidence", None),

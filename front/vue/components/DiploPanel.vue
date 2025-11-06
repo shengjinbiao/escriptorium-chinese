@@ -224,6 +224,8 @@
                     :class="{
                         'escr-entity-type-toolbar__button--active': isQuickTypeActive(option),
                     }"
+                    :style="getEntityTypeButtonStyle(option)"
+                    :title="`标注为 ${option}`"
                     :disabled="entityTypeToolbarDisabled"
                     @click="applyEntityType(option)"
                 >
@@ -396,6 +398,18 @@ import TranscriptionDropdown from "./EditorTranscriptionDropdown/EditorTranscrip
 import "../components/Common/Annotation.css";
 
 const NAMED_ENTITY_TAXONOMY_NAME = "Named Entity (AI)";
+const DEFAULT_ENTITY_TYPES = [
+    { label: "人名", color: "#FF6B6B" },
+    { label: "地名", color: "#4ECDC4" },
+    { label: "时间", color: "#45B7D1" },
+    { label: "官职", color: "#96CEB4" },
+    { label: "朝代", color: "#D4A5A5" },
+    { label: "机构", color: "#FFE66D" },
+    { label: "书籍", color: "#A8D8B9" },
+    { label: "事件", color: "#FF9999" },
+    { label: "其他", color: "#CCCCCC" },
+];
+const DEFAULT_ENTITY_LABELS = DEFAULT_ENTITY_TYPES.map((item) => item.label);
 const ENTITY_COMPONENTS = {
     type: "Entity Type",
     normalized: "Normalized Value",
@@ -418,6 +432,16 @@ const ENTITY_COLOR_MAP = {
     "ERA DATE": "#fb923c",
     DYNASTY: "#d946ef",
     OTHER: "#6b7280",
+};
+DEFAULT_ENTITY_TYPES.forEach(({ label, color }) => {
+    ENTITY_COLOR_MAP[label.toUpperCase()] = color;
+    ENTITY_COLOR_MAP[label] = color;
+});
+const MARKER_TYPE_LABEL = {
+    3: "Background Color",
+    4: "Text Color",
+    5: "Bold",
+    6: "Italic",
 };
 
 export default {
@@ -471,8 +495,9 @@ export default {
             currentPartPk: (state) => state.parts.pk,
         }),
         groupedTaxonomies() {
+            const taxonomies = this.annotationTaxonomies?.text || [];
             return groupBy(
-                this.annotationTaxonomies.text,
+                taxonomies,
                 (taxo) => taxo.typology && taxo.typology.name,
             );
         },
@@ -517,7 +542,7 @@ export default {
             );
             const values = component?.allowed_values || [];
             if (!values.length) {
-                return ["Person", "Location", "Organization", "Time", "Date", "Dynasty", "Other"];
+                return DEFAULT_ENTITY_LABELS;
             }
             return values;
         },
@@ -708,11 +733,17 @@ export default {
                 this.isRegionsModeEnabled = false;
             }
         },
-        async annotationTaxonomies() {
-            // reload text annotations on taxonomy update (i.e. colors)
+        async annotationTaxonomies(newValue) {
+            if (!newValue || !Array.isArray(newValue.text)) return;
             await this.loadAnnotations();
             if (this.selectedEntityId) {
                 this.selectEntityFromList(this.selectedEntityId);
+            }
+            this.maybeActivateDefaultEntityTaxonomy();
+        },
+        aiEntityTaxonomy(newValue, oldValue) {
+            if (newValue && newValue !== oldValue) {
+                this.maybeActivateDefaultEntityTaxonomy();
             }
         },
     },
@@ -756,6 +787,7 @@ export default {
         }.bind(this));
 
         this.initAnnotations();
+        this.maybeActivateDefaultEntityTaxonomy();
 
         this.registerAiWorkflowListener();
 
@@ -797,6 +829,42 @@ export default {
                 $alerts.off("part:workflow", this.aiWorkflowListener);
             }
             this.aiWorkflowListener = null;
+        },
+        maybeActivateDefaultEntityTaxonomy() {
+            if (
+                this.currentTaxonomy ||
+                !this.aiEntityTaxonomy ||
+                !this.annotationTaxonomies?.text?.length ||
+                !this.anno
+            ) {
+                return;
+            }
+            this.$nextTick(() => {
+                if (
+                    this.currentTaxonomy ||
+                    !this.aiEntityTaxonomy ||
+                    !this.$refs.annotationToolbar
+                ) {
+                    return;
+                }
+                this.toggleTaxonomy(this.aiEntityTaxonomy);
+            });
+        },
+        getEntityTypeColor(label) {
+            if (!label) return null;
+            const normalized = label.trim();
+            const upper = normalized.toUpperCase();
+            return ENTITY_COLOR_MAP[upper] || ENTITY_COLOR_MAP[normalized] || null;
+        },
+        getEntityTypeButtonStyle(label) {
+            const color = this.getEntityTypeColor(label);
+            if (!color) return {};
+            const active = this.isQuickTypeActive(label);
+            return {
+                borderColor: color,
+                color: active ? "#0f172a" : color,
+                backgroundColor: active ? `${color}22` : "transparent",
+            };
         },
         getEntityAnnotationById(id) {
             return this.entityAnnotations.find((entity) => entity.id === id) || null;
@@ -987,8 +1055,7 @@ export default {
         getEntityColorFromAnnotation(annotation) {
             const entityType = this.getAnnotationComponentValue(annotation, ENTITY_COMPONENTS.type);
             if (!entityType) return null;
-            const key = entityType.toUpperCase();
-            return ENTITY_COLOR_MAP[key] || null;
+            return this.getEntityTypeColor(entityType);
         },
         scrollAnnotationIntoView(annotationId) {
             if (!this.$refs.contentContainer) return;
@@ -1327,7 +1394,10 @@ export default {
                 background-color: transparent;
                 border-bottom: none;
             `;
-            const markerType = taxonomy?.marker_type || this.currentTaxonomy?.marker_type;
+            const rawMarkerType = taxonomy?.marker_type || this.currentTaxonomy?.marker_type;
+            const markerType = typeof rawMarkerType === "number"
+                ? (MARKER_TYPE_LABEL[rawMarkerType] || rawMarkerType)
+                : rawMarkerType;
             switch (markerType) {
                 case "Background Color":
                     style = `${style} background-color: ${color}33; border-bottom: 2px solid ${color};`;

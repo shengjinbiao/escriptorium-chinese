@@ -12,14 +12,13 @@ from core.models import (
     DocumentPart,
     LineTranscription,
     NAMED_ENTITY_DEFAULT_TYPES,
+    NAMED_ENTITY_TYPE_NAMES,
     TextAnnotation,
     TextAnnotationComponentValue,
     Transcription,
 )
 
 from knowledge.services.entity_extraction import EntitySpan, HanLPEntityExtractor
-
-NAMED_ENTITY_TYPE_NAMES = [label for label, _ in NAMED_ENTITY_DEFAULT_TYPES]
 
 ENTITY_LABEL_DISPLAY = {
     "PERSON": "人名",
