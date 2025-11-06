@@ -38,8 +38,12 @@ RUN pip install --root-user-action ignore -q -r /tmp/requirements.txt
 RUN pip  install --root-user-action ignore -q faiss-cpu
 
 # Install yjxz services
+# Clone yjxz from its public repository at build time and install in editable mode.
+# Replace the URL below with the actual HTTPS repo URL for yjxz.
+# Install yjxz services
+# The yjxz package is provided as a git submodule and copied into the image.
 COPY yjxz /usr/src/yjxz
-RUN pip  install --root-user-action ignore -q -e /usr/src/yjxz
+RUN pip install --root-user-action ignore -q -e /usr/src/yjxz
 
 # Copy application source (will be overridden by bind mount in development)
 COPY escriptorium-chinese/app /usr/src/app
