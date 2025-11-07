@@ -49,6 +49,8 @@ CUSTOM_HOME = os.getenv('CUSTOM_HOME', False) == 'True'
 
 CUSTOM_CONTRIBUTORS = os.getenv('CUSTOM_CONTRIBUTORS', False) == 'True'
 
+ENABLE_NER_BOOTSTRAP = os.getenv('ENABLE_NER_BOOTSTRAP', 'true').lower() == 'true'
+
 ALLOWED_HOSTS = ['*']
 
 ASGI_APPLICATION = "escriptorium.asgi.application"

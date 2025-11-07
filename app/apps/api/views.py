@@ -708,6 +708,17 @@ class DocumentViewSet(ModelViewSet):
         for model in document.ocr_models.filter(training=True):
             model.cancel_training(revoke_task=False, username=request.user.username)  # We already revoked the Celery task
 
+        for doc_import in document.documentimport_set.all():
+            doc_import.cancel(revoke_task=False, username=request.user.username)
+
+        return Response({
+            'status': 'canceled',
+            'details': _('Canceled %(count)d pending/running tasks linked to document %(name)s.') % {
+                'count': count,
+                'name': document.name,
+            },
+        })
+
     @action(detail=True, methods=['post'], url_path='mind-map')
     def mind_map(self, request, pk=None):
         document = self.get_object()

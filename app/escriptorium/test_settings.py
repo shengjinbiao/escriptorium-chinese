@@ -43,6 +43,8 @@ old_build_tracer = celery.app.trace.build_tracer
 # show all errors during exports
 EXPORT_STRICT = True
 
+ENABLE_NER_BOOTSTRAP = False
+
 
 def build_tracer_patched(name, task, *args, **kwargs):
     before_task_publish_receivers = signals.before_task_publish.receivers

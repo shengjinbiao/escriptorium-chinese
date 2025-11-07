@@ -643,8 +643,9 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
                 [Document.valid_line_types.through(document_id=self.id, linetype_id=type_.id)
                  for type_ in LineType.objects.filter(public=True, default=True)]
             )
-            # 初始化命名实体注释配置，便于新文档直接使用
-            self._bootstrap_named_entity_annotations()
+            if getattr(settings, "ENABLE_NER_BOOTSTRAP", True):
+                # Initialize named-entity annotations so new docs can use them immediately.
+                self._bootstrap_named_entity_annotations()
 
         return res
 
@@ -2358,7 +2359,7 @@ def create_default_taxonomies(sender, instance, created, **kwargs):
     """
     在创建新文档时自动创建默认的实体标注类型
     """
-    if created:
+    if created and getattr(settings, "ENABLE_NER_BOOTSTRAP", True):
         annotation_type, _ = AnnotationType.objects.get_or_create(
             name="命名实体",
             defaults={"public": True}
