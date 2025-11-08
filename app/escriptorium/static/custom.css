@@ -1,0 +1,11 @@
+/* app/escriptorium/static/custom.css */
+.escr-modal {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+}
+
+.escr-modal-backdrop {
+    overflow: visible !important;
+}

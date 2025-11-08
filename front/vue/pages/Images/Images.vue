@@ -870,13 +870,22 @@ export default {
             let actions = [
                 {
                     data: {
-                        allowTextOperations: false,
-                        allowEntityExtraction: false,
+                        allowTextOperations: true,
+                        allowEntityExtraction: true,
                         disabled: this.loading?.document,
                         processing: this.loading?.images,
+                        vectorizing: this.vectorProcessing,
                         scopeLabel: this.selectedParts?.length
                             ? `${this.selectedParts.length} selected images`
                             : "this document",
+                        onRun: this.runAiOperations,
+                        onVectorize: () => {
+                            const options = {};
+                            if (this.selectedParts?.length) {
+                                options.document_part_ids = this.selectedParts;
+                            }
+                            return this.buildSemanticIndexForDocument(options);
+                        },
                         onMindMap: this.generateKnowledgeTreeForSelection,
                         mindMapLoading: this.knowledgeTreeLoading,
                     },

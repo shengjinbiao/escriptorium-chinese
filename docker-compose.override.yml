@@ -8,7 +8,6 @@ x-app: &app
   image: escriptorium-custom:latest
   env_file: variables.env
   volumes:
-    - ./app:/usr/src/app
     - ./app/config/providers.yml:/usr/src/app/config/providers.yml:ro
     - ../yjxz:/usr/src/yjxz
 
@@ -63,8 +62,8 @@ services:
     <<: *app
     command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10"
     restart: always
-    volumes:
-      - ./front/dist:/usr/src/app/front
+  #  volumes:
+  #    - ./front/dist:/usr/src/app/front
 
   celery-live:
     <<: *app

@@ -39,6 +39,8 @@
     <link href="{% static 'css/flags.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
     {% block extrastyle %}{% endblock extrastyle %}
+    <link href="{% static 'custom.css' %}" rel="stylesheet" type="text/css">
+
   </head>
   <body id="escriptorium" class="escr-body {% block bodyclass %}{% endblock %}">
     {% if user.legacy_mode %}

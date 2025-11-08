@@ -7,10 +7,8 @@ x-app:
     context: .
   env_file: variables.env
   volumes:
-    - ./app/:/usr/src/app/ # for development, comment out for production 开发环境使用，生产环境注释掉
-  #  - ./front/dist:/usr/src/app/front # 本地前端开发时才需要挂载，默认禁用以使用镜像自带静态文件
-    - static:/usr/src/app/static
-    - media:/usr/src/app/media
+    - ./app/:/usr/src/app/ # # 需要实时开发后端时保留，否则注释掉
+    - ./front/dist:/usr/src/app/front/dist # 统一到 /usr/src/app/front/dist
   command: /bin/true
 
 services:
@@ -21,13 +19,14 @@ services:
     expose:
       - 8000
     volumes:
-      - static:/usr/src/app/static
-      - media:/usr/src/app/media
-  #    - ./front/dist:/usr/src/app/front/dist:ro
-
+      - ./app/:/usr/src/app/
+      - ./front/dist:/usr/src/app/front/dis
+      - static:/usr/src/app/static # 生产环境需要挂载静态文件卷
+      - media:/usr/src/app/media # 生产环境需要挂载静态和媒体文件卷
+   
   channelserver:
     <<: *app
-    command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
+    command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application 
     expose:
       - 5000
 
