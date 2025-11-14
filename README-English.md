@@ -5,7 +5,8 @@ The eScriptorium app itself is at the 'center'. It is a work in progress but wil
 - nginx
 - uwsgi
 - [django](https://www.djangoproject.com/)
-- [daphne](https://github.com/django/daphne) (channel server for websockets)
+- [daphne](https://github.com/django/daphne)（用于 WebSocket 的通道服务器）
+<!-- Daphne is the ASGI server that handles HTTP/WebSocket traffic for Django Channels. In this setup it runs the escriptorium ASGI application, accepting WebSocket connections from clients and forwarding them through Channels to your app. Think of it as the counterpart to uwsgi for real-time websocket traffic—uwsgi serves regular HTTP, and Daphne keeps the asynchronous channelserver up so features like collaborative editing or live updates work. -->
 - [celery](http://www.celeryproject.org/)
 - postgres
 - [elasticsearch](https://www.elastic.co/)

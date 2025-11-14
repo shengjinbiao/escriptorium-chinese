@@ -18,10 +18,10 @@ services:
     command: uwsgi --ini /usr/src/app/uwsgi.ini
     restart: always
     
-
+# daphne 命令的目录路径，官方的目录路径是escriptorium, 新版改成了escriptorium_chinese
   channelserver:
     <<: *app
-    command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
+    command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium_chinese.asgi:application
     restart: always
 
   db:

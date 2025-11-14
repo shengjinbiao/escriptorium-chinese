@@ -24,9 +24,12 @@ services:
       - static:/usr/src/app/static # 生产环境需要挂载静态文件卷
       - media:/usr/src/app/media # 生产环境需要挂载静态和媒体文件卷
    
+  # daphne 命令的目录路径，官方的目录路径是escriptorium, 新版改成了escriptorium_chinese, 
+  # 跟代码仓库的路径要一致，要不然daphne找不到模块。daphne用于WebSocket的通道服务器。
+  # dappne保证通道服务器channelserver运行， 用于非同步（asynchronous）的编辑和更新。
   channelserver:
     <<: *app
-    command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application 
+    command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium_chinese.asgi:application 
     expose:
       - 5000
 
