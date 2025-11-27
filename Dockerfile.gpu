@@ -3,7 +3,9 @@ FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
 # basic python environment setup
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=non-interactive
+    DEBIAN_FRONTEND=non-interactive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
 WORKDIR /usr/src/app
 
