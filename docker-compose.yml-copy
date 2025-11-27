@@ -5,7 +5,6 @@ x-app:
   image: registry.gitlab.com/scripta/escriptorium:latest
   build:
     context: .
-    dockerfile: Dockerfile.gpu
   env_file: variables.env
   volumes:
     - ./app/:/usr/src/app/ # for development, comment out for production 开发环境使用，生产环境注释掉

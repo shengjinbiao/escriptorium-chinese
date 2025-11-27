@@ -526,6 +526,12 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
             raise forms.ValidationError(_("The provided model could not be loaded."))
         self._model_job = model.model_type
         if self._model_job not in ('segmentation', 'recognition'):
+            # Older kraken models (e.g. en_best) were published before the
+            # model_type metadata existed.  Those still ship a codec for
+            # recognition models while segmentation models don't carry one, so
+            # we can reasonably guess the type from that.
+            self._model_job = 'recognition' if getattr(model, 'codec', None) else 'segmentation'
+        if self._model_job not in ('segmentation', 'recognition'):
             raise forms.ValidationError(_("Invalid model (Couldn't determine whether it's a segmentation or recognition model)."))
         elif self._model_job == 'recognition' and model.seg_type == "bbox":
             raise forms.ValidationError(_("eScriptorium is not compatible with bounding box models."))
