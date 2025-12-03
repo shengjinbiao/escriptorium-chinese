@@ -1170,13 +1170,18 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         if self.workflow_state == self.WORKFLOW_STATE_ALIGNED:
             w["align"] = "done"
 
-        for report in self.reports.filter(method__in=["core.tasks.segment", "core.tasks.transcribe", "core.tasks.align"]):
+        reports_qs = self.reports.filter(
+            method__in=["core.tasks.segment", "core.tasks.transcribe", "core.tasks.align"]
+        ).order_by("queued_at", "pk")
+        for report in reports_qs:
             # Only the last registered state for each group of tasks will be kept
             short_name = report.method.split(".")[-1]
             if report.workflow_state == TaskReport.WORKFLOW_STATE_QUEUED:
                 w[short_name] = "pending"
             elif report.workflow_state == TaskReport.WORKFLOW_STATE_STARTED:
                 w[short_name] = "ongoing"
+            elif report.workflow_state == TaskReport.WORKFLOW_STATE_DONE:
+                w[short_name] = "done"
             elif report.workflow_state == TaskReport.WORKFLOW_STATE_ERROR:
                 w[short_name] = "canceled"
             elif report.workflow_state == TaskReport.WORKFLOW_STATE_CANCELED:

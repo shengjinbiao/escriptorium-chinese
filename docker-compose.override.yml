@@ -179,15 +179,16 @@ services:
 
     # Needed to enable text alignment with passim!
     # unfortunately need to replicate everything because docker-compose only understands one level of inheritance..
-    # celery-jvm:
-    #   image: registry.gitlab.com/scripta/escriptorium:latest
-    #   build:
-    #     context: .
-    #   env_file: variables.env
-    #   volumes:
-    #     - static:/usr/src/app/static
-    #     - media:/usr/src/app/media
-    #   command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q jvm -c 1 --max-tasks-per-child=1"
+    celery-jvm:
+      image: registry.gitlab.com/scripta/escriptorium:latest
+      build:
+        context: .
+      env_file: variables.env
+      volumes:
+        - ./app/:/usr/src/app/
+        - static:/usr/src/app/static
+        - media:/usr/src/app/media
+      command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q jvm -c 1 --max-tasks-per-child=1"
 
     # celerybeat:
       # restart: always

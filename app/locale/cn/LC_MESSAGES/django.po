@@ -1552,9 +1552,9 @@ msgstr "最后修改时间"
 
 #: escriptorium/templates/core/document_list.html:89
 #, python-format
-msgid "1 image."
+msgid "%(n)s image."
 msgid_plural "%(n)s images."
-msgstr[0] "1 张图像。"
+msgstr[0] "%(n)s 张图像。"
 msgstr[1] "%(n)s 张图像。"
 
 #: escriptorium/templates/core/document_list.html:112

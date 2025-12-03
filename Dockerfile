@@ -19,6 +19,16 @@ ENV LC_ALL=C.UTF-8
 # set work directory
 WORKDIR /usr/src/app
 
+# Install a Java 17 runtime for Spark/Passim alignment jobs.
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends openjdk-17-jre-headless openjdk-17-jdk && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    JAVA_HOME=$(dirname $(dirname $(readlink -f /usr/bin/java))) && \
+    ln -sfn "${JAVA_HOME}" /opt/java-home
+ENV JAVA_HOME=/opt/java-home
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
 COPY ./app/entrypoint.sh /usr/src/app/entrypoint.sh
 COPY ./app/manage.py /usr/src/app/manage.py
 COPY ./app/requirements.txt /usr/src/app/requirements.txt

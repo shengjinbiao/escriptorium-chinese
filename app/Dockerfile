@@ -17,15 +17,18 @@ RUN apt-get update -q && \
     rm -rf /var/lib/apt/lists/*
 
 
-# Install OpenJDK
+# Install OpenJDK (Spark/Passim now require Java 17)
 RUN echo "Installing jvm" && \
     apt-get update && \
-    apt-get install -y default-jre default-jdk && \
-    apt-get install -y ant && \
-    apt-get clean;
+    apt-get install -y --no-install-recommends openjdk-17-jre-headless openjdk-17-jdk ant && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    JAVA_HOME=$(dirname $(dirname $(readlink -f /usr/bin/java))) && \
+    ln -sfn "${JAVA_HOME}" /opt/java-home
 
 # Set JAVA_HOME
-RUN export JAVA_HOME=$(dirname $(dirname $(readlink -f  /usr/bin/java)))
+ENV JAVA_HOME=/opt/java-home
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Add non privileged user to run the app
 RUN addgroup --system uwsgi
