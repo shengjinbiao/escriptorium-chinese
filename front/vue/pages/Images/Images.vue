@@ -221,6 +221,67 @@
                             <EscrButton
                                 color="secondary"
                                 class="context-menu-button"
+                                label="AI Tools"
+                                size="small"
+                                :disabled="loading && loading.images"
+                                :on-click="() => {}"
+                            >
+                                <template #button-icon>
+                                    <AiIcon />
+                                </template>
+                                <template #button-icon-right>
+                                    <ChevronDownIcon />
+                                </template>
+                            </EscrButton>
+                            <template #popper>
+                                <ul class="escr-vertical-menu">
+                                    <li>
+                                        <button
+                                            @mousedown="() => runAiOperations({ punctuate: true, translate: false })"
+                                        >
+                                            <span>Generate Punctuation</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            @mousedown="() => runAiOperations({ punctuate: false, translate: true })"
+                                        >
+                                            <span>Generate Translation</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            @mousedown="() => runAiOperations({ punctuate: true, translate: true })"
+                                        >
+                                            <span>Punctuation & Translation</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            @mousedown="() => runAiOperations({ punctuate: false, translate: false, entities: true })"
+                                        >
+                                            <span>Extract Entities</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            :disabled="vectorProcessing"
+                                            @mousedown="() => buildSemanticIndexForDocument()"
+                                        >
+                                            <span>Generate Semantic Vectors</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </template>
+                        </VMenu>
+                        <VMenu
+                            placement="bottom-start"
+                            :triggers="['click']"
+                            theme="vertical-menu"
+                        >
+                            <EscrButton
+                                color="secondary"
+                                class="context-menu-button"
                                 label="Train Model"
                                 size="small"
                                 :disabled="loading && loading.images"
@@ -447,6 +508,11 @@
                     :cannot-undo="false"
                 />
 
+                <KnowledgeTreeModal
+                    :visible="knowledgeTreeModalOpen"
+                    :data="knowledgeTreeResult || {}"
+                    :on-close="closeKnowledgeTreeModal"
+                />
                 <!-- move images modal -->
                 <MoveImagesModal
                     v-if="moveModalOpen"
@@ -471,6 +537,7 @@
                 <TranscribeModal
                     v-if="taskModalOpen && taskModalOpen.transcribe"
                     :models="recognitionModels"
+                    :transcriptions="transcriptions"
                     :disabled="loading && (loading.images || loading.document)"
                     :on-cancel="() => {
                         closeTaskModal('transcribe');
@@ -569,6 +636,8 @@ import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapMutations, mapState } from "vuex";
 
 import AlignIcon from "../../components/Icons/AlignIcon/AlignIcon.vue";
+import AiIcon from "../../components/Icons/AiIcon/AiIcon.vue";
+import AiActionsPanel from "../../components/AiActionsPanel/AiActionsPanel.vue";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import ChevronDownIcon from "../../components/Icons/ChevronDownIcon/ChevronDownIcon.vue";
@@ -608,6 +677,8 @@ import TrainModal from "../../components/TrainModal/TrainModal.vue";
 import TranscribeIcon from "../../components/Icons/TranscribeIcon/TranscribeIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import KnowledgeTreeModal from "../../components/KnowledgeTreeModal/KnowledgeTreeModal.vue";
+import { generateDocumentMindMap } from "../../../src/api";
 import XCircleFilledIcon from "../../components/Icons/XCircleFilledIcon/XCircleFilledIcon.vue";
 import "../../components/VerticalMenu/VerticalMenu.css";
 import "./Images.css";
@@ -615,6 +686,8 @@ import "./Images.css";
 export default {
     name: "EscrImages",
     components: {
+        AiIcon,
+        AiActionsPanel,
         AlignIcon,
         AlignModal,
         ChevronDownIcon,
@@ -665,6 +738,7 @@ export default {
         VDropdown,
         VMenu,
         XCircleFilledIcon,
+        KnowledgeTreeModal,
     },
     props: {
         /**
@@ -709,6 +783,10 @@ export default {
             redrawModalOpen: false,
             textFilter: "",
             textFilterValue: "",
+            vectorProcessing: false,
+            knowledgeTreeLoading: false,
+            knowledgeTreeModalOpen: false,
+            knowledgeTreeResult: null,
         }
     },
     computed: {
@@ -790,6 +868,23 @@ export default {
          */
         sidebarActions() {
             let actions = [
+                {
+                    data: {
+                        allowTextOperations: false,
+                        allowEntityExtraction: false,
+                        disabled: this.loading?.document,
+                        processing: this.loading?.images,
+                        scopeLabel: this.selectedParts?.length
+                            ? `${this.selectedParts.length} selected images`
+                            : "this document",
+                        onMindMap: this.generateKnowledgeTreeForSelection,
+                        mindMapLoading: this.knowledgeTreeLoading,
+                    },
+                    icon: AiIcon,
+                    key: "ai-tools",
+                    label: "AI Tools",
+                    panel: AiActionsPanel,
+                },
                 {
                     data: {
                         disabled: this.loading?.document,
@@ -966,13 +1061,15 @@ export default {
         }
     },
     methods: {
-        ...mapActions("alerts", ["addError"]),
+        ...mapActions("alerts", { addError: "addError", addAlert: "add" }),
         ...mapActions("document", [
             "confirmImageCancelWarning",
             "fetchDocumentModels",
             "handleSubmitImport",
             "setId",
             "updatePartTaskStatus",
+            "triggerAiOnParts",
+            "triggerSemanticIndex",
         ]),
         ...mapActions("images", [
             "confirmOverwriteWarning",
@@ -1013,6 +1110,94 @@ export default {
          */
         closeContextMenu() {
             this.contextMenuOpen = null;
+        },
+        describeAiOperationMessage(operations, count) {
+            const actions = [];
+            if (operations?.punctuate) actions.push("punctuation");
+            if (operations?.translate) actions.push("translation");
+            if (operations?.entities) actions.push("entity extraction");
+            const taskLabel = actions.length ? actions.join(" & ") : "AI processing";
+            const itemLabel = count === 1 ? "image" : "images";
+            return `Queued ${taskLabel} for ${count} ${itemLabel}.`;
+        },
+        describeSemanticIndexMessage() {
+            return "Queued semantic indexing for this document.";
+        },
+        async runAiOperations(operations) {
+            if (!this.selectedParts.length) {
+                this.addAlert({
+                    color: "warning",
+                    message: "Select at least one image before running AI tools.",
+                });
+                return;
+            }
+            if (this.loading?.images) {
+                return;
+            }
+            this.setLoading({ key: "images", loading: true });
+            try {
+                const response = await this.triggerAiOnParts({
+                    parts: this.selectedParts,
+                    operations,
+                });
+                const processedCount = response?.parts?.length || this.selectedParts.length;
+                this.addAlert({
+                    color: "success",
+                    message: this.describeAiOperationMessage(operations, processedCount),
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.setLoading({ key: "images", loading: false });
+            }
+        },
+        async generateKnowledgeTreeForSelection() {
+            if (this.knowledgeTreeLoading) return;
+            const options = {};
+            if (this.selectedParts?.length) {
+                options.document_part_ids = this.selectedParts;
+            }
+            this.knowledgeTreeLoading = true;
+            try {
+                const { data } = await generateDocumentMindMap({
+                    documentId: this.id,
+                    options,
+                });
+                this.knowledgeTreeResult = data;
+                this.knowledgeTreeModalOpen = true;
+                const message = options.document_part_ids
+                    ? "Knowledge tree generated for selected images."
+                    : "Knowledge tree generated for this document.";
+                this.addAlert({
+                    color: "success",
+                    message,
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.knowledgeTreeLoading = false;
+            }
+        },
+        closeKnowledgeTreeModal() {
+            this.knowledgeTreeModalOpen = false;
+        },
+        async buildSemanticIndexForDocument(options = {}) {
+            if (this.vectorProcessing) return;
+            this.vectorProcessing = true;
+            try {
+                const response = await this.triggerSemanticIndex(options);
+                if (response?.status !== "queued") {
+                    throw new Error(response?.error || "Failed to queue semantic indexing.");
+                }
+                this.addAlert({
+                    color: "success",
+                    message: this.describeSemanticIndexMessage(),
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.vectorProcessing = false;
+            }
         },
         /**
          * Handle range input, validate, and set selected parts if valid

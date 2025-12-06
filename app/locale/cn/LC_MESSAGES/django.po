@@ -1183,7 +1183,7 @@ msgstr "德语"
 
 #: escriptorium/local_settings.py:22 escriptorium/settings.py:194
 msgid "Chinese"
-msgstr ""
+msgstr "中文"
 
 #: escriptorium/templates/403.html:6
 msgid "You don't have permission to view or edit this document."
@@ -1430,7 +1430,7 @@ msgstr "您没有任何磁盘存储空间"
 
 #: escriptorium/templates/core/document_images.html:100
 msgid "Train a segmenter/recognizer model."
-msgstr "训练分段/识别器模型。"
+msgstr "训练分割/识别器模型。"
 
 #: escriptorium/templates/core/document_images.html:103
 #: escriptorium/templates/core/wizards/segtrain.html:20
@@ -1713,7 +1713,7 @@ msgstr "自动<br>转录"
 msgid ""
 "Apply OCR/HTR to images of printed and handwritten documents using shared "
 "open models."
-msgstr "将OCR/HTR应用于使用共享的打开模型的印刷和手写文档的图像。"
+msgstr "使用共享的开放模型将OCR/HTR应用于的印刷和手写文档的图像。"
 
 #: escriptorium/templates/core/home.html:31
 msgid "Manual<br>Transcription"
@@ -1732,7 +1732,7 @@ msgstr "训练<br>模型"
 #: escriptorium/templates/core/home.html:38
 msgid ""
 "Create new models or finetune existing ones to improve automatic recognition."
-msgstr "创建新的模型或Finetune现有模型以改善自动识别。"
+msgstr "创建新的模型或微调Finetune现有模型以改善自动识别。"
 
 #: escriptorium/templates/core/home.html:43
 msgid "Import/<br>Export"

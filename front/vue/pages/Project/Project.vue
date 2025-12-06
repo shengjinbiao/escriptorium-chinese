@@ -159,12 +159,18 @@
                     :on-cancel="closeShareModal"
                     :on-submit="share"
                 />
+                <KnowledgeTreeModal
+                    :visible="knowledgeTreeModalOpen"
+                    :data="knowledgeTreeResult || {}"
+                    :on-close="closeKnowledgeTreeModal"
+                />
             </div>
         </template>
     </EscrPage>
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import AiActionsPanel from "../../components/AiActionsPanel/AiActionsPanel.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import EditDocumentModal from "../../components/EditDocumentModal/EditDocumentModal.vue";
 import EditProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
@@ -175,6 +181,7 @@ import EscrTable from "../../components/Table/Table.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import FilterSet from "../../components/FilterSet/FilterSet.vue";
 import ImagesIcon from "../../components/Icons/ImagesIcon/ImagesIcon.vue";
+import AiIcon from "../../components/Icons/AiIcon/AiIcon.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
@@ -184,12 +191,15 @@ import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import KnowledgeTreeModal from "../../components/KnowledgeTreeModal/KnowledgeTreeModal.vue";
 import "../../components/Common/Card.css"
 import "./Project.css";
+import { generateProjectMindMap } from "../../../src/api";
 
 export default {
     name: "EscrProjectDashboard",
     components: {
+        AiActionsPanel,
         ConfirmModal,
         EditDocumentModal,
         EditProjectModal,
@@ -199,6 +209,8 @@ export default {
         EscrTable,
         EscrTags,
         FilterSet,
+        // eslint-disable-next-line vue/no-unused-components
+        AiIcon,
         ImagesIcon,
         // eslint-disable-next-line vue/no-unused-components
         PencilIcon,
@@ -212,6 +224,7 @@ export default {
         SharePanel,
         TrashIcon,
         VerticalMenu,
+        KnowledgeTreeModal,
     },
     props: {
         /**
@@ -228,6 +241,14 @@ export default {
             type: Boolean,
             required: true,
         },
+    },
+    data() {
+        return {
+            vectorProcessing: false,
+            knowledgeTreeLoading: false,
+            knowledgeTreeModalOpen: false,
+            knowledgeTreeResult: null,
+        };
     },
     computed: {
         ...mapState({
@@ -309,6 +330,22 @@ export default {
             let actions = [
                 {
                     data: {
+                        allowTextOperations: false,
+                        allowEntityExtraction: false,
+                        disabled: this.loading,
+                        vectorizing: this.vectorProcessing,
+                        scopeLabel: "this project",
+                        onVectorize: this.buildSemanticIndexForProject,
+                        onMindMap: this.generateProjectKnowledgeTree,
+                        mindMapLoading: this.knowledgeTreeLoading,
+                    },
+                    icon: AiIcon,
+                    key: "ai-tools",
+                    label: "AI Tools",
+                    panel: AiActionsPanel,
+                },
+                {
+                    data: {
                         disabled: this.loading,
                         users: this.sharedWithUsers,
                         groups: this.sharedWithGroups,
@@ -380,10 +417,55 @@ export default {
             "setLoading",
             "share",
             "sortDocuments",
+            "triggerSemanticIndex",
         ]),
         ...mapActions("projects", ["fetchAllProjectTags"]),
         ...mapActions("user", ["fetchGroups"]),
-        ...mapActions("alerts", ["addError"]),
+        ...mapActions("alerts", { addError: "addError", addAlert: "add" }),
+        describeSemanticIndexMessage() {
+            return "Queued semantic indexing for this project.";
+        },
+        async buildSemanticIndexForProject(options = {}) {
+            if (this.vectorProcessing) return;
+            this.vectorProcessing = true;
+            try {
+                const response = await this.triggerSemanticIndex(options);
+                if (response?.status !== "queued") {
+                    throw new Error(response?.error || "Failed to queue semantic indexing.");
+                }
+                this.addAlert({
+                    color: "success",
+                    message: this.describeSemanticIndexMessage(),
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.vectorProcessing = false;
+            }
+        },
+        async generateProjectKnowledgeTree() {
+            if (this.knowledgeTreeLoading) return;
+            this.knowledgeTreeLoading = true;
+            try {
+                const { data } = await generateProjectMindMap({
+                    projectId: this.projectId,
+                    options: {},
+                });
+                this.knowledgeTreeResult = data;
+                this.knowledgeTreeModalOpen = true;
+                this.addAlert({
+                    color: "success",
+                    message: "Knowledge tree generated successfully.",
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.knowledgeTreeLoading = false;
+            }
+        },
+        closeKnowledgeTreeModal() {
+            this.knowledgeTreeModalOpen = false;
+        },
         async onFilterDocuments() {
             this.setLoading(true);
             try {

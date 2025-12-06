@@ -1,0 +1,131 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = []
+
+    operations = [
+        migrations.CreateModel(
+            name="LibraryCatalog",
+            fields=[
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("title", models.CharField(max_length=255)),
+                ("category", models.CharField(blank=True, max_length=128)),
+                ("author", models.CharField(blank=True, max_length=255)),
+                ("edition", models.CharField(blank=True, max_length=255)),
+                ("volume_count", models.CharField(blank=True, max_length=64)),
+                ("collection_location", models.CharField(blank=True, max_length=255)),
+                ("call_number", models.CharField(blank=True, max_length=128)),
+                ("page_count", models.CharField(blank=True, max_length=64)),
+                ("source_filename", models.CharField(blank=True, max_length=255)),
+                ("extra", models.JSONField(blank=True, default=dict)),
+            ],
+            options={
+                "verbose_name": "Library Catalog",
+                "verbose_name_plural": "Library Catalog",
+                "ordering": ["title"],
+            },
+        ),
+        migrations.CreateModel(
+            name="GazetteerStructureRecord",
+            fields=[
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("dataset", models.CharField(blank=True, max_length=255)),
+                ("record_id", models.CharField(max_length=128, unique=True)),
+                ("unique_identifier", models.CharField(blank=True, max_length=255)),
+                ("title_level", models.CharField(blank=True, max_length=255)),
+                ("new_title_level", models.CharField(blank=True, max_length=255)),
+                ("extracted_title", models.CharField(blank=True, max_length=255)),
+                ("subject_terms", models.TextField(blank=True)),
+                ("main_responsible", models.CharField(blank=True, max_length=255)),
+                ("abstract", models.TextField(blank=True)),
+                ("funding", models.CharField(blank=True, max_length=255)),
+                ("related_resources", models.CharField(blank=True, max_length=255)),
+                ("other_language_title", models.CharField(blank=True, max_length=255)),
+                ("other_language_subject_terms", models.TextField(blank=True)),
+                ("other_language_abstract", models.TextField(blank=True)),
+                ("other_language_funding", models.CharField(blank=True, max_length=255)),
+                ("language", models.CharField(blank=True, max_length=64)),
+                ("classification_ccl", models.CharField(blank=True, max_length=255)),
+                ("academic_classification", models.CharField(blank=True, max_length=255)),
+                ("industry_classification", models.CharField(blank=True, max_length=255)),
+                ("era_classification", models.CharField(blank=True, max_length=255)),
+                ("region_classification", models.CharField(blank=True, max_length=255)),
+                ("column", models.CharField(blank=True, max_length=255)),
+                ("source_filename", models.CharField(blank=True, max_length=255)),
+                ("extra", models.JSONField(blank=True, default=dict)),
+            ],
+            options={
+                "verbose_name": "Gazetteer Structure Record",
+                "verbose_name_plural": "Gazetteer Structure Records",
+                "ordering": ["record_id"],
+            },
+        ),
+        migrations.CreateModel(
+            name="PlaceReference",
+            fields=[
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("dynasty", models.CharField(blank=True, max_length=128)),
+                ("standard_name", models.CharField(max_length=255)),
+                ("admin_level", models.CharField(blank=True, max_length=128)),
+                ("level_description", models.CharField(blank=True, max_length=255)),
+                ("era_years_chinese", models.CharField(blank=True, max_length=255)),
+                ("era_years_western", models.CharField(blank=True, max_length=255)),
+                ("alternate_names", models.TextField(blank=True)),
+                ("event_codes", models.CharField(blank=True, max_length=255)),
+                ("evolution_notes", models.TextField(blank=True)),
+                ("affiliation", models.CharField(blank=True, max_length=255)),
+                ("affiliation_level_description", models.CharField(blank=True, max_length=255)),
+                ("jurisdiction", models.TextField(blank=True)),
+                ("center_longitude", models.FloatField(blank=True, null=True)),
+                ("center_latitude", models.FloatField(blank=True, null=True)),
+                ("east_longitude", models.FloatField(blank=True, null=True)),
+                ("west_longitude", models.FloatField(blank=True, null=True)),
+                ("south_latitude", models.FloatField(blank=True, null=True)),
+                ("north_latitude", models.FloatField(blank=True, null=True)),
+                ("east_neighbor", models.CharField(blank=True, max_length=255)),
+                ("west_neighbor", models.CharField(blank=True, max_length=255)),
+                ("south_neighbor", models.CharField(blank=True, max_length=255)),
+                ("north_neighbor", models.CharField(blank=True, max_length=255)),
+                ("neighbors_era", models.CharField(blank=True, max_length=255)),
+                ("references", models.TextField(blank=True)),
+                ("notes", models.TextField(blank=True)),
+                ("source_filename", models.CharField(blank=True, max_length=255)),
+                ("extra", models.JSONField(blank=True, default=dict)),
+            ],
+            options={
+                "verbose_name": "Place Reference",
+                "verbose_name_plural": "Place References",
+                "ordering": ["standard_name"],
+            },
+        ),
+        migrations.AddIndex(
+            model_name="librarycatalog",
+            index=models.Index(fields=["title"], name="knowledge_l_title_78a3f8_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="librarycatalog",
+            index=models.Index(fields=["collection_location"], name="knowledge_l_collect_0a1cb9_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="librarycatalog",
+            index=models.Index(fields=["call_number"], name="knowledge_l_call_n_715689_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="placereference",
+            index=models.Index(fields=["standard_name"], name="knowledge_p_standar_365fa4_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="placereference",
+            index=models.Index(fields=["dynasty"], name="knowledge_p_dynasty_51f7c1_idx"),
+        ),
+    ]

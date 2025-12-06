@@ -25,7 +25,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
 from django.db.models import Avg, JSONField, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Length
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 from django.forms import ValidationError
 from django.utils.functional import cached_property
@@ -68,6 +68,23 @@ from users.models import User
 from versioning.models import Versioned
 
 logger = logging.getLogger(__name__)
+
+NAMED_ENTITY_DEFAULT_TYPES = [
+    ("人名", "#FF6B6B"),
+    ("地名", "#4ECDC4"),
+    ("时间", "#45B7D1"),
+    ("官职", "#96CEB4"),
+    ("朝代", "#D4A5A5"),
+    ("机构", "#FFE66D"),
+    ("书籍", "#A8D8B9"),
+    ("事件", "#FF9999"),
+    ("其他", "#CCCCCC"),
+    ("卷标题", "#F472B6"),
+    ("章标题", "#C084FC"),
+    ("节标题", "#FB923C"),
+    ("段落标题", "#38BDF8"),
+]
+NAMED_ENTITY_TYPE_NAMES = [label for label, _ in NAMED_ENTITY_DEFAULT_TYPES]
 
 
 class ProcessFailureException(Exception):
@@ -301,13 +318,15 @@ class Annotation(CascadeUpdate, models.Model):
 
             selector = {"type": "TextPositionSelector", "start": start, "end": end}
 
+        comments = self.comments or []
+
         return {
             "id": self.id,
             "@context": "http://www.w3.org/ns/anno.jsonld",
             "type": "Annotation",
             "body": [
                 {"type": "TextualBody", "value": comment, "purpose": "commenting"}
-                for comment in self.comments
+                for comment in comments
             ]
             + [
                 {
@@ -624,8 +643,79 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
                 [Document.valid_line_types.through(document_id=self.id, linetype_id=type_.id)
                  for type_ in LineType.objects.filter(public=True, default=True)]
             )
+            # 初始化命名实体注释配置，便于新文档直接使用
+            self._bootstrap_named_entity_annotations()
 
         return res
+
+    def _bootstrap_named_entity_annotations(self):
+        """
+        Seed a basic Named Entity taxonomy so new documents can annotate entities out of the box.
+        """
+        component_specs = (
+            ("Entity Type", NAMED_ENTITY_TYPE_NAMES),
+            ("Normalized Value", None),
+            ("Attributes", None),
+            ("Confidence", None),
+            ("Entity Identifier", None),
+        )
+        component_map = {}
+        for name, allowed_values in component_specs:
+            defaults = {"allowed_values": allowed_values}
+            component, created = AnnotationComponent.objects.get_or_create(
+                document=self,
+                name=name,
+                defaults=defaults,
+            )
+            if not created and component.allowed_values != allowed_values:
+                component.allowed_values = allowed_values
+                component.save(update_fields=["allowed_values"])
+            component_map[name] = component
+
+        annotation_type, _ = AnnotationType.objects.get_or_create(
+            name="Named Entity",
+            defaults={"public": True, "default": True},
+        )
+
+        manual_defaults = {
+            "typology": annotation_type,
+            "has_comments": False,
+            "abbreviation": "NE",
+            "marker_type": AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
+            "marker_detail": "#fde68a",
+        }
+        manual_taxonomy, created = AnnotationTaxonomy.objects.get_or_create(
+            document=self,
+            name="Named Entity",
+            defaults=manual_defaults,
+        )
+        if created:
+            manual_taxonomy.components.set(component_map.values())
+        else:
+            manual_taxonomy.components.add(*component_map.values())
+
+        ai_defaults = {
+            "typology": annotation_type,
+            "has_comments": False,
+            "abbreviation": "AI",
+            "marker_type": AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
+            "marker_detail": "#facc15",
+        }
+        ai_taxonomy, created = AnnotationTaxonomy.objects.get_or_create(
+            document=self,
+            name="Named Entity (AI)",
+            defaults=ai_defaults,
+        )
+        ai_components = [
+            component_map["Entity Type"],
+            component_map["Normalized Value"],
+            component_map["Attributes"],
+            component_map["Confidence"],
+        ]
+        if created:
+            ai_taxonomy.components.set(ai_components)
+        else:
+            ai_taxonomy.components.add(*ai_components)
 
     @property
     def is_published(self):
@@ -1866,6 +1956,59 @@ class Line(CascadeUpdate, OrderedModel):
         return super().save(*args, **kwargs)
 
 
+class DocumentPassage(models.Model):
+    """
+    Represents a text fragment extracted from a document and prepared for semantic indexing.
+    """
+
+    document = models.ForeignKey(
+        "core.Document",
+        on_delete=models.CASCADE,
+        related_name="passages",
+    )
+    document_part = models.ForeignKey(
+        "core.DocumentPart",
+        on_delete=models.SET_NULL,
+        related_name="passages",
+        null=True,
+        blank=True,
+        help_text=_("Optional page/part reference this passage originates from."),
+    )
+    order = models.PositiveIntegerField(
+        help_text=_("Sequential order of the passage within the document."),
+    )
+    raw_text = models.TextField(help_text=_("Original text content of the passage."))
+    normalized_text = models.TextField(
+        blank=True,
+        help_text=_("Pre-processed text used for embedding generation."),
+    )
+    metadata = JSONField(
+        default=dict,
+        blank=True,
+        help_text=_(
+            "Arbitrary metadata such as headings, page numbers or source links."
+        ),
+    )
+    embedding = ArrayField(
+        models.FloatField(),
+        null=True,
+        blank=True,
+        help_text=_("Cached embedding vector for this passage."),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["document", "order"]
+        unique_together = [("document", "order")]
+        indexes = [
+            models.Index(fields=["document", "order"]),
+        ]
+
+    def __str__(self):
+        return f"Passage#{self.order} of {self.document}"
+
+
 class ProtectedObjectException(Exception):
     pass
 
@@ -2213,3 +2356,27 @@ class InstanceSettings(SingletonModel):
 
     def __str__(self):
         return "Instance settings"
+
+
+@receiver(post_save, sender=Document)
+def create_default_taxonomies(sender, instance, created, **kwargs):
+    """
+    在创建新文档时自动创建默认的实体标注类型
+    """
+    if created:
+        annotation_type, _ = AnnotationType.objects.get_or_create(
+            name="命名实体",
+            defaults={"public": True}
+        )
+        
+        for name, color in NAMED_ENTITY_DEFAULT_TYPES:
+            AnnotationTaxonomy.objects.get_or_create(
+                document=instance,
+                name=name,
+                defaults={
+                    'typology': annotation_type,
+                    'marker_type': AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
+                    'marker_detail': color,
+                    'has_comments': True
+                }
+            )

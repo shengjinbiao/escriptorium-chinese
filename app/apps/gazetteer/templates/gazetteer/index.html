@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+<div id="gazetteer-app"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'vendor.js' %}"></script>
+<script src="{% static 'gazetteer.js' %}"></script>
+{% endblock %}

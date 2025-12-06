@@ -1,5 +1,6 @@
 import json
 import logging
+from collections import defaultdict
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -18,13 +19,14 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import PrimaryKeyRelatedField
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.views import APIView
 
 from api.serializers import (
     AlignSerializer,
@@ -52,8 +54,12 @@ from api.serializers import (
     PartDetailSerializer,
     PartMoveSerializer,
     PartSerializer,
+    PartAIEnrichmentSerializer,
+    SemanticIndexRequestSerializer,
     ProjectSerializer,
     ProjectTagSerializer,
+    SemanticSearchRequestSerializer,
+    MindMapRequestSerializer,
     ScriptSerializer,
     SegmentSerializer,
     SegTrainSerializer,
@@ -65,6 +71,11 @@ from api.serializers import (
     TranscribeSerializer,
     TranscriptionSerializer,
     UserSerializer,
+    LibraryCatalogSerializer,
+    GazetteerStructureRecordSerializer,
+    EraReferenceSerializer,
+    PersonReferenceSerializer,
+    PlaceReferenceSerializer,
 )
 from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
@@ -79,6 +90,7 @@ from core.models import (
     DocumentPart,
     DocumentPartMetadata,
     DocumentPartType,
+    DocumentPassage,
     DocumentTag,
     ImageAnnotation,
     Line,
@@ -93,7 +105,27 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
-from core.tasks import recalculate_masks
+from core.services.ai_text import (
+    AIDependencyError,
+    get_punctuation_service,
+    get_translation_service,
+    load_entity_services,
+)
+from core.services.embedding import (
+    EmbeddingServiceNotConfigured,
+    ensure_embedding_service_ready,
+)
+from core.services.semantic_answer import (
+    SemanticAnswerNotConfigured,
+    build_semantic_answer,
+)
+from core.services.semantic_search import semantic_search
+from core.services.mind_map import MindMapParameters, generate_mind_map
+from core.tasks import (
+    build_semantic_index_task,
+    recalculate_masks,
+    run_ai_enrichment,
+)
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
 from reporting.models import TaskGroup, TaskReport
@@ -101,6 +133,13 @@ from users.consumers import send_event
 from users.models import Group, User
 from versioning.models import NoChangeException
 
+from knowledge.models import (
+    EraReference,
+    GazetteerStructureRecord,
+    LibraryCatalog,
+    PersonReference,
+    PlaceReference,
+)
 logger = logging.getLogger(__name__)
 
 CLIENT_TASK_NAME_MAP = {
@@ -166,6 +205,12 @@ class LargeResultsSetPagination(PageNumberPagination):
 
 class ExtraLargeResultsSetPagination(PageNumberPagination):
     page_size = 500
+
+
+class KnowledgePagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = "page_size"
+    max_page_size = 200
 
 
 class UserViewSet(ModelViewSet):
@@ -269,6 +314,175 @@ class ProjectViewSet(ModelViewSet):
         serializer = ProjectSerializer(project)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'], url_path='mind-map')
+    def mind_map(self, request, pk=None):
+        project = self.get_object()
+        serializer = MindMapRequestSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+        if params.get("document_part_ids"):
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("Image selections must be generated from the document view."),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        document_qs = Document.objects.for_user(request.user).filter(project=project)
+        requested_ids = params.get("document_ids") or []
+        if requested_ids:
+            allowed_ids = set(
+                document_qs.filter(pk__in=requested_ids).values_list("pk", flat=True)
+            )
+            missing = [doc_id for doc_id in requested_ids if doc_id not in allowed_ids]
+            if missing:
+                return Response(
+                    {
+                        "status": "error",
+                        "error": _(
+                            "Some documents are not accessible or do not belong to this project."
+                        ),
+                        "missing_documents": missing,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            document_qs = document_qs.filter(pk__in=allowed_ids)
+
+        documents = list(document_qs.order_by("pk"))
+        if not documents:
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("No accessible documents were found for this project."),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        passages_qs = (
+            DocumentPassage.objects.filter(document__in=documents)
+            .exclude(embedding__isnull=True)
+            .select_related("document", "document_part")
+            .order_by("document_id", "order")
+        )
+        if not passages_qs.exists():
+            root_label = documents[0].name if len(documents) == 1 else project.name
+            graph = generate_mind_map(
+                [],
+                root_id="root",
+                root_label=root_label,
+                parameters=MindMapParameters(
+                    cluster_count=params.get("cluster_count", 5),
+                    max_neighbors=params.get("max_neighbors", 2),
+                    snippet_length=160,
+                ),
+            )
+            return Response(
+                {
+                    "project": {"id": project.pk, "name": project.name},
+                    "documents": [
+                        {"id": doc.pk, "name": doc.name, "passages": 0}
+                        for doc in documents
+                    ],
+                    "parameters": {
+                        "max_passages": params.get("max_passages"),
+                        "cluster_count": params.get("cluster_count"),
+                        "max_neighbors": params.get("max_neighbors"),
+                    },
+                    "graph": graph,
+                }
+            )
+
+        max_passages = params.get("max_passages", 200)
+        passages = list(passages_qs[:max_passages])
+
+        root_label = documents[0].name if len(documents) == 1 else project.name
+        parameters = MindMapParameters(
+            cluster_count=params.get("cluster_count", 5),
+            max_neighbors=params.get("max_neighbors", 2),
+            snippet_length=160,
+        )
+        graph = generate_mind_map(passages, root_id="root", root_label=root_label, parameters=parameters)
+
+        passage_counts = defaultdict(int)
+        for passage in passages:
+            passage_counts[passage.document_id] += 1
+
+        documents_payload = [
+            {"id": doc.pk, "name": doc.name, "passages": passage_counts.get(doc.pk, 0)}
+            for doc in documents
+        ]
+
+        return Response(
+            {
+                "project": {"id": project.pk, "name": project.name},
+                "documents": documents_payload,
+                "parameters": {
+                    "max_passages": max_passages,
+                    "cluster_count": parameters.cluster_count,
+                    "max_neighbors": parameters.max_neighbors,
+                },
+                "graph": graph,
+            }
+        )
+
+    @action(detail=True, methods=['post'], url_path='semantic/vectorize')
+    def build_semantic_index(self, request, pk=None):
+        if settings.DISABLE_ELASTICSEARCH:
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("Elasticsearch is disabled on this instance."),
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        project = self.get_object()
+        serializer = SemanticIndexRequestSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+
+        document_ids = list(
+            Document.objects.for_user(request.user)
+            .filter(project=project)
+            .values_list("pk", flat=True)
+        )
+        if not document_ids:
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("This project does not contain accessible documents."),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ensure_embedding_service_ready()
+        except EmbeddingServiceNotConfigured as exc:
+            logger.exception("Embedding service unavailable: %s", exc)
+            return Response(
+                {"status": "error", "error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        async_result = build_semantic_index_task.delay(
+            document_ids=document_ids,
+            reset=params.get("reset", True),
+            force_embeddings=params.get("force", False),
+            drop_index=params.get("drop", False),
+            user_pk=request.user.pk if request.user.is_authenticated else None,
+        )
+        return Response(
+            {
+                "status": "queued",
+                "task_id": async_result.id,
+                "project": project.pk,
+                "documents": document_ids,
+                "params": params,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
+
 
 class ProjectTagViewSet(ModelViewSet):
     queryset = ProjectTag.objects.all()
@@ -277,6 +491,55 @@ class ProjectTagViewSet(ModelViewSet):
 
     def get_queryset(self):
         return ProjectTag.objects.filter(user=self.request.user)
+
+
+class LibraryCatalogViewSet(ReadOnlyModelViewSet):
+    queryset = LibraryCatalog.objects.all()
+    serializer_class = LibraryCatalogSerializer
+    filter_backends = (SearchFilter, OrderingFilter)
+    search_fields = ("title", "author", "collection_location", "call_number")
+    ordering_fields = ("title", "collection_location", "updated_at")
+    pagination_class = KnowledgePagination
+
+
+class GazetteerStructureRecordViewSet(ReadOnlyModelViewSet):
+    queryset = GazetteerStructureRecord.objects.all()
+    serializer_class = GazetteerStructureRecordSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ("extracted_title", "subject_terms", "record_id")
+    filterset_fields = ("title_level", "language", "dataset")
+    ordering_fields = ("record_id", "title_level", "updated_at")
+    pagination_class = KnowledgePagination
+
+
+class PlaceReferenceViewSet(ReadOnlyModelViewSet):
+    queryset = PlaceReference.objects.all()
+    serializer_class = PlaceReferenceSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ("standard_name", "alternate_names", "references")
+    filterset_fields = ("dynasty", "admin_level")
+    ordering_fields = ("standard_name", "dynasty", "updated_at")
+    pagination_class = KnowledgePagination
+
+
+class EraReferenceViewSet(ReadOnlyModelViewSet):
+    queryset = EraReference.objects.all()
+    serializer_class = EraReferenceSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ("era_name", "dynasty", "emperor", "era_id")
+    filterset_fields = ("dynasty",)
+    ordering_fields = ("start_year_ce", "era_name", "updated_at")
+    pagination_class = KnowledgePagination
+
+
+class PersonReferenceViewSet(ReadOnlyModelViewSet):
+    queryset = PersonReference.objects.select_related("origin_place").all()
+    serializer_class = PersonReferenceSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ("name", "courtesy_name", "aliases", "person_id")
+    filterset_fields = ("dynasty", "gender")
+    ordering_fields = ("name", "birth_year", "updated_at")
+    pagination_class = KnowledgePagination
 
 
 class DocumentTagViewSet(ModelViewSet):
@@ -444,6 +707,165 @@ class DocumentViewSet(ModelViewSet):
         # the model.training attribute to False)
         for model in document.ocr_models.filter(training=True):
             model.cancel_training(revoke_task=False, username=request.user.username)  # We already revoked the Celery task
+
+    @action(detail=True, methods=['post'], url_path='mind-map')
+    def mind_map(self, request, pk=None):
+        document = self.get_object()
+        serializer = MindMapRequestSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+
+        part_ids = params.get("document_part_ids") or []
+        if part_ids:
+            allowed_part_ids = set(
+                document.parts.filter(pk__in=part_ids).values_list("pk", flat=True)
+            )
+            missing_parts = [part_id for part_id in part_ids if part_id not in allowed_part_ids]
+            if missing_parts:
+                return Response(
+                    {
+                        "status": "error",
+                        "error": _(
+                            "Some selected images are not part of this document or cannot be accessed."
+                        ),
+                        "missing_parts": missing_parts,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            allowed_part_ids = set()
+
+        passages_qs = (
+            DocumentPassage.objects.filter(document=document)
+            .exclude(embedding__isnull=True)
+            .select_related("document_part")
+            .order_by("order")
+        )
+        if allowed_part_ids:
+            passages_qs = passages_qs.filter(document_part_id__in=allowed_part_ids)
+
+        parameters = MindMapParameters(
+            cluster_count=params.get("cluster_count", 5),
+            max_neighbors=params.get("max_neighbors", 2),
+            snippet_length=160,
+        )
+
+        if not passages_qs.exists():
+            graph = generate_mind_map(
+                [],
+                root_id="root",
+                root_label=document.name,
+                parameters=parameters,
+            )
+            return Response(
+                {
+                    "project": {"id": document.project_id, "name": document.project.name},
+                    "document": {"id": document.pk, "name": document.name},
+                    "documents": [
+                        {"id": document.pk, "name": document.name, "passages": 0}
+                    ],
+                    "parts": [],
+                    "parameters": {
+                        "max_passages": params.get("max_passages", 200),
+                        "cluster_count": parameters.cluster_count,
+                        "max_neighbors": parameters.max_neighbors,
+                    },
+                    "graph": graph,
+                }
+            )
+
+        max_passages = params.get("max_passages", 200)
+        passages = list(passages_qs[:max_passages])
+
+        graph = generate_mind_map(
+            passages,
+            root_id="root",
+            root_label=document.name,
+            parameters=parameters,
+        )
+
+        part_counts = defaultdict(int)
+        for passage in passages:
+            if passage.document_part_id:
+                part_counts[passage.document_part_id] += 1
+
+        parts_payload = []
+        if part_counts:
+            parts = list(
+                document.parts.filter(pk__in=part_counts.keys()).order_by("order")
+            )
+            for part in parts:
+                parts_payload.append(
+                    {
+                        "id": part.pk,
+                        "title": part.title,
+                        "order": part.order,
+                        "passages": part_counts.get(part.pk, 0),
+                    }
+                )
+
+        return Response(
+            {
+                "project": {"id": document.project_id, "name": document.project.name},
+                "document": {"id": document.pk, "name": document.name},
+                "documents": [
+                    {
+                        "id": document.pk,
+                        "name": document.name,
+                        "passages": len(passages),
+                    }
+                ],
+                "parts": parts_payload,
+                "parameters": {
+                    "max_passages": max_passages,
+                    "cluster_count": parameters.cluster_count,
+                    "max_neighbors": parameters.max_neighbors,
+                },
+                "graph": graph,
+            }
+        )
+
+    @action(detail=True, methods=['post'], url_path='semantic/vectorize')
+    def build_semantic_index(self, request, pk=None):
+        if settings.DISABLE_ELASTICSEARCH:
+            return Response(
+                {
+                    "status": "error",
+                    "error": _("Elasticsearch is disabled on this instance."),
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        document = self.get_object()
+        serializer = SemanticIndexRequestSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+
+        try:
+            ensure_embedding_service_ready()
+        except EmbeddingServiceNotConfigured as exc:
+            logger.exception("Embedding service unavailable: %s", exc)
+            return Response(
+                {"status": "error", "error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        async_result = build_semantic_index_task.delay(
+            document_ids=[document.pk],
+            reset=params.get("reset", True),
+            force_embeddings=params.get("force", False),
+            drop_index=params.get("drop", False),
+            user_pk=request.user.pk if request.user.is_authenticated else None,
+        )
+        return Response(
+            {
+                "status": "queued",
+                "task_id": async_result.id,
+                "documents": [document.pk],
+                "params": params,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
 
         for doc_import in document.documentimport_set.all():
             doc_import.cancel(revoke_task=False, username=request.user.username)  # We already revoked the Celery task
@@ -772,14 +1194,20 @@ class TaskReportViewSet(ModelViewSet):
 
 
 class DocumentPermissionMixin():
-    def get_queryset(self):
-        try:
-            self.document = (Document.objects
-                             .for_user(self.request.user)
-                             .get(pk=self.kwargs.get('document_pk')))
-        except Document.DoesNotExist:
-            raise PermissionDenied
+    def get_document(self):
+        if not hasattr(self, "document"):
+            try:
+                self.document = (
+                    Document.objects.for_user(self.request.user).get(
+                        pk=self.kwargs.get("document_pk")
+                    )
+                )
+            except Document.DoesNotExist:
+                raise PermissionDenied
+        return self.document
 
+    def get_queryset(self):
+        self.get_document()
         return super().get_queryset()
 
 
@@ -929,6 +1357,54 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
             return Response({'error': "Post corners as x1, y1 (top left) and x2, y2 (bottom right)."},
                             status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'], url_path='ai/enrich')
+    def ai_enrich(self, request, document_pk=None):
+        document = self.get_document()
+        serializer = PartAIEnrichmentSerializer(
+            data=request.data,
+            context={"document": document},
+        )
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+        operations = payload["operations"]
+        parts = payload["parts"]
+
+        try:
+            if operations.get("punctuate"):
+                get_punctuation_service()
+            if operations.get("translate"):
+                get_translation_service()
+            if operations.get("entities"):
+                try:
+                    HanLPEntityExtractor, _ = load_entity_services()
+                    HanLPEntityExtractor()
+                except Exception as exc:
+                    raise RuntimeError(str(exc)) from exc
+        except (AIDependencyError, FileNotFoundError, RuntimeError) as exc:
+            logger.exception("AI services unavailable: %s", exc)
+            return Response(
+                {"status": "error", "error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        async_result = run_ai_enrichment.delay(
+            document_pk=self.document.pk,
+            part_ids=parts,
+            operations=operations,
+            user_pk=request.user.pk if request.user.is_authenticated else None,
+            transcription_pk=payload.get("transcription"),
+        )
+        return Response(
+            {
+                "status": "queued",
+                "task_id": async_result.id,
+                "parts": parts,
+                "operations": operations,
+                "transcription": payload.get("transcription"),
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
+
 
 class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     # Note: there is no dedicated Transcription viewset, it's always in the context of a Document
@@ -1041,6 +1517,12 @@ class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = AnnotationTaxonomySerializer
 
     def get_queryset(self):
+        # Ensure basic Named Entity taxonomies exist for this document so that
+        # newly created documents immediately expose the annotation buttons.
+        document = getattr(self, "document", None)
+        if document and hasattr(document, "_bootstrap_named_entity_annotations"):
+            document._bootstrap_named_entity_annotations()
+
         qs = (super().get_queryset()
               .filter(document=self.document)
               .prefetch_related('typology', 'components'))
@@ -1332,6 +1814,44 @@ class OcrModelViewSet(ModelViewSet):
             logger.exception(e)
             return Response({'status': 'failed'}, status=400)
         return Response({'status': 'canceled'})
+
+
+class SemanticSearchView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = SemanticSearchRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        try:
+            results = build_semantic_answer(
+                payload["query"],
+                limit=payload.get("limit", 5),
+                documents=payload.get("documents"),
+                document_parts=payload.get("document_parts"),
+                with_answer=payload.get("with_answer", True),
+            )
+        except (SemanticAnswerNotConfigured, EmbeddingServiceNotConfigured) as exc:
+            return Response({"hits": [], "error": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        if payload.get("num_candidates"):
+            # Forward to semantic_search for debugging details if requested explicitly
+            hybrid = semantic_search(
+                payload["query"],
+                limit=payload.get("limit", 5),
+                documents=payload.get("documents"),
+                document_parts=payload.get("document_parts"),
+                num_candidates=payload.get("num_candidates"),
+            )
+            results["hits"] = hybrid.get("hits", results.get("hits", []))
+            if hybrid.get("error") and not results.get("error"):
+                results["error"] = hybrid["error"]
+
+        status_code = status.HTTP_200_OK
+        if results.get("error"):
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return Response(results, status=status_code)
 
 
 class RegenerableAuthToken(ObtainAuthToken):

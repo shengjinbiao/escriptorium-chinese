@@ -1,0 +1,3 @@
+era_id,era_name,dynasty,emperor,start_year_ce,end_year_ce,start_year_cn,end_year_cn,applicable_regions,source_refs,notes
+era_ming_1368,洪武,明,朱元璋,1368,1398,洪武元年,洪武三十一年,全国,"《明史·太祖本纪》;中国历史纪年表","与“太祖高皇帝”并用，注意万历本纪中的引用差异"
+era_qing_1662,康熙,清,玄烨,1662,1722,顺治十八年翌年,康熙六十一年,全国,"《清史稿·世祖纪》;Wikipedia Kangxi Emperor","与西历 1722 年末过渡注意"

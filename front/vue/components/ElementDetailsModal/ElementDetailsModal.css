@@ -4,6 +4,7 @@
 }
 .escr-element-details .escr-modal-content {
     max-height: calc(100vh - 250px);
+    width: min(100vw - 40px, 600px);
 }
 .escr-element-details dl.escr-form-field {
     display: grid;

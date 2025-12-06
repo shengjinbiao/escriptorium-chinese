@@ -11,13 +11,17 @@
 .escr-modal {
     z-index: var(--modal-z);
     background-color: var(--background1);
-    padding: 8px 0 16px 16px;
+    padding: 16px;
     border-radius: 15px;
-    /* the following will generally be overridden, but it's similar for enough to factor out */
-    width: 460px;
+    width: min(640px, 95vw);
+    max-height: 85vh;
     position: fixed;
-    top: 15%;
-    left: calc(50% - 250px);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 .escr-modal:not(:has(.escr-modal-backdrop)) {
     /* apply drop shadow to modals, with the exception of modals containing other modals:
@@ -28,10 +32,11 @@
 }
 .escr-modal .escr-modal-content {
     overflow: auto;
-    padding-right: 16px;
+    padding-right: 8px;
+    flex: 1 1 auto;
 }
 .escr-modal .escr-modal-header {
-    margin: 0.5rem 16px 8px 0;
+    margin: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -51,9 +56,7 @@
 .escr-modal .modal-actions {
     display: flex;
     justify-content: flex-end;
-    margin-top: 25px;
-    margin-right: 16px;
+    margin-top: 8px;
+    gap: 16px;
 }
-.escr-modal .modal-actions button + button {
-    margin-left: 16px;
-}
+

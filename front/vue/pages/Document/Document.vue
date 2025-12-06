@@ -35,7 +35,7 @@
                             </div>
                         </div>
                         <span class="escr-document-metadata">
-                            Main script: {{ mainScript }}
+                            Main script: {{ localizedMainScript }}
                         </span>
                     </div>
 
@@ -234,6 +234,11 @@
                     :on-cancel="closeShareModal"
                     :on-submit="shareDocument"
                 />
+                <KnowledgeTreeModal
+                    :visible="knowledgeTreeModalOpen"
+                    :data="knowledgeTreeResult || {}"
+                    :on-close="closeKnowledgeTreeModal"
+                />
                 <!-- import images modal -->
                 <ImportModal
                     v-if="taskModalOpen && taskModalOpen.import"
@@ -267,6 +272,7 @@
                 <TranscribeModal
                     v-if="taskModalOpen && taskModalOpen.transcribe"
                     :models="recognitionModels"
+                    :transcriptions="transcriptions"
                     :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('transcribe')"
                     :on-submit="handleSubmitTranscribe"
@@ -327,6 +333,7 @@
 import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapState } from "vuex";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
+import AiActionsPanel from "../../components/AiActionsPanel/AiActionsPanel.vue";
 import ExportModal from "../../components/ExportModal/ExportModal.vue";
 import ArrowRightIcon from "../../components/Icons/ArrowRightIcon/ArrowRightIcon.vue";
 import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
@@ -339,6 +346,7 @@ import EscrPage from "../Page/Page.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import EscrTable from "../../components/Table/Table.vue";
 import ImportModal from "../../components/ImportModal/ImportModal.vue";
+import AiIcon from "../../components/Icons/AiIcon/AiIcon.vue";
 import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
 import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
@@ -355,12 +363,18 @@ import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import KnowledgeTreeModal from "../../components/KnowledgeTreeModal/KnowledgeTreeModal.vue";
+import { generateDocumentMindMap } from "../../../src/api";
+import localizeScriptName from "../../store/util/scriptLocalization";
 import "../../components/Common/Card.css"
 import "./Document.css";
 
 export default {
     name: "EscrDocumentDashboard",
     components: {
+        AiActionsPanel,
+        // eslint-disable-next-line vue/no-unused-components
+        AiIcon,
         AlignModal,
         ArrowRightIcon,
         CharactersCard,
@@ -400,6 +414,7 @@ export default {
         TrashIcon,
         TranscribeModal,
         VerticalMenu,
+        KnowledgeTreeModal,
     },
     props: {
         /**
@@ -434,6 +449,11 @@ export default {
     data() {
         return {
             msgSocket: undefined,
+            aiProcessing: false,
+            vectorProcessing: false,
+            knowledgeTreeLoading: false,
+            knowledgeTreeModalOpen: false,
+            knowledgeTreeResult: null,
         };
     },
     computed: {
@@ -475,6 +495,9 @@ export default {
             transcriptionLoading: (state) => state.transcription.loading,
             transcriptions: (state) => state.document.transcriptions,
         }),
+        localizedMainScript() {
+            return localizeScriptName(this.mainScript);
+        },
         /**
          * Links and titles for the breadcrumbs above the page.
          */
@@ -543,6 +566,23 @@ export default {
                     key: "tasks",
                     label: "Quick Actions",
                     panel: QuickActionsPanel,
+                },
+                {
+                    data: {
+                        disabled: this.loading?.document,
+                        processing: this.aiProcessing,
+                        vectorizing: this.vectorProcessing,
+                        scopeLabel: "this document",
+                        onRun: this.runAiOnDocument,
+                        onVectorize: this.buildSemanticIndexForDocument,
+                        allowEntityExtraction: true,
+                        onMindMap: this.generateDocumentKnowledgeTree,
+                        mindMapLoading: this.knowledgeTreeLoading,
+                    },
+                    icon: AiIcon,
+                    key: "ai-tools",
+                    label: "AI Tools",
+                    panel: AiActionsPanel,
                 },
                 {
                     data: {
@@ -652,9 +692,11 @@ export default {
             "setLoading",
             "shareDocument",
             "sortCharacters",
+            "triggerAiOnParts",
+            "triggerSemanticIndex",
             "viewTasks",
         ]),
-        ...mapActions("alerts", ["addError"]),
+        ...mapActions("alerts", { addError: "addError", addAlert: "add" }),
         ...mapActions("project", ["createNewDocumentTag"]),
         ...mapActions("user", ["fetchGroups"]),
         ...mapActions("tasks", {
@@ -670,6 +712,83 @@ export default {
         },
         navigateToTasks() {
             window.location = "/quotas/";
+        },
+        describeAiOperationMessage(operations, count, scopeLabel = "this document") {
+            const actions = [];
+            if (operations?.punctuate) actions.push("punctuation");
+            if (operations?.translate) actions.push("translation");
+            if (operations?.entities) actions.push("entity extraction");
+            const taskLabel = actions.length ? actions.join(" & ") : "AI processing";
+            const pageLabel = count === 1 ? "page" : "pages";
+            return `Queued ${taskLabel} for ${count} ${pageLabel} in ${scopeLabel}.`;
+        },
+        describeSemanticIndexMessage(scopeLabel = "this document") {
+            return `Queued semantic indexing for ${scopeLabel}.`;
+        },
+        async runAiOnDocument(operations) {
+            if (this.aiProcessing) return;
+            this.aiProcessing = true;
+            try {
+                this.setLoading({ key: "parts", loading: true });
+                const response = await this.triggerAiOnParts({ operations });
+                const processedCount = response?.parts?.length || this.parts?.length || 0;
+                this.addAlert({
+                    color: "success",
+                    message: this.describeAiOperationMessage(
+                        operations,
+                        processedCount,
+                        "this document",
+                    ),
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.setLoading({ key: "parts", loading: false });
+                this.aiProcessing = false;
+            }
+        },
+        async buildSemanticIndexForDocument(options = {}) {
+            if (this.vectorProcessing) return;
+            this.vectorProcessing = true;
+            try {
+                const response = await this.triggerSemanticIndex(options);
+                if (response?.status !== "queued") {
+                    throw new Error(response?.error || "Failed to queue semantic indexing.");
+                }
+                this.addAlert({
+                    color: "success",
+                    message: this.describeSemanticIndexMessage("this document"),
+                });
+                return response;
+            } catch (error) {
+                this.addError(error);
+                throw error;
+            } finally {
+                this.vectorProcessing = false;
+            }
+        },
+        async generateDocumentKnowledgeTree() {
+            if (this.knowledgeTreeLoading) return;
+            this.knowledgeTreeLoading = true;
+            try {
+                const { data } = await generateDocumentMindMap({
+                    documentId: this.id,
+                    options: {},
+                });
+                this.knowledgeTreeResult = data;
+                this.knowledgeTreeModalOpen = true;
+                this.addAlert({
+                    color: "success",
+                    message: "Knowledge tree generated successfully.",
+                });
+            } catch (error) {
+                this.addError(error);
+            } finally {
+                this.knowledgeTreeLoading = false;
+            }
+        },
+        closeKnowledgeTreeModal() {
+            this.knowledgeTreeModalOpen = false;
         },
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));

@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: eScriptorium-Chinese
+message: "If you use this project, please cite it as below."
+authors:
+  - family-names: Sheng
+    given-names: Jinbiao
+    email: jim.sheng@gmail.com
+    affiliation: Dalriada Books ltd.
+version: "0.9.0"
+url: "https://github.com/shengjinbiao/escriptorium-chinese"
+repository-code: "https://github.com/shengjinbiao/escriptorium-chinese"
+date-released: 2025-10-20
+keywords:
+  - eScriptorium
+  - OCR
+  - Chinese
+  - Digital Humanities
+license: MIT

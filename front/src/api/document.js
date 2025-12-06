@@ -217,6 +217,46 @@ export const updateDocumentMetadata = async ({ documentId, metadatum }) =>
         ...metadatum,
     });
 
+export const runAiOnParts = async ({
+    documentId,
+    parts,
+    operations,
+    transcription,
+}) => {
+    const payload = {};
+    if (Array.isArray(parts)) {
+        payload.parts = parts;
+    }
+    if (operations) {
+        payload.operations = operations;
+    }
+    if (typeof transcription === "number") {
+        payload.transcription = transcription;
+    }
+    return await axios.post(
+        `/documents/${documentId}/parts/ai/enrich/`,
+        payload,
+    );
+};
+
+export const buildDocumentSemanticIndex = async ({
+    documentId,
+    options,
+} = {}) =>
+    await axios.post(
+        `/documents/${documentId}/semantic/vectorize/`,
+        options || {},
+    );
+
+export const generateDocumentMindMap = async ({
+    documentId,
+    options,
+} = {}) =>
+    await axios.post(
+        `/documents/${documentId}/mind-map/`,
+        options || {},
+    );
+
 // delete document metadata
 export const deleteDocumentMetadata = async ({ documentId, metadatumId }) =>
     await axios.delete(`/documents/${documentId}/metadata/${metadatumId}/`);

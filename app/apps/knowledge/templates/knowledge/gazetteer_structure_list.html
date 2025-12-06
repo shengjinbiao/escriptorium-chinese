@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block head_title %}Gazetteer Structure{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+  <h1 class="mb-3">Gazetteer Structure</h1>
+  <div class="row">
+    <aside class="col-lg-3 col-md-4 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-header py-2">
+          <strong>Filters</strong>
+        </div>
+        <div class="card-body">
+          <form method="get" class="mb-3">
+            <input type="hidden" name="dataset" value="{{ selected_dataset }}">
+            <input type="hidden" name="title_level" value="{{ selected_title_level }}">
+            <input type="hidden" name="language" value="{{ selected_language }}">
+            <div class="form-group">
+              <label class="small text-uppercase text-muted">Keyword</label>
+              <input type="text" class="form-control" name="q" placeholder="Search by title, subject terms or record id" value="{{ query }}">
+            </div>
+            <button class="btn btn-primary btn-sm btn-block" type="submit">Search</button>
+          </form>
+
+          <div class="mb-4">
+            <h6 class="small text-uppercase text-muted mb-2">Dataset</h6>
+            <div class="list-group list-group-flush">
+              {% for link in dataset_filters %}
+              <a class="list-group-item list-group-item-action {% if link.active %}active{% endif %}" href="{{ link.url }}">
+                {{ link.label }}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <h6 class="small text-uppercase text-muted mb-2">Title Level</h6>
+            <div class="list-group list-group-flush">
+              {% for link in title_level_filters %}
+              <a class="list-group-item list-group-item-action {% if link.active %}active{% endif %}" href="{{ link.url }}">
+                {{ link.label }}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div>
+            <h6 class="small text-uppercase text-muted mb-2">Language</h6>
+            <div class="list-group list-group-flush">
+              {% for link in language_filters %}
+              <a class="list-group-item list-group-item-action {% if link.active %}active{% endif %}" href="{{ link.url }}">
+                {{ link.label }}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="col-lg-9 col-md-8">
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-striped table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Title</th>
+                <th>Title Level</th>
+                <th>Language</th>
+                <th>Subject Terms</th>
+                <th>Main Contributor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in object_list %}
+              <tr>
+                <td>{{ item.record_id }}</td>
+                <td>{{ item.extracted_title|default:"—" }}</td>
+                <td>{{ item.title_level|default:"—" }}</td>
+                <td>{{ item.language|default:"—" }}</td>
+                <td class="text-break">{{ item.subject_terms|default:"—" }}</td>
+                <td>{{ item.main_responsible|default:"—" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">No data</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {% if is_paginated %}
+      <nav class="mt-3">
+        <ul class="pagination">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="{{ request.path }}{% if query_params %}?{{ query_params }}&page={{ page_obj.previous_page_number }}{% else %}?page={{ page_obj.previous_page_number }}{% endif %}">Previous</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          {% endif %}
+
+          <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="{{ request.path }}{% if query_params %}?{{ query_params }}&page={{ page_obj.next_page_number }}{% else %}?page={{ page_obj.next_page_number }}{% endif %}">Next</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -17,7 +17,8 @@ django-solo>=1.1
 djangorestframework~=3.15.1
 drf-nested-routers~=0.91
 easy-thumbnails~=2.8.1
-elasticsearch~=7.17.0
+elasticsearch>=8.12,<9
+hanlp>=2.1.0
 kraken>=5.2.9,~=5.2
 oitei~=1.1.1
 git+https://github.com/dasmiq/passim.git@v2.0.1#egg=passim
@@ -29,3 +30,6 @@ redis~=4.4.4
 requests>=2.21
 sentry-sdk>=1.10
 uWSGI~=2.0.20
+openpyxl>=3.1.0
+djangorestframework>=3.15
+django-filter>=24.3

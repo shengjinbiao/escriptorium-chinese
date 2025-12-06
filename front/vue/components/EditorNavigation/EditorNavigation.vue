@@ -129,6 +129,26 @@
                     Transcriptions
                 </template>
             </VDropdown>
+            <VDropdown
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
+            >
+                <EscrButton
+                    color="text"
+                    aria-label="Open Knowledge"
+                    :disabled="disabled"
+                    :on-click="openKnowledge"
+                >
+                    <template #button-icon>
+                        <InfoFilledIcon />
+                    </template>
+                </EscrButton>
+                <template #popper>
+                    Knowledge
+                </template>
+            </VDropdown>
         </div>
     </nav>
 </template>
@@ -140,6 +160,7 @@ import ArrowCircleRightIcon from "../Icons/ArrowCircleRightIcon/ArrowCircleRight
 import EscrBreadcrumbs from "../Breadcrumbs/Breadcrumbs.vue";
 import EscrButton from "../Button/Button.vue";
 import InfoOutlineIcon from "../Icons/InfoOutlineIcon/InfoOutlineIcon.vue";
+import InfoFilledIcon from "../Icons/InfoFilledIcon/InfoFilledIcon.vue";
 import OntologyIcon from "../Icons/OntologyIcon/OntologyIcon.vue";
 import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
 import "./EditorNavigation.css";
@@ -152,6 +173,7 @@ export default {
         EscrBreadcrumbs,
         EscrButton,
         InfoOutlineIcon,
+        InfoFilledIcon,
         OntologyIcon,
         TranscribeIcon,
         VDropdown,
@@ -253,6 +275,9 @@ export default {
             if (e.key === "Enter" && num && num > 0 && num <= this.partsCount) {
                 this.loadPartByOrder(num - 1);
             }
+        },
+        openKnowledge() {
+            window.open("/knowledge/", "_blank");
         }
     }
 }

@@ -1,0 +1,25 @@
+openai:
+  base_url: https://api.openai.com/v1
+  api_key_env: OPENAI_API_KEY
+  timeout: 120
+  punctuation:
+    model: gpt-4o-mini
+    system_prompt: |
+      你是一名擅长古汉语句读的标点助手。请在保持原文完整的前提下，添加合适的标点符号，并保留换行。
+  translation:
+    model: gpt-4o-mini
+    system_prompt: |
+      你是一名中文翻译，请将输入的古文准确翻译为现代汉语，保持原文意思并使用简体中文。
+  embedding:
+    model: text-embedding-3-small
+  qa:
+    model: gpt-4o-mini
+    system_prompt: |
+      你是温州地方志的解答助手。请先通读提供的参考资料，组织一段友好自然的回答，并在合适位置使用“[编号]”引用对应的参考资料（编号来自提供的列表）。若资料不足，请直说“不确定”或说明原因，切勿编造。回答最后可补充建议或引导用户查看参考资料。
+  entity_refine:
+    model: gpt-4o-mini
+    system_prompt: |
+      你是实体校对助手。下面给出一段原文和自动抽取的候选实体（可能存在遗漏或标错）。
+          请结合上下文自行判断增删改，并返回 JSON：{"entities": [...] }。
+          实体标签仅限 PERSON、LOCATION、ORG、TIME、MISC；若是持续时间可归入 MISC。
+          请保留原文顺序，不要完全照搬候选列表。

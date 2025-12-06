@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import importlib.metadata
 import os
 import sys
+from pathlib import Path
 
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
@@ -20,6 +21,8 @@ from kombu import Queue
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+HANLP_HOME = os.getenv('HANLP_HOME', os.path.join(BASE_DIR, 'hanlp_data'))
+os.environ.setdefault('HANLP_HOME', HANLP_HOME)
 
 ADMINS = [(os.getenv('DJANGO_SU_NAME', 'admin'),
            os.getenv('DJANGO_SU_EMAIL', 'admin@example.com'))]
@@ -80,6 +83,8 @@ INSTALLED_APPS = [
     'reporting',
     'django_prometheus',
     'solo',
+    'knowledge',
+    'apps.gazetteer',  # 地方志知识库
 ]
 
 MIDDLEWARE = [
@@ -220,6 +225,11 @@ CACHES = {
 DISABLE_ELASTICSEARCH = os.getenv('DISABLE_ELASTICSEARCH', 'True').lower() not in ('false', '0')
 ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost:9200')
 ELASTICSEARCH_COMMON_INDEX = os.getenv('ELASTICSEARCH_COMMON_INDEX', 'es-transcriptions')
+ELASTICSEARCH_SEMANTIC_INDEX = os.getenv('ELASTICSEARCH_SEMANTIC_INDEX', 'es-passages')
+
+SEMANTIC_EMBEDDING_BATCH_SIZE = int(os.getenv('SEMANTIC_EMBEDDING_BATCH_SIZE', 64))
+SEMANTIC_EMBEDDING_DIM = int(os.getenv('SEMANTIC_EMBEDDING_DIM', 1536))
+SEMANTIC_EMBEDDING_MODEL = os.getenv('SEMANTIC_EMBEDDING_MODEL')
 
 
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
@@ -299,6 +309,22 @@ if CUSTOM_CONTRIBUTORS:
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+AI_PROVIDER_CONFIG_PATH = os.getenv(
+    'AI_PROVIDER_CONFIG_PATH',
+    str(Path(BASE_DIR) / 'config' / 'providers.yml'),
+)
+AI_CACHE_ROOT = Path(
+    os.getenv('AI_CACHE_ROOT', os.path.join(MEDIA_ROOT, 'ai_cache')),
+)
+AI_PUNCTUATION_TRANSCRIPTION_NAME = os.getenv(
+    'AI_PUNCTUATION_TRANSCRIPTION_NAME',
+    'AI punctuation',
+)
+AI_TRANSLATION_TRANSCRIPTION_NAME = os.getenv(
+    'AI_TRANSLATION_TRANSCRIPTION_NAME',
+    'AI translation',
+)
 
 LOGGING = {
     'version': 1,

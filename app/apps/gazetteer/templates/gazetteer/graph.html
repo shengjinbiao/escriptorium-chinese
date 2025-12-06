@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block head_title %}{% trans "Knowledge Graph" %}{% endblock %}
+
+{% block head_extra %}
+<style>
+  #graph-container {
+    width: 100%;
+    height: 600px;
+    border: 1px solid #ccc;
+  }
+</style>
+<link rel="stylesheet" href="{% static 'vis-network/dist/vis-network.min.css' %}">
+{% endblock %}
+
+{% block body %}
+<div class="container">
+  <h1>{% trans "Knowledge Graph" %}</h1>
+  
+  <div class="row">
+    <div class="col-md-3">
+      <!-- 图谱控制面板 -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">{% trans "Graph Controls" %}</h5>
+          
+          <div class="form-group">
+            <label for="layout">{% trans "Layout" %}</label>
+            <select class="form-control" id="layout">
+              <option value="force">{% trans "Force Directed" %}</option>
+              <option value="hierarchical">{% trans "Hierarchical" %}</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="filter">{% trans "Entity Type" %}</label>
+            <select class="form-control" id="filter">
+              <option value="all">{% trans "All" %}</option>
+              <option value="person">{% trans "Person" %}</option>
+              <option value="place">{% trans "Place" %}</option>
+              <option value="event">{% trans "Event" %}</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="search">{% trans "Search Entity" %}</label>
+            <input type="text" class="form-control" id="search" placeholder="{% trans 'Enter entity name...' %}">
+          </div>
+          
+          <button id="center" class="btn btn-secondary">
+            {% trans "Center Graph" %}
+          </button>
+        </div>
+      </div>
+      
+      <!-- 实体详情面板 -->
+      <div class="card mt-3">
+        <div class="card-body">
+          <h5 class="card-title">{% trans "Entity Details" %}</h5>
+          <div id="entity-details">
+            <p class="text-muted">{% trans "Click an entity to see details" %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-9">
+      <!-- 知识图谱可视化 -->
+      <div id="graph-container"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 使用 vis.js 进行图谱可视化 -->
+<script src="{% static 'vis-network/dist/vis-network.min.js' %}"></script>
+<script>
+  // 初始化图谱数据和配置
+  const nodes = new vis.DataSet([
+    {% for entity in entities %}
+      {
+        id: {{ entity.id }},
+        label: "{{ entity.name }}",
+        group: "{{ entity.type }}",
+        title: "{{ entity.description }}"
+      },
+    {% endfor %}
+  ]);
+  
+  const edges = new vis.DataSet([
+    {% for relation in relations %}
+      {
+        from: {{ relation.source.id }},
+        to: {{ relation.target.id }},
+        label: "{{ relation.type }}",
+        arrows: "to"
+      },
+    {% endfor %}
+  ]);
+  
+  const container = document.getElementById("graph-container");
+  const data = {
+    nodes: nodes,
+    edges: edges
+  };
+  
+  const options = {
+    nodes: {
+      shape: "dot",
+      size: 30,
+      font: {
+        size: 14
+      }
+    },
+    edges: {
+      font: {
+        size: 12
+      },
+      length: 200
+    },
+    physics: {
+      barnesHut: {
+        gravitationalConstant: -2000,
+        centralGravity: 0.3,
+        springLength: 200
+      }
+    },
+    groups: {
+      person: {color: "#ff0000"},
+      place: {color: "#00ff00"},
+      event: {color: "#0000ff"}
+    }
+  };
+  
+  const network = new vis.Network(container, data, options);
+  
+  // 事件处理
+  network.on("selectNode", function(params) {
+    if (params.nodes.length === 1) {
+      const nodeId = params.nodes[0];
+      const node = nodes.get(nodeId);
+      document.getElementById("entity-details").innerHTML = `
+        <h6>${node.label}</h6>
+        <p>${node.title}</p>
+      `;
+    }
+  });
+  
+  // 布局切换
+  document.getElementById("layout").addEventListener("change", function(e) {
+    if (e.target.value === "hierarchical") {
+      network.setOptions({
+        layout: {
+          hierarchical: {
+            direction: "UD",
+            sortMethod: "hubsize"
+          }
+        }
+      });
+    } else {
+      network.setOptions({
+        layout: {hierarchical: false}
+      });
+    }
+  });
+  
+  // 实体类型过滤
+  document.getElementById("filter").addEventListener("change", function(e) {
+    const type = e.target.value;
+    if (type === "all") {
+      nodes.forEach((node) => {
+        node.hidden = false;
+      });
+    } else {
+      nodes.forEach((node) => {
+        node.hidden = node.group !== type;
+      });
+    }
+    network.setData({nodes: nodes, edges: edges});
+  });
+  
+  // 搜索实体
+  document.getElementById("search").addEventListener("input", function(e) {
+    const query = e.target.value.toLowerCase();
+    nodes.forEach((node) => {
+      node.hidden = !node.label.toLowerCase().includes(query);
+    });
+    network.setData({nodes: nodes, edges: edges});
+  });
+  
+  // 居中图谱
+  document.getElementById("center").addEventListener("click", function() {
+    network.fit();
+  });
+</script>
+{% endblock %}

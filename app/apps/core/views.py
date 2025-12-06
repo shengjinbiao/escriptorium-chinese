@@ -64,6 +64,11 @@ from core.models import (
 )
 from core.search import WORD_BY_WORD_SEARCH_MODE, build_highlighted_replacement_psql
 from core.tasks import replace_line_transcriptions_text
+from core.services.embedding import EmbeddingServiceNotConfigured
+from core.services.semantic_answer import (
+    SemanticAnswerNotConfigured,
+    build_semantic_answer,
+)
 from imports.forms import DocumentOntologyImportForm, ExportForm, ImportForm
 from imports.serializers import OntologyImportSerializer
 from reporting.models import TaskReport
@@ -172,6 +177,10 @@ class BaseSearch(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
         context['page_obj'] = paginator.page(page)
         context['is_paginated'] = paginator.num_pages > 1
 
+        extra_context = getattr(self, 'extra_context', None)
+        if extra_context:
+            context.update(extra_context)
+
         return context
 
 
@@ -237,11 +246,33 @@ class Search(BaseSearch):
         }
 
     def get_and_format_results(self, page=None, paginate_by=None):
+        self.extra_context = None
         try:
             es_results = self.form.search(page=page, paginate_by=paginate_by)
             self.es_total = int(es_results['hits']['total']['value'])
         except es_exceptions.ConnectionError as e:
             return [], {'es_error': str(e)}
+
+        semantic_context = {}
+        try:
+            document = self.form.cleaned_data.get('document')
+            semantic_response = build_semantic_answer(
+                self.form.cleaned_data['query'],
+                documents=[document.id] if document else None,
+                with_answer=True,
+            )
+        except (SemanticAnswerNotConfigured, EmbeddingServiceNotConfigured) as exc:
+            semantic_context['semantic_error'] = str(exc)
+        else:
+            if semantic_response.get('hits'):
+                semantic_context['semantic_hits'] = semantic_response['hits']
+            if semantic_response.get('answer'):
+                semantic_context['semantic_answer'] = semantic_response['answer']
+            if semantic_response.get('error'):
+                semantic_context['semantic_error'] = semantic_response['error']
+
+        if semantic_context:
+            self.extra_context = semantic_context
 
         return [self.convert_hit_to_template(hit) for hit in es_results['hits']['hits']], None
 

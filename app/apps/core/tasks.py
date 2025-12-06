@@ -6,7 +6,7 @@ import tempfile
 from collections import defaultdict
 from itertools import groupby
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from celery import shared_task
@@ -31,6 +31,20 @@ from core.search import (
     build_highlighted_replacement_psql,
     search_content_psql_regex,
     search_content_psql_word,
+)
+from core.services.ai_text import (
+    AIDependencyError,
+    AIOperations,
+    enrich_document_part,
+    load_entity_services,
+)
+from core.services.embedding import (
+    EmbeddingServiceNotConfigured,
+    generate_embeddings_for_passages,
+)
+from core.services.semantic_index import (
+    SemanticIndexingError,
+    build_semantic_index,
 )
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
@@ -196,6 +210,61 @@ class FrontendFeedback(Callback):
             # 'chars': chars,
             # 'error': error
         })
+
+
+@shared_task
+def generate_passage_embeddings_task(passage_ids: List[int], force: bool = False):
+    """
+    Celery wrapper around the semantic embedding generation service.
+
+    The heavy lifting will be implemented during Sprint B.
+    """
+
+    if not passage_ids:
+        return {"processed": 0, "force": force}
+    return generate_embeddings_for_passages(passage_ids, force=force)
+
+
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 5)
+def build_semantic_index_task(
+    self,
+    *,
+    document_ids: List[int],
+    reset: bool = True,
+    force_embeddings: bool = False,
+    drop_index: bool = False,
+    user_pk: Optional[int] = None,
+) -> dict:
+    """
+    Generate passages, embeddings, and Elasticsearch index entries for documents.
+    """
+
+    doc_ids = sorted({int(pk) for pk in document_ids or [] if pk is not None})
+    if not doc_ids:
+        return {"status": "empty", "reason": "no_documents"}
+
+    try:
+        result = build_semantic_index(
+            doc_ids,
+            reset_passages=reset,
+            force_embeddings=force_embeddings,
+            drop_index=drop_index,
+        )
+    except EmbeddingServiceNotConfigured as exc:
+        logger.error("Semantic indexing aborted: %s", exc)
+        return {"status": "error", "reason": str(exc)}
+    except SemanticIndexingError as exc:
+        logger.exception(
+            "Semantic indexing failed for documents %s: %s", doc_ids, exc
+        )
+        raise self.retry(exc=exc)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "Unexpected error while building semantic index for documents %s", doc_ids
+        )
+        raise self.retry(exc=exc)
+
+    return {"status": "ok", **result}
 
 
 def _to_ptl_device(device: str):
@@ -926,3 +995,114 @@ def replace_line_transcriptions_text(
         user.notify(_('Replacements applied with some errors'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-warning', level='warning')
     else:
         user.notify(_('Replacements applied!'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-success', level='success')
+
+
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60)
+def run_ai_enrichment(
+    self,
+    *,
+    document_pk: int,
+    part_ids: List[int],
+    operations: dict,
+    user_pk: Optional[int] = None,
+    transcription_pk: Optional[int] = None,
+) -> dict:
+    Document = apps.get_model("core", "Document")
+    DocumentPart = apps.get_model("core", "DocumentPart")
+    Transcription = apps.get_model("core", "Transcription")
+
+    try:
+        document = Document.objects.get(pk=document_pk)
+    except Document.DoesNotExist:
+        logger.error("AI enrichment requested for missing document %s", document_pk)
+        return {"status": "error", "reason": "document_missing"}
+
+    user = None
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+        except User.DoesNotExist:
+            user = None
+
+    normalized_ids = sorted({int(pk) for pk in part_ids})
+    parts = list(
+        DocumentPart.objects.filter(document=document, pk__in=normalized_ids).order_by(
+            "order"
+        )
+    )
+    if not parts:
+        return {"status": "empty", "reason": "no_matching_parts"}
+
+    ops = AIOperations.from_payload(operations)
+    results: List[dict] = []
+    source_transcription = None
+    force_source_transcription = False
+
+    if transcription_pk:
+        try:
+            source_transcription = Transcription.objects.get(
+                pk=transcription_pk,
+                document=document,
+                archived=False,
+            )
+            force_source_transcription = True
+        except Transcription.DoesNotExist:
+            logger.error(
+                "AI enrichment requested with missing transcription %s for document %s",
+                transcription_pk,
+                document_pk,
+            )
+            return {"status": "error", "reason": "transcription_missing"}
+
+    entity_extractor = None
+    entity_annotator = None
+    if ops.entities:
+        try:
+            HanLPEntityExtractor, entity_annotator = load_entity_services()
+            entity_extractor = HanLPEntityExtractor()
+        except ImportError as exc:
+            logger.error("Entity services not available: %s", exc)
+            raise
+        except Exception as exc:
+            logger.error("Entity extraction unavailable: %s", exc)
+            raise
+
+    try:
+        total_parts = len(parts)
+        for idx, part in enumerate(parts):
+            include_prev_context = total_parts == 1 or idx == 0
+            include_next_context = total_parts == 1 or idx == total_parts - 1
+            try:
+                results.append(
+                    enrich_document_part(
+                        part,
+                        ops,
+                        user=user,
+                        include_previous_context=include_prev_context,
+                        include_next_context=include_next_context,
+                        entity_extractor=entity_extractor,
+                        entity_annotator=entity_annotator,
+                        source_transcription=source_transcription,
+                        force_source_transcription=force_source_transcription,
+                    )
+                )
+            except AIDependencyError:
+                raise
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("AI enrichment failed for part %s", part.pk)
+                results.append(
+                    {
+                        "part_id": part.pk,
+                        "status": "error",
+                        "reason": str(exc),
+                    }
+                )
+    except AIDependencyError as exc:
+        logger.error("AI enrichment aborted: %s", exc)
+        raise
+
+    return {
+        "status": "ok",
+        "document_id": document_pk,
+        "parts": results,
+    }

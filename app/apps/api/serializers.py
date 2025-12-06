@@ -42,6 +42,7 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
+from core.services.ai_text import AIOperations
 from core.tasks import _chunks, segment, segtrain, train, transcribe
 from imports.forms import FileImportError, clean_import_uri, clean_upload_file
 from imports.models import DocumentImport
@@ -49,6 +50,14 @@ from imports.tasks import document_import
 from reporting.models import TaskGroup, TaskReport
 from users.consumers import send_event
 from users.models import Group, User
+
+from knowledge.models import (
+    EraReference,
+    GazetteerStructureRecord,
+    LibraryCatalog,
+    PersonReference,
+    PlaceReference,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +162,150 @@ class ProjectSerializer(serializers.ModelSerializer):
         return repr
 
 
+class LibraryCatalogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LibraryCatalog
+        fields = (
+            "id",
+            "title",
+            "category",
+            "author",
+            "edition",
+            "volume_count",
+            "collection_location",
+            "call_number",
+            "page_count",
+            "source_filename",
+            "extra",
+            "created_at",
+            "updated_at",
+        )
+
+
+class GazetteerStructureRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GazetteerStructureRecord
+        fields = (
+            "id",
+            "dataset",
+            "record_id",
+            "unique_identifier",
+            "title_level",
+            "new_title_level",
+            "extracted_title",
+            "subject_terms",
+            "main_responsible",
+            "abstract",
+            "funding",
+            "related_resources",
+            "other_language_title",
+            "other_language_subject_terms",
+            "other_language_abstract",
+            "other_language_funding",
+            "language",
+            "classification_ccl",
+            "academic_classification",
+            "industry_classification",
+            "era_classification",
+            "region_classification",
+            "column",
+            "source_filename",
+            "extra",
+            "created_at",
+            "updated_at",
+        )
+
+
+class PlaceReferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlaceReference
+        fields = (
+            "id",
+            "dynasty",
+            "standard_name",
+            "admin_level",
+            "level_description",
+            "era_years_chinese",
+            "era_years_western",
+            "alternate_names",
+            "event_codes",
+            "evolution_notes",
+            "affiliation",
+            "affiliation_level_description",
+            "jurisdiction",
+            "center_longitude",
+            "center_latitude",
+            "east_longitude",
+            "west_longitude",
+            "south_latitude",
+            "north_latitude",
+            "east_neighbor",
+            "west_neighbor",
+            "south_neighbor",
+            "north_neighbor",
+            "neighbors_era",
+            "references",
+            "notes",
+            "source_filename",
+            "extra",
+            "created_at",
+            "updated_at",
+        )
+
+
+class EraReferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EraReference
+        fields = (
+            "id",
+            "era_id",
+            "era_name",
+            "dynasty",
+            "emperor",
+            "start_year_ce",
+            "end_year_ce",
+            "start_year_cn",
+            "end_year_cn",
+            "applicable_regions",
+            "source_refs",
+            "notes",
+            "created_at",
+            "updated_at",
+        )
+
+
+class PersonReferenceSerializer(serializers.ModelSerializer):
+    origin_place = serializers.SlugRelatedField(
+        slug_field="standard_name",
+        queryset=PlaceReference.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+
+    class Meta:
+        model = PersonReference
+        fields = (
+            "id",
+            "person_id",
+            "name",
+            "courtesy_name",
+            "aliases",
+            "gender",
+            "dynasty",
+            "birth_year",
+            "death_year",
+            "origin_place",
+            "positions",
+            "works",
+            "related_events",
+            "biography_summary",
+            "source_refs",
+            "notes",
+            "created_at",
+            "updated_at",
+        )
+
+
 class PartMoveSerializer(serializers.ModelSerializer):
     index = serializers.IntegerField()
 
@@ -195,6 +348,23 @@ class PartBulkMoveSerializer(serializers.ModelSerializer):
         for (idx, p) in enumerate(reordered):
             p.order = idx
         DocumentPart.objects.bulk_update(reordered, ["order"])
+
+
+class SemanticSearchRequestSerializer(serializers.Serializer):
+    query = serializers.CharField()
+    limit = serializers.IntegerField(required=False, min_value=1, max_value=50)
+    documents = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    document_parts = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    num_candidates = serializers.IntegerField(required=False, min_value=1)
+    with_answer = serializers.BooleanField(required=False, default=True)
 
 
 class TranscriptionSerializer(serializers.ModelSerializer):
@@ -653,6 +823,132 @@ class PartSerializer(serializers.ModelSerializer):
             user_pk=part.document.owner and part.document.owner.pk or None)
 
         return part
+
+
+class PartAIEnrichmentSerializer(serializers.Serializer):
+    parts = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    operations = serializers.DictField(
+        child=serializers.BooleanField(),
+        required=False,
+    )
+    transcription = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=1,
+    )
+
+    default_error_messages = {
+        "unknown_parts": _("Unknown parts for this document: %(ids)s"),
+        "no_parts": _("There are no matching pages to process."),
+        "no_operations": _("Select at least one AI operation to run."),
+        "invalid_transcription": _("Invalid transcription for this document."),
+    }
+
+    def validate_parts(self, value):
+        document: Document = self.context.get("document")
+        if document is None:
+            raise serializers.ValidationError("Document missing from serializer context.")
+        valid_ids = set(document.parts.values_list("pk", flat=True))
+        missing = [pk for pk in value if pk not in valid_ids]
+        if missing:
+            raise serializers.ValidationError(
+                self.error_messages["unknown_parts"] % {"ids": ", ".join(map(str, missing))}
+            )
+        return list(dict.fromkeys(value))
+
+    def validate_operations(self, value):
+        ops = AIOperations.from_payload(value)
+        if not ops.has_work():
+            raise serializers.ValidationError(self.error_messages["no_operations"])
+        return {
+            "punctuate": ops.punctuate,
+            "translate": ops.translate,
+            "entities": ops.entities,
+        }
+
+    def validate_transcription(self, value):
+        if value is None:
+            return None
+        document: Document = self.context.get("document")
+        if document is None:
+            raise serializers.ValidationError("Document missing from serializer context.")
+        try:
+            transcription = document.transcriptions.get(pk=value, archived=False)
+        except Transcription.DoesNotExist:
+            raise serializers.ValidationError(self.error_messages["invalid_transcription"])
+        return transcription.pk
+
+    def validate(self, attrs):
+        document: Document = self.context.get("document")
+        if document is None:
+            raise serializers.ValidationError("Document missing from serializer context.")
+
+        if "operations" not in attrs:
+            ops = AIOperations()
+            attrs["operations"] = {
+                "punctuate": ops.punctuate,
+                "translate": ops.translate,
+                "entities": ops.entities,
+            }
+
+        parts = attrs.get("parts")
+        if not parts:
+            parts = list(document.parts.values_list("pk", flat=True))
+            if not parts:
+                raise serializers.ValidationError(self.error_messages["no_parts"])
+            attrs["parts"] = parts
+        if "transcription" in attrs and attrs["transcription"] is None:
+            attrs.pop("transcription")
+        return attrs
+
+
+class SemanticIndexRequestSerializer(serializers.Serializer):
+    reset = serializers.BooleanField(required=False, default=True)
+    force = serializers.BooleanField(required=False, default=False)
+    drop = serializers.BooleanField(required=False, default=False)
+
+
+class MindMapRequestSerializer(serializers.Serializer):
+    document_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    document_part_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+    max_passages = serializers.IntegerField(required=False, default=200, min_value=1, max_value=1000)
+    cluster_count = serializers.IntegerField(required=False, default=5, min_value=1, max_value=20)
+    max_neighbors = serializers.IntegerField(required=False, default=2, min_value=0, max_value=10)
+
+    def validate_document_ids(self, value):
+        if not value:
+            return []
+        # Remove duplicates while preserving the original order.
+        seen = set()
+        ordered = []
+        for doc_id in value:
+            if doc_id not in seen:
+                ordered.append(doc_id)
+                seen.add(doc_id)
+        return ordered
+
+    def validate_document_part_ids(self, value):
+        if not value:
+            return []
+        seen = set()
+        ordered = []
+        for part_id in value:
+            if part_id not in seen:
+                ordered.append(part_id)
+                seen.add(part_id)
+        return ordered
 
 
 class BlockSerializer(serializers.ModelSerializer):

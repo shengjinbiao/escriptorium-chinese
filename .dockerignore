@@ -1,4 +1,6 @@
 env/
+.venv/
+*/.venv/
 app/static/
 app/media/
 app/test_media/

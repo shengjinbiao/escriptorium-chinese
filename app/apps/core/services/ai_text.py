@@ -1,0 +1,826 @@
+"""
+Utilities for running AI-based punctuation and translation on document parts.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import re
+import unicodedata
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, List, Optional, Sequence, Tuple
+
+from django.apps import apps
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+from versioning.models import NoChangeException
+
+try:  # typing support without triggering imports
+    from typing import TYPE_CHECKING
+except ImportError:  # pragma: no cover
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:  # pragma: no cover
+    from core.models import DocumentPart, Line, LineTranscription, Transcription
+
+logger = logging.getLogger(__name__)
+
+User = get_user_model()
+
+try:
+    from wz_gazetteer.services.openai_client import (
+        OpenAIClient,
+        ProviderConfig,
+        load_provider_config,
+    )
+    from wz_gazetteer.services.punctuation import PunctuationService
+    from wz_gazetteer.services.translation import TranslationResult, TranslationService
+    from wz_gazetteer.utilities.cache import JsonCache
+
+    _GAZETTEER_IMPORT_ERROR: Optional[Exception] = None
+except ImportError as exc:  # pragma: no cover - handled at runtime
+    PunctuationService = TranslationService = None  # type: ignore[assignment]
+    OpenAIClient = ProviderConfig = JsonCache = None  # type: ignore[assignment]
+    load_provider_config = None  # type: ignore[assignment]
+    TranslationResult = None  # type: ignore[assignment]
+    _GAZETTEER_IMPORT_ERROR = exc
+
+_punctuation_service: Optional[PunctuationService] = None
+_translation_service: Optional[TranslationService] = None
+_provider_config: Optional[ProviderConfig] = None
+
+
+def _line_model():
+    return apps.get_model("core", "Line")
+
+
+def _line_transcription_model():
+    return apps.get_model("core", "LineTranscription")
+
+
+def _transcription_model():
+    return apps.get_model("core", "Transcription")
+
+
+class AIDependencyError(RuntimeError):
+    """Raised when the AI helper dependencies are missing."""
+
+
+@dataclass(frozen=True)
+class AIOperations:
+    punctuate: bool = True
+    translate: bool = True
+    entities: bool = False
+
+    def has_work(self) -> bool:
+        return self.punctuate or self.translate or self.entities
+
+    @classmethod
+    def from_payload(cls, payload: Optional[dict]) -> "AIOperations":
+        def _coerce(value, default):
+            if value is None:
+                return default
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in {"true", "1", "yes", "on"}:
+                    return True
+                if normalized in {"false", "0", "no", "off"}:
+                    return False
+            return bool(value)
+
+        if not payload:
+            return cls()
+        return cls(
+            punctuate=_coerce(payload.get("punctuate"), True),
+            translate=_coerce(payload.get("translate"), True),
+            entities=_coerce(payload.get("entities"), False),
+        )
+
+
+def load_entity_services():
+    """
+    Lazily import entity annotation helpers to avoid circular imports during Django setup.
+    """
+    from knowledge.services.entity_annotation import (  # noqa: WPS433 - runtime import
+        HanLPEntityExtractor,
+        annotate_part_entities,
+    )
+
+    return HanLPEntityExtractor, annotate_part_entities
+
+
+def _ensure_dependencies() -> None:
+    if _GAZETTEER_IMPORT_ERROR is not None:
+        raise AIDependencyError(
+            "wz-gazetteer package is not available. "
+            "Install it (e.g. `pip install -e ../yjxz`) inside the eScriptorium environment."
+        ) from _GAZETTEER_IMPORT_ERROR
+
+
+def _ensure_provider_config() -> ProviderConfig:
+    global _provider_config
+    if _provider_config is not None:
+        return _provider_config
+
+    if load_provider_config is None:
+        _ensure_dependencies()
+        raise AssertionError("load_provider_config unexpectedly missing")
+
+    config_path = Path(settings.AI_PROVIDER_CONFIG_PATH)
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"AI provider configuration file not found: {config_path}"
+        )
+    _provider_config = load_provider_config(config_path)
+    return _provider_config
+
+
+def _build_cache(path_name: str) -> JsonCache:
+    cache_root = Path(settings.AI_CACHE_ROOT)
+    cache_root.mkdir(parents=True, exist_ok=True)
+    return JsonCache(cache_root / path_name)
+
+
+def get_punctuation_service() -> PunctuationService:
+    _ensure_dependencies()
+    global _punctuation_service
+    if _punctuation_service is None:
+        config = _ensure_provider_config()
+        client = OpenAIClient(config)
+        _punctuation_service = PunctuationService(client, _build_cache("punctuation_cache.json"))
+    return _punctuation_service
+
+
+def get_translation_service() -> TranslationService:
+    _ensure_dependencies()
+    global _translation_service
+    if _translation_service is None:
+        config = _ensure_provider_config()
+        client = OpenAIClient(config)
+        _translation_service = TranslationService(client, _build_cache("translation_cache.json"))
+    return _translation_service
+
+
+def _get_source_transcription(document) -> Optional[Transcription]:
+    Transcription = _transcription_model()
+    LineTranscription = _line_transcription_model()
+    ai_names = {
+        name
+        for name in (
+            settings.AI_PUNCTUATION_TRANSCRIPTION_NAME,
+            settings.AI_TRANSLATION_TRANSCRIPTION_NAME,
+        )
+        if name
+    }
+
+    def _has_content(candidate: Transcription) -> bool:
+        return (
+            LineTranscription.objects.filter(
+                transcription=candidate,
+                line__document_part__document=document,
+            )
+            .exclude(content__isnull=True)
+            .exclude(content__regex=r"^\s*$")
+            .exists()
+        )
+
+    candidates = (
+        Transcription.objects.filter(document=document, archived=False)
+        .exclude(name__in=ai_names)
+        .order_by("-updated_at", "pk")
+    )
+
+    for candidate in candidates:
+        if _has_content(candidate):
+            return candidate
+
+    empty_candidate = candidates.first()
+    if empty_candidate:
+        return empty_candidate
+
+    archived_candidates = (
+        Transcription.objects.filter(document=document, archived=True)
+        .exclude(name__in=ai_names)
+        .order_by("-updated_at", "pk")
+    )
+
+    for candidate in archived_candidates:
+        if _has_content(candidate):
+            return candidate
+
+    archived_fallback = archived_candidates.first()
+    if archived_fallback:
+        return archived_fallback
+
+    return (
+        Transcription.objects.filter(document=document)
+        .order_by("-updated_at", "pk")
+        .first()
+    )
+
+
+def _get_destination_transcription(document, name: str) -> Transcription:
+    Transcription = _transcription_model()
+    transcription, created = Transcription.objects.get_or_create(
+        document=document,
+        name=name,
+        defaults={
+            "comments": "Auto-generated by AI tools.",
+            "archived": False,
+        },
+    )
+    if not created and transcription.archived:
+        transcription.archived = False
+        transcription.save(update_fields=["archived"])
+    return transcription
+
+
+def _get_existing_transcription(document, name: Optional[str]) -> Optional["Transcription"]:
+    if not name:
+        return None
+    Transcription = _transcription_model()
+    return (
+        Transcription.objects.filter(
+            document=document,
+            name=name,
+            archived=False,
+        )
+        .order_by("-updated_at", "pk")
+        .first()
+    )
+
+
+def _collect_line_text(
+    lines: Iterable[Line],
+    transcription: Transcription,
+) -> List[str]:
+    results: List[str] = []
+    LineTranscription = _line_transcription_model()
+    for line in lines:
+        entry = (
+            LineTranscription.objects.filter(
+                line=line,
+                transcription=transcription,
+            )
+            .only("content")
+            .first()
+        )
+        results.append(entry.content if entry and entry.content else "")
+    return results
+
+
+_PUNCTUATION_EXTRA = frozenset(
+    "，。！？；：、．,.!?;:()（）《》〈〉「」『』“”‘’—…·﹔﹕﹖﹗"
+)
+
+
+def _get_neighbor_line_content(
+    part: "DocumentPart",
+    transcription: "Transcription",
+    *,
+    direction: str,
+) -> Optional[str]:
+    Line = _line_model()
+    if direction == "previous":
+        queryset = (
+            Line.objects.filter(
+                document_part__document=part.document,
+                document_part__order__lt=part.order,
+            )
+            .order_by("-document_part__order", "-order")
+            .only("pk")
+        )
+    else:
+        queryset = (
+            Line.objects.filter(
+                document_part__document=part.document,
+                document_part__order__gt=part.order,
+            )
+            .order_by("document_part__order", "order")
+            .only("pk")
+        )
+    neighbor = queryset.first()
+    if neighbor is None:
+        return None
+
+    LineTranscription = _line_transcription_model()
+    entry = (
+        LineTranscription.objects.filter(
+            line=neighbor,
+            transcription=transcription,
+        )
+        .only("content")
+        .first()
+    )
+    if not entry or not entry.content:
+        return None
+    return entry.content
+
+
+def _build_context_lines(
+    part: "DocumentPart",
+    transcription: "Transcription",
+    *,
+    include_before: bool,
+    include_after: bool,
+) -> Tuple[Optional[str], Optional[str]]:
+    before = (
+        _get_neighbor_line_content(part, transcription, direction="previous")
+        if include_before
+        else None
+    )
+    after = (
+        _get_neighbor_line_content(part, transcription, direction="next")
+        if include_after
+        else None
+    )
+    return before, after
+
+
+def _is_punctuation_char(ch: str) -> bool:
+    if ch in _PUNCTUATION_EXTRA:
+        return True
+    category = unicodedata.category(ch)
+    return category.startswith("P")
+
+
+def _strip_core_text(text: str) -> str:
+    return "".join(
+        ch for ch in text if not _is_punctuation_char(ch) and not ch.isspace()
+    )
+
+
+def _merge_punctuation_text(
+    original_lines: Sequence[str],
+    candidate_text: str,
+) -> List[str]:
+    if not candidate_text.strip():
+        return list(original_lines)
+
+    original_text = "\n".join(original_lines)
+    orig_chars = list(original_text)
+    result: List[str] = []
+    punct_buffer: List[str] = []
+
+    def flush_buffer() -> None:
+        if punct_buffer:
+            result.append("".join(punct_buffer))
+            punct_buffer.clear()
+
+    idx = 0
+    started = False
+    candidate_iter = iter(candidate_text)
+    for ch in candidate_iter:
+        if ch == "\r":
+            continue
+        if idx >= len(orig_chars):
+            break
+
+        if not started:
+            if ch.isspace() and ch != "\n":
+                continue
+            if _is_punctuation_char(ch):
+                continue
+            remaining = "".join(orig_chars[idx:])
+            forward_idx = remaining.find(ch)
+            if forward_idx < 0:
+                continue
+            started = True
+            flush_buffer()
+            skip_until = idx + forward_idx
+            while idx < skip_until:
+                result.append(orig_chars[idx])
+                idx += 1
+            result.append(orig_chars[idx])
+            idx += 1
+            continue
+
+        if ch.isspace() and ch != "\n":
+            continue
+
+        if idx < len(orig_chars) and ch == orig_chars[idx]:
+            flush_buffer()
+            result.append(ch)
+            idx += 1
+            continue
+
+        if ch == "\n":
+            if idx < len(orig_chars) and orig_chars[idx] == "\n":
+                flush_buffer()
+                result.append(ch)
+                idx += 1
+            continue
+
+        if _is_punctuation_char(ch):
+            punct_buffer.append(ch)
+            continue
+
+        if idx < len(orig_chars):
+            remaining = "".join(orig_chars[idx:])
+            forward_idx = remaining.find(ch)
+            if forward_idx >= 0:
+                flush_buffer()
+                skip_until = idx + forward_idx
+                while idx < skip_until:
+                    result.append(orig_chars[idx])
+                    idx += 1
+                result.append(orig_chars[idx])
+                idx += 1
+                continue
+        # Drop non-punctuation characters that cannot be aligned to the source text.
+        continue
+
+    flush_buffer()
+
+    while idx < len(orig_chars):
+        result.append(orig_chars[idx])
+        idx += 1
+
+    merged_text = "".join(result)
+    if _strip_core_text(merged_text) != _strip_core_text(original_text):
+        return list(original_lines)
+
+    merged_lines = merged_text.split("\n")
+    if len(merged_lines) < len(original_lines):
+        merged_lines.extend([""] * (len(original_lines) - len(merged_lines)))
+    elif len(merged_lines) > len(original_lines):
+        merged_lines = merged_lines[: len(original_lines)]
+    return merged_lines
+
+
+def _extract_json_array(text: str) -> Optional[str]:
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        parts = cleaned.split("```")
+        for part in parts:
+            snippet = part.strip()
+            if not snippet or snippet.lower().startswith("json"):
+                continue
+            if snippet.startswith("[") and snippet.endswith("]"):
+                return snippet
+    match = re.search(r"\[[\s\S]*\]", text)
+    if match:
+        return match.group(0)
+    return None
+
+
+def _parse_translation_response(text: str, expected_count: int) -> Optional[List[str]]:
+    candidate = _extract_json_array(text) or text
+    try:
+        data = json.loads(candidate)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, list):
+        return None
+    normalized = [str(item) if item is not None else "" for item in data]
+    if len(normalized) < expected_count:
+        normalized.extend([""] * (expected_count - len(normalized)))
+    elif len(normalized) > expected_count:
+        normalized = normalized[:expected_count]
+    return normalized
+
+
+_TRANSLATION_SPLIT_HINTS = frozenset("。！？；：，,.!?;\n")
+
+
+def _find_split_index(text: str, target: float, window: int = 30) -> int:
+    length = len(text)
+    if length == 0:
+        return 0
+    idx = max(1, min(length - 1, int(round(target))))
+    for offset in range(window + 1):
+        left = idx - offset
+        if left > 0 and text[left - 1] in _TRANSLATION_SPLIT_HINTS:
+            return left
+        if 0 <= left < length and text[left] in _TRANSLATION_SPLIT_HINTS:
+            return min(left + 1, length)
+        right = idx + offset
+        if right < length and text[right] in _TRANSLATION_SPLIT_HINTS:
+            return min(right + 1, length)
+        if right + 1 < length and text[right + 1] in _TRANSLATION_SPLIT_HINTS:
+            return min(right + 2, length)
+    return idx
+
+
+def _split_translation_proportionally(
+    original_lines: Sequence[str],
+    translated_text: str,
+) -> List[str]:
+    count = len(original_lines)
+    normalized = translated_text.strip()
+    if count == 0:
+        return []
+    if not normalized:
+        return [""] * count
+    if count == 1:
+        return [normalized]
+
+    weights: List[int] = []
+    for line in original_lines:
+        weight = len(line.strip())
+        weights.append(weight if weight > 0 else 1)
+
+    total_weight = sum(weights)
+    if total_weight <= 0:
+        total_weight = count
+        weights = [1] * count
+
+    total_length = len(normalized)
+    boundaries: List[int] = []
+    accumulated = 0.0
+    last_idx = 0
+    for weight in weights[:-1]:
+        accumulated += weight
+        raw_idx = accumulated / total_weight * total_length
+        split_idx = _find_split_index(normalized, raw_idx)
+        split_idx = max(min(split_idx, total_length), last_idx)
+        boundaries.append(split_idx)
+        last_idx = split_idx
+
+    segments: List[str] = []
+    prev = 0
+    for boundary in boundaries:
+        segments.append(normalized[prev:boundary].strip())
+        prev = boundary
+    segments.append(normalized[prev:].strip())
+
+    if len(segments) > count:
+        head = segments[: count - 1]
+        tail = " ".join(segments[count - 1 :]).strip()
+        segments = head + [tail]
+    while len(segments) < count:
+        segments.append("")
+    return segments[:count]
+
+
+def _call_punctuate_with_context(
+    service: PunctuationService,
+    text: str,
+    *,
+    context_before: Optional[str],
+    context_after: Optional[str],
+) -> str:
+    try:
+        return service.punctuate(
+            text,
+            context_before=context_before,
+            context_after=context_after,
+        )
+    except TypeError as exc:
+        message = str(exc)
+        if "context_before" in message or "context_after" in message:
+            return service.punctuate(text)
+        raise
+
+
+def _call_translate_with_context(
+    service: TranslationService,
+    text: str,
+    *,
+    context_before: Optional[str],
+    context_after: Optional[str],
+) -> TranslationResult:
+    try:
+        return service.translate(
+            text,
+            context_before=context_before,
+            context_after=context_after,
+        )
+    except TypeError as exc:
+        message = str(exc)
+        if "context_before" in message or "context_after" in message:
+            return service.translate(text)
+        raise
+
+
+def _align_result_lines(result_lines: List[str], target_count: int) -> List[str]:
+    if len(result_lines) == target_count:
+        return result_lines
+    if not result_lines:
+        return [""] * target_count
+    if len(result_lines) < target_count:
+        return result_lines + [""] * (target_count - len(result_lines))
+    aligned = result_lines[: max(target_count - 1, 0)]
+    aligned.append("\n".join(result_lines[len(aligned) :]))
+    return aligned[:target_count]
+
+
+def _write_line_contents(
+    *,
+    lines: Iterable[Line],
+    transcription: Transcription,
+    values: List[str],
+    user: Optional[User],
+    source_label: str,
+) -> int:
+    updated = 0
+    username = getattr(user, "username", None) or source_label
+    LineTranscription = _line_transcription_model()
+    for line, content in zip(lines, values):
+        lt, created = LineTranscription.objects.get_or_create(
+            line=line,
+            transcription=transcription,
+            defaults={
+                "content": content,
+                "version_author": username,
+                "version_source": source_label,
+            },
+        )
+        if created:
+            updated += 1 if content else 0
+            continue
+        if lt.content == content:
+            continue
+        try:
+            lt.new_version(author=username, source=source_label)
+        except NoChangeException:
+            pass
+        lt.content = content
+        lt.version_author = username
+        lt.version_source = source_label
+        lt.avg_confidence = None
+        lt.save()
+        updated += 1
+    return updated
+
+
+def enrich_document_part(
+    part: DocumentPart,
+    operations: AIOperations,
+    *,
+    user: Optional[User] = None,
+    include_previous_context: bool = False,
+    include_next_context: bool = False,
+    entity_extractor: Optional[object] = None,
+    entity_annotator: Optional[object] = None,
+    source_transcription: Optional["Transcription"] = None,
+    force_source_transcription: bool = False,
+) -> dict:
+    """
+    Run punctuation and/or translation on a document part and update AI layers.
+    """
+
+    if not operations.has_work():
+        return {
+            "part_id": part.pk,
+            "status": "skipped",
+            "reason": "no_operations_requested",
+        }
+
+    Line = _line_model()
+    lines = list(Line.objects.filter(document_part=part).order_by("order"))
+    if not lines:
+        return {
+            "part_id": part.pk,
+            "status": "skipped",
+            "reason": "no_lines",
+        }
+
+    if source_transcription is None:
+        source_transcription = _get_source_transcription(part.document)
+        if source_transcription is None:
+            raise RuntimeError(
+                f"Document {part.document_id} has no available transcription to read from."
+            )
+
+    def _collect_texts(trans: Optional["Transcription"]) -> List[str]:
+        return _collect_line_text(lines, trans) if trans is not None else []
+
+    def _has_non_empty_text(texts: Sequence[str]) -> bool:
+        return any(text and text.strip() for text in texts)
+
+    line_texts = _collect_texts(source_transcription)
+    if not _has_non_empty_text(line_texts):
+        if force_source_transcription:
+            return {
+                "part_id": part.pk,
+                "status": "skipped",
+                "reason": "empty_source",
+            }
+        Transcription = _transcription_model()
+        ai_names = {
+            name
+            for name in (
+                settings.AI_PUNCTUATION_TRANSCRIPTION_NAME,
+                settings.AI_TRANSLATION_TRANSCRIPTION_NAME,
+            )
+            if name
+        }
+        candidate_qs = (
+            Transcription.objects.filter(document=part.document)
+            .exclude(name__in=ai_names)
+            .order_by("archived", "-updated_at", "pk")
+        )
+        for candidate in candidate_qs:
+            if source_transcription and candidate.pk == source_transcription.pk:
+                continue
+            candidate_texts = _collect_texts(candidate)
+            if _has_non_empty_text(candidate_texts):
+                source_transcription = candidate
+                line_texts = candidate_texts
+                break
+
+    if not _has_non_empty_text(line_texts):
+        return {
+            "part_id": part.pk,
+            "status": "skipped",
+            "reason": "empty_source",
+        }
+
+    entity_transcription = source_transcription
+
+    if operations.entities and not operations.punctuate and not force_source_transcription:
+        punct_name = settings.AI_PUNCTUATION_TRANSCRIPTION_NAME
+        preferred = _get_existing_transcription(part.document, punct_name)
+        if preferred and (
+            entity_transcription is None
+            or preferred.pk != entity_transcription.pk
+        ):
+            preferred_texts = _collect_texts(preferred)
+            if _has_non_empty_text(preferred_texts):
+                entity_transcription = preferred
+
+    joined_text = "\n".join(line_texts)
+    result: dict = {"part_id": part.pk, "status": "ok"}
+    context_before: Optional[str] = None
+    context_after: Optional[str] = None
+
+    if include_previous_context or include_next_context:
+        context_before, context_after = _build_context_lines(
+            part,
+            source_transcription,
+            include_before=include_previous_context,
+            include_after=include_next_context,
+        )
+
+    if operations.punctuate:
+        service = get_punctuation_service()
+        punctuated = _call_punctuate_with_context(
+            service,
+            joined_text,
+            context_before=context_before,
+            context_after=context_after,
+        )
+        punctuated_lines = _merge_punctuation_text(line_texts, punctuated)
+        ai_transcription = _get_destination_transcription(
+            part.document,
+            settings.AI_PUNCTUATION_TRANSCRIPTION_NAME,
+        )
+        entity_transcription = ai_transcription
+        result["punctuation_updated"] = _write_line_contents(
+            lines=lines,
+            transcription=ai_transcription,
+            values=punctuated_lines,
+            user=user,
+            source_label="ai_punctuation",
+        )
+    elif operations.entities:
+        precomputed_punctuation = _get_existing_transcription(
+            part.document,
+            settings.AI_PUNCTUATION_TRANSCRIPTION_NAME,
+        )
+        if precomputed_punctuation is not None:
+            entity_transcription = precomputed_punctuation
+
+    if operations.translate:
+        service = get_translation_service()
+        translation: TranslationResult = _call_translate_with_context(
+            service,
+            joined_text,
+            context_before=context_before,
+            context_after=context_after,
+        )
+        parsed = _parse_translation_response(translation.text, len(lines))
+        if parsed is None:
+            translation_lines = _split_translation_proportionally(
+                line_texts, translation.text
+            )
+        else:
+            translation_lines = parsed
+        ai_transcription = _get_destination_transcription(
+            part.document,
+            settings.AI_TRANSLATION_TRANSCRIPTION_NAME,
+        )
+        result["translation_updated"] = _write_line_contents(
+            lines=lines,
+            transcription=ai_transcription,
+            values=translation_lines,
+            user=user,
+            source_label=f"ai_translation:{translation.provider}",
+        )
+
+    if operations.entities:
+        if entity_annotator is None:
+            _, _, _, entity_annotator = load_entity_services()
+        annotations_created = entity_annotator(
+            part=part,
+            transcription=entity_transcription or source_transcription,
+            extractor=entity_extractor,
+            clear_existing=True,
+        )
+        result["entities_updated"] = annotations_created
+
+    return result

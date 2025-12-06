@@ -98,6 +98,7 @@ export default {
     transcribe: {
         model: "",
         layerName: "",
+        existingLayer: "",
     },
     transcriptionManagement: {
         transcriptions: [],

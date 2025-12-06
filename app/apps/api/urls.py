@@ -1,6 +1,8 @@
 from django.urls import include, path
 from rest_framework_nested import routers
 
+from knowledge.views import extract_entities
+
 from api.views import (
     AnnotationComponentViewSet,
     AnnotationTaxonomyViewSet,
@@ -22,8 +24,14 @@ from api.views import (
     PartMetadataViewSet,
     PartViewSet,
     ProjectTagViewSet,
+    LibraryCatalogViewSet,
+    GazetteerStructureRecordViewSet,
+    EraReferenceViewSet,
+    PersonReferenceViewSet,
+    PlaceReferenceViewSet,
     ProjectViewSet,
     RegenerableAuthToken,
+    SemanticSearchView,
     ScriptViewSet,
     TaskGroupViewSet,
     TaskReportViewSet,
@@ -46,6 +54,11 @@ router.register(r'types/block', BlockTypeViewSet)
 router.register(r'types/line', LineTypeViewSet)
 router.register(r'types/annotations', AnnotationTypeViewSet)
 router.register(r'types/part', DocumentPartTypeViewSet)
+router.register(r'knowledge/catalog', LibraryCatalogViewSet, basename='knowledge-catalog')
+router.register(r'knowledge/structure', GazetteerStructureRecordViewSet, basename='knowledge-structure')
+router.register(r'knowledge/places', PlaceReferenceViewSet, basename='knowledge-places')
+router.register(r'knowledge/eras', EraReferenceViewSet, basename='knowledge-eras')
+router.register(r'knowledge/persons', PersonReferenceViewSet, basename='knowledge-persons')
 
 projects_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 projects_router.register(r'tags', DocumentTagViewSet, basename='document-tag')
@@ -74,5 +87,7 @@ urlpatterns = [
     path('', include(parts_router.urls)),
     path('', include(projects_router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('token-auth/', RegenerableAuthToken.as_view())
+    path('token-auth/', RegenerableAuthToken.as_view()),
+    path('search/semantic/', SemanticSearchView.as_view(), name='semantic-search'),
+    path('documents/<int:document_pk>/parts/<int:part_pk>/extract-entities/', extract_entities, name='extract-entities'),
 ]
