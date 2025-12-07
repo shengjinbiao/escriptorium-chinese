@@ -31,18 +31,18 @@ RUN addgroup --system uwsgi \
 RUN pip install --root-user-action ignore -q --upgrade pip
 
 # Install Python requirements
-COPY escriptorium-chinese/app/requirements.txt /tmp/requirements.txt
+COPY app/requirements.txt /tmp/requirements.txt
 RUN pip install --root-user-action ignore -q -r /tmp/requirements.txt
 
 # Install embedding dependencies
 RUN pip  install --root-user-action ignore -q faiss-cpu
 
-# Install yjxz services (submodule lives under escriptorium-chinese/yjxz when build context is the repo parent)
-COPY escriptorium-chinese/yjxz /usr/src/yjxz
+# Install yjxz services (submodule lives under repo root when build context is the repo itself)
+COPY yjxz /usr/src/yjxz
 RUN pip  install --root-user-action ignore -q -e /usr/src/yjxz
 
 # Copy application source (will be overridden by bind mount in development)
-COPY escriptorium-chinese/app /usr/src/app
+COPY app /usr/src/app
 
 # Ensure AI provider configuration file is present
 RUN rm -rf /usr/src/app/config/providers.yml \

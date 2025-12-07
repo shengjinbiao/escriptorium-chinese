@@ -1,16 +1,19 @@
 # version: "3.9"
 x-app-build: &app-build
-  context: ..
-  dockerfile: escriptorium-chinese/Dockerfile.custom
+  context: .
+  dockerfile: Dockerfile.custom
 
 
 x-app: &app
   image: escriptorium-custom:latest
   env_file: variables.env
+  environment:
+    - FRONTEND_DIR=/usr/src/app/front/dist
   volumes:
     - ./app:/usr/src/app
     - ./static:/usr/src/app/static
     - ./media:/usr/src/app/media
+    - ./front/dist:/usr/src/app/front/dist
     - ./app/config/providers.yml:/usr/src/app/config/providers.yml:ro
     - ../yjxz:/usr/src/yjxz
 
@@ -55,6 +58,9 @@ services:
 
   nginx:
     restart: always
+    volumes:
+      - ./static:/usr/src/app/static
+      - ./media:/usr/src/app/media
     ports:
       - "80:80"
 
