@@ -37,14 +37,36 @@ module.exports = {
             {
                 test: /\.(css|scss)$/,
                 use: [
-                    MiniCssExtractPlugin.loader,
-                    "css-loader",
+                    {
+                        loader: MiniCssExtractPlugin.loader,
+                        options: { publicPath: "/static/" },
+                    },
+                    {
+                        loader: "css-loader",
+                        options: {
+                            url: {
+                                filter: (url) => !url.startsWith("/static/webfonts/"),
+                            },
+                        },
+                    },
                     "sass-loader"
                 ],
             },
             {
-                test: /\.(png|jpe?g|gif|woff|woff2|eot|ttf|otf|svg)$/i,
-                use: ["file-loader"],
+                test: /\.(woff2?|eot|ttf|otf|svg)$/i,
+                type: "asset/resource",
+                generator: {
+                    filename: "webfonts/[name][ext]",
+                    publicPath: "/static/",
+                },
+            },
+            {
+                test: /\.(png|jpe?g|gif)$/i,
+                type: "asset/resource",
+                generator: {
+                    filename: "images/[name][ext]",
+                    publicPath: "/static/",
+                },
             },
             {
                 test: /\.vue$/,

@@ -826,6 +826,74 @@ small.context {
     word-break: break-all;
 }
 
+/* Ensure modals overlay the app content */
+.modal.show {
+    position: fixed;
+    inset: 0;
+    display: block;
+    z-index: 2000;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show .modal-dialog {
+    margin: 2rem auto;
+    z-index: 2001;
+}
+
+/* Force Vue modals to sit on top (backup fix when other bundles override stacking) */
+.escr-modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2000 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+.escr-modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 2001 !important;
+    max-height: 85vh;
+    width: min(640px, 95vw);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.escr-modal .escr-modal-content {
+    overflow: auto;
+    flex: 1 1 auto;
+    padding-right: 8px;
+}
+
+/* Fix Font Awesome paths (legacy UI icons) */
+@font-face {
+    font-family: "Font Awesome 5 Brands";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/* webpackIgnore: true */ "/static/webfonts/fa-brands-400.woff2") format("woff2"),
+         url(/* webpackIgnore: true */ "/static/webfonts/fa-brands-400.woff") format("woff");
+}
+
+@font-face {
+    font-family: "Font Awesome 5 Free";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/* webpackIgnore: true */ "/static/webfonts/fa-regular-400.woff2") format("woff2"),
+         url(/* webpackIgnore: true */ "/static/webfonts/fa-regular-400.woff") format("woff");
+}
+
+@font-face {
+    font-family: "Font Awesome 5 Free";
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url(/* webpackIgnore: true */ "/static/webfonts/fa-solid-900.woff2") format("woff2"),
+         url(/* webpackIgnore: true */ "/static/webfonts/fa-solid-900.woff") format("woff");
+}
+
 /*
  * New UI for non-vue pages
  */

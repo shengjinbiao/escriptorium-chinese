@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "webpack --config webpack.dev.js",
+    "postbuild": "mkdir -p dist/webfonts && cp node_modules/@fortawesome/fontawesome-free/webfonts/* dist/webfonts/",
     "start": "webpack --config webpack.dev.js --watch",
     "production": "webpack --config webpack.prod.js",
     "storybook": "start-storybook -p 6006",
